@@ -213,16 +213,42 @@ tr:hover td{background:rgba(255,255,255,.012)}
 .voice-entry-card{padding:24px;border-radius:28px;border:1px solid rgba(115,224,205,.16);background:linear-gradient(140deg,rgba(35,81,83,.28),rgba(12,24,43,.96));margin-top:18px}
 .voice-entry-card h2{font-size:26px;margin:0 0 10px}.voice-entry-card p{font-size:17px;line-height:1.55;color:#adc5d5}
 @media(max-width:900px){.voice-shell{grid-template-columns:1fr}.voice-panel{padding:19px}.voice-question{font-size:21px;padding:18px}.voice-srow{grid-template-columns:1fr auto;gap:5px}.voice-srow small{grid-column:1}.voice-srow strong{grid-column:1}.voice-srow button{grid-column:2;grid-row:1/3}.voice-textform{flex-direction:column}.voice-textform button{width:100%}}
+/* V9 — Pilote global : bouton micro flottant + panneau de conversation, sur toutes les pages */
+.pg-fab{position:fixed;right:18px;bottom:104px;z-index:60;width:68px;height:68px;border-radius:50%;border:0;background:linear-gradient(180deg,#76e3d1,#5fcfbe);color:#062222;font-size:30px;box-shadow:0 14px 34px rgba(103,216,199,.38);display:grid;place-items:center;cursor:pointer}
+.pg-fab.on{background:linear-gradient(180deg,#ff8a9a,#e5677a);color:#fff;animation:pgpulse 1.2s infinite}
+@keyframes pgpulse{0%{box-shadow:0 0 0 0 rgba(229,103,122,.55)}70%{box-shadow:0 0 0 18px rgba(229,103,122,0)}100%{box-shadow:0 0 0 0 rgba(229,103,122,0)}}
+.pg-panel{position:fixed;right:18px;bottom:104px;z-index:65;width:min(440px,calc(100vw - 32px));max-height:min(640px,calc(100vh - 140px));display:flex;flex-direction:column;background:linear-gradient(160deg,#0f2236,#08131f);border:1px solid rgba(115,224,205,.22);border-radius:26px;box-shadow:0 26px 60px rgba(0,0,0,.55);overflow:hidden}
+.pg-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 18px;border-bottom:1px solid rgba(255,255,255,.07)}
+.pg-head strong{font-size:18px;color:#eafcff}.pg-head small{display:block;color:#8fb2bf;font-size:13px;margin-top:3px}
+.pg-x{border:0;background:rgba(255,255,255,.07);color:#cfe3f2;border-radius:12px;width:40px;height:40px;font-size:18px;cursor:pointer}
+.pg-log{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:9px;min-height:120px}
+.pg-msg{max-width:88%;padding:11px 14px;border-radius:17px;font-size:15.5px;line-height:1.45;overflow-wrap:anywhere}
+.pg-msg.aurel{align-self:flex-end;background:rgba(115,224,205,.16);color:#dffcf6;border-bottom-right-radius:5px}
+.pg-msg.pilote{align-self:flex-start;background:rgba(255,255,255,.06);color:#e3ecf8;border-bottom-left-radius:5px}
+.pg-msg .pg-done{display:block;margin-top:6px;font-size:13px;color:#9df9e7;font-weight:800}
+.pg-chips{display:flex;flex-wrap:wrap;gap:7px}
+.pg-chip{border:1px solid rgba(115,224,205,.25);background:rgba(115,224,205,.07);color:#bff8ee;border-radius:14px;padding:9px 11px;font-size:14px;text-align:left;cursor:pointer}
+.pg-foot{padding:12px 16px 16px;border-top:1px solid rgba(255,255,255,.07);display:grid;gap:10px}
+.pg-state{font-size:14px;font-weight:800;color:#9fe7d8;min-height:18px}
+.pg-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pg-mic{flex:1;border:0;border-radius:18px;padding:16px;font-size:17px;font-weight:900;background:linear-gradient(180deg,#76e3d1,#67d8c7);color:#062222;cursor:pointer}
+.pg-mic.on{background:linear-gradient(180deg,#ff8a9a,#e5677a);color:#fff}
+.pg-small{border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:#d5e4f3;border-radius:14px;padding:11px 12px;font-size:14px;font-weight:800;cursor:pointer}
+.pg-small.ok{border-color:rgba(115,224,205,.4);color:#9df9e7}
+.pg-text{display:flex;gap:8px}.pg-text input{flex:1;min-width:0;background:#08172b;border:1px solid rgba(157,181,214,.26);border-radius:14px;padding:12px;color:#f3f7ff;font-size:16px}
+.pg-warn{color:#ffd190;background:rgba(243,179,94,.10);border:1px solid rgba(243,179,94,.18);border-radius:13px;padding:9px 11px;font-size:13.5px;line-height:1.4}
+@media(max-width:600px){.pg-panel{right:8px;left:8px;width:auto;bottom:96px;max-height:calc(100vh - 120px)}.pg-fab{right:14px;bottom:98px}}
 </style>
 </head>
 <body>
-<div class="topbar"><div class="topbar-inner"><div class="brand"><div class="mark"><img src="data:image/png;base64,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" alt="Logo My I-Car"></div><div><div class="brand-title">My I-Car <span class="ver">V8</span></div><div class="brand-sub">Cockpit atelier • pilotage intelligent de carrosserie</div></div></div><div class="top-badge">Pilote IA • Gemini</div></div></div>
+<div class="topbar"><div class="topbar-inner"><div class="brand"><div class="mark"><img src="data:image/png;base64,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" alt="Logo My I-Car"></div><div><div class="brand-title">My I-Car <span class="ver">V9</span></div><div class="brand-sub">Cockpit atelier • pilotage intelligent de carrosserie</div></div></div><div class="top-badge">Pilote IA • Gemini</div></div></div>
 <div class="wrap">
   <main id="root"></main>
 </div>
 <div class="mobile-nav"><div class="mobile-nav-grid" id="mobiletabs"></div></div>
 <div id="modalhost"></div>
 <div id="toast"></div>
+<div id="pilotehost"></div>
 <script>
 const STORAGE_KEY='myicar_v8_data';
 const LEGACY_KEYS=['myicar_v7_data','myicar_v6_data','myicar_v5_data','myicar_v4_data'];
@@ -283,7 +309,7 @@ function bottomNav(){
 }
 function hero(){
   const risk=countRisk();
-  return `<section class="hero"><div class="kicker">✦ Pilotage intelligent de carrosserie</div><h1>Bonjour Aurel. <br>Ton atelier a une longueur d’avance.</h1><p>Les dossiers avancent. Le pilote t’aide à recueillir les informations d’un dossier et à repérer les points qui restent à traiter.</p><div class="hero-actions"><button class="btn btn-primary" onclick="go('assistant')">🎙 Parler au pilote</button><button class="btn btn-secondary" onclick="go('planning')">▦ Préparer demain</button><button class="btn btn-secondary" onclick="go('taches')">✦ Relances</button></div>${risk===0?`<div class="hint-card"><strong>Nouveau sur My I-Car ?</strong><span>Un parcours guidé t’explique les fonctions, sans jargon technique. <span style="color:#9ff6e6;font-weight:900;cursor:pointer" onclick="go('aide')">Démarrer avec le guide →</span></span></div>`:''}</section>`;
+  return `<section class="hero"><div class="kicker">✦ Pilotage intelligent de carrosserie</div><h1>Bonjour Aurel. <br>Ton atelier a une longueur d’avance.</h1><p>Les dossiers avancent. Le pilote t’aide à recueillir les informations d’un dossier et à repérer les points qui restent à traiter.</p><div class="hero-actions"><button class="btn btn-primary" onclick="pgOpen()">🎙 Parler au pilote</button><button class="btn btn-secondary" onclick="go('planning')">▦ Préparer demain</button><button class="btn btn-secondary" onclick="go('taches')">✦ Relances</button></div>${risk===0?`<div class="hint-card"><strong>Nouveau sur My I-Car ?</strong><span>Un parcours guidé t’explique les fonctions, sans jargon technique. <span style="color:#9ff6e6;font-weight:900;cursor:pointer" onclick="go('aide')">Démarrer avec le guide →</span></span></div>`:''}</section>`;
 }
 function linkedVehicule(e){const plate=String(e.immatriculation||'').replace(/[^A-Z0-9]/gi,'').toUpperCase(); return db.vehicules.find(v=>plate&&String(v.immatriculation||'').replace(/[^A-Z0-9]/gi,'').toUpperCase()===plate)||db.vehicules.find(v=>e.client&&v.client&&v.client.trim().toLowerCase()===e.client.trim().toLowerCase())}
 function dashboard(){
@@ -294,7 +320,7 @@ function dashboard(){
     ...db.taches.filter(x=>x.statut!=='Terminée').map(x=>({icon:'•', cls:'icon-amber', title:`Relance à faire · ${x.client||x.titre||'Signal'}`, desc:`${x.titre||'Action à arbitrer'}${x.echeance?' · échéance '+x.echeance:''}`, link:'taches'}))
   ].slice(0,5);
   const topAdvice=alerts[0] ? `Je commencerais par « ${alerts[0].title} ». ${alerts[0].desc} Une vérification maintenant peut éviter une mauvaise surprise.` : `Aucun blocage fort détecté pour le moment. Tu peux te concentrer sur l’organisation de demain et la préparation des prochains passages atelier.`;
-  return hero()+`<div class="voice-entry"><div><h3>🎙️ Ton copilote vocal</h3><p>Raconte un nouveau dossier, il te posera les bonnes questions puis te proposera son classement.</p></div><button class="btn btn-primary" onclick="go('assistant')">Commencer à parler ↗</button></div>
+  return hero()+`<div class="voice-entry"><div><h3>🎙️ Ton pilote, à voix haute</h3><p>Demande-lui n’importe quoi : prêter une voiture, ce que tu as demain, passer un dossier en peinture, créer une relance… Il le fait et te répond à l’oral.</p></div><button class="btn btn-primary" onclick="pgOpen()">Parler au pilote ↗</button></div>
   <div class="grid metrics">
     <div class="card metric"><div><div class="metric-label">Dossiers actifs</div><div class="metric-num white">${active}</div></div><div class="metric-sub">Tous les véhicules en cours</div></div>
     <div class="card metric"><div><div class="metric-label">Points à risque</div><div class="metric-num orange">${risk}</div></div><div class="metric-sub">À surveiller dans le flux</div></div>
@@ -532,7 +558,148 @@ function assistantPage(){
 // Ajoute un montant estimé saisissable ; un portefeuille vide affiche 0 et non un montant fictif.
 configs.vehicules.fields.push(['montant','Montant estimé (€)','number']);
 
+// ───────────────────────────────────────────────────────────────────────────
+// V9 — PILOTE GLOBAL À VOIX HAUTE
+// Un bouton micro sur toutes les pages. Aurel parle, la fonction Netlify
+// /api/pilote-global (Gemini) comprend la demande et renvoie : une réponse lue
+// à voix haute + des actions (afficher une page, ajouter, modifier, supprimer).
+// Les suppressions demandent une confirmation ; chaque changement peut être annulé.
+// ───────────────────────────────────────────────────────────────────────────
+const GLOBAL_URL='/api/pilote-global';
+const PG_PAGES=['dashboard','vehicules','planning','prets','taches','clients','expertises','assistant','aide','parametres'];
+const pg={open:false,listening:false,thinking:false,mainsLibres:true,log:[],pending:null,undo:null,error:'',recognition:null};
+const PG_EXEMPLES=['Quelles voitures de prêt sont disponibles ?','Qu’est-ce que j’ai demain au planning ?','Prête la Clio à Monsieur Martin jusqu’à vendredi','Passe le dossier Dupont en peinture'];
+
+function pgId(){return crypto.randomUUID?.()||String(Date.now()+Math.random())}
+function pgMaintenant(){const d=new Date();const j=['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'][d.getDay()];return `${localISO(d)} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}, ${j}`}
+function pgOpen(){pg.open=true;pg.error='';pgRender();pgListen()}
+function pgClose(){pgStopMic();if(window.speechSynthesis)window.speechSynthesis.cancel();pg.open=false;pgRender()}
+function pgToggleMains(){pg.mainsLibres=!pg.mainsLibres;pgRender()}
+function pgStopMic(){if(pg.recognition){try{pg.recognition.abort()}catch(e){}}pg.recognition=null;pg.listening=false}
+function pgPush(qui,texte,done=''){pg.log.push({qui,texte,done});if(pg.log.length>40)pg.log.splice(0,pg.log.length-40)}
+
+function pgSpeak(t){
+  if(!window.speechSynthesis||!t){return}
+  try{
+    window.speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(t);
+    u.lang='fr-FR';u.rate=1;u.pitch=1;
+    const vs=window.speechSynthesis.getVoices();
+    const fr=vs.find(v=>v.lang.toLowerCase()==='fr-fr')||vs.find(v=>v.lang.toLowerCase().startsWith('fr'));
+    if(fr)u.voice=fr;
+    u.onend=()=>{if(pg.mainsLibres&&pg.open&&!pg.thinking)setTimeout(pgListen,300)};
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+function pgListen(){
+  if(!pg.open||pg.listening||pg.thinking)return;
+  if(!window.isSecureContext){pg.error='Le micro ne marche que depuis l’adresse https de ton site. Tu peux écrire ta demande en dessous.';pgRender();return}
+  if(!SpeechRec){pg.error='Ce navigateur ne reconnaît pas la voix. Utilise Chrome, ou écris ta demande en dessous.';pgRender();return}
+  if(voice.listening||voice.autopilot)voiceStop(); // un seul micro à la fois
+  try{
+    if(window.speechSynthesis)window.speechSynthesis.cancel();
+    const r=new SpeechRec();
+    r.lang='fr-FR';r.interimResults=false;r.continuous=false;r.maxAlternatives=1;
+    pg.recognition=r;pg.listening=true;pg.error='';
+    r.onresult=e=>{const t=e.results?.[0]?.[0]?.transcript?.trim()||'';pgStopMic();if(t)pgSend(t);else pgRender()};
+    r.onerror=e=>{pgStopMic();if(e.error==='not-allowed')pg.error='Micro refusé. Autorise le micro pour ce site dans Chrome, puis réessaie.';else if(e.error!=='no-speech'&&e.error!=='aborted')pg.error='Micro : '+e.error+'. Tu peux écrire ta demande.';pgRender()};
+    r.onend=()=>{pg.listening=false;pg.recognition=null;pgRender()};
+    r.start();pgRender();
+  }catch(e){pgStopMic();pg.error='Impossible de lancer le micro : '+e.message;pgRender()}
+}
+function pgMic(){if(pg.listening){pgStopMic();pgRender()}else pgListen()}
+function pgTextSubmit(e){e.preventDefault();const i=document.getElementById('pgInput');const t=(i?.value||'').trim();if(!t||pg.thinking)return;i.value='';pgSend(t)}
+
+function pgRepond(t,done=''){pgPush('pilote',t,done);pg.thinking=false;pgRender();pgSpeak(t)}
+
+async function pgSend(t){
+  if(pg.thinking)return;
+  pgPush('aurel',t);pg.error='';
+  const s=voiceClean(t).replace(/[.!?,]/g,'').trim();
+
+  // 1. Une suppression attend ta confirmation
+  if(pg.pending){
+    const acts=pg.pending;pg.pending=null;
+    if(/^(oui|ouais|ok|vas-y|vas y|confirme|je confirme|d'accord|c'est bon|supprime|valide)\b/.test(s)){const n=pgApply(acts);pgRepond('C’est fait.',n?n+' changement(s) · tu peux annuler':'');return}
+    if(/^(non|nan|laisse|annule|surtout pas|stop)\b/.test(s)){pgRepond('D’accord, je ne supprime rien.');return}
+  }
+  // 2. Annuler le dernier changement
+  if(pg.undo&&/^(annule|annule ca|annule ça|annuler|reviens en arriere|retour en arriere|defais|defais ca)$/.test(s)){pgUndo();return}
+  // 3. Fin de conversation
+  if(/^(stop|arrete|tais.toi|ferme|au revoir|merci c'est tout|c'est tout|ca sera tout)$/.test(s)){pgPush('pilote','À plus tard.');pgClose();return}
+
+  pg.thinking=true;pgRender();
+  const historique=pg.log.slice(0,-1).slice(-16).map(m=>({qui:m.qui,texte:m.texte}));
+  try{
+    const ctrl=new AbortController();const timer=setTimeout(()=>ctrl.abort(),30000);
+    const r=await fetch(GLOBAL_URL,{method:'POST',headers:{'Content-Type':'application/json'},signal:ctrl.signal,
+      body:JSON.stringify({phrase:t,historique,page,maintenant:pgMaintenant(),donnees:db})});
+    clearTimeout(timer);
+    const d=await r.json().catch(()=>({erreur:'réponse illisible'}));
+    if(!r.ok||d.erreur)throw Error(d.erreur||('erreur '+r.status));
+    const actions=Array.isArray(d.actions)?d.actions:[];
+    if(d.confirmation){pg.pending=actions;pgRepond(d.reponse);return}
+    if(actions.some(a=>a.type==='entretien')){pg.thinking=false;pgPush('pilote',d.reponse||'Je lance l’entretien de dossier.');pgClose();go('assistant');voiceNew();return}
+    const n=pgApply(actions);
+    pgRepond(d.reponse,n?n+' changement(s) · tu peux annuler':'');
+  }catch(e){
+    pg.thinking=false;
+    const local=pgLocal(s);
+    const raison=e.name==='AbortError'?'le pilote a mis trop de temps':e.message;
+    if(local){pgRepond(local+' (Pilote IA injoignable : '+raison+'.)')}
+    else{pg.error='Pilote IA injoignable : '+raison+'. En attendant, je sais seulement ouvrir les pages (« ouvre les prêts »).';pgPush('pilote','Je n’arrive pas à joindre l’IA pour le moment.');pgRender()}
+  }
+}
+
+// Applique les actions renvoyées par l'IA, en revérifiant tout côté appli.
+function pgApply(actions){
+  const avant=clone(db);let n=0,nav=null;
+  for(const a of actions||[]){
+    if(a.type==='aller'&&PG_PAGES.includes(a.page)){nav=a;continue}
+    const c=configs[a.section];if(!c)continue;
+    const permis=c.fields.map(f=>f[0]);
+    const vals={};for(const [k,v] of Object.entries(a.valeurs||{}))if(permis.includes(k))vals[k]=String(v);
+    if(a.type==='ajouter'&&Object.keys(vals).length){db[a.section].push({id:pgId(),...vals});n++}
+    else if(a.type==='modifier'){const el=db[a.section].find(x=>x.id===a.id);if(el&&Object.keys(vals).length){Object.assign(el,vals);n++}}
+    else if(a.type==='supprimer'){const avantLen=db[a.section].length;db[a.section]=db[a.section].filter(x=>x.id!==a.id);if(db[a.section].length<avantLen)n++}
+  }
+  if(n){pg.undo=avant;save(true)}
+  if(nav){page=nav.page;query=nav.recherche||'';filter=nav.statut||''}
+  if(n||nav)render();
+  return n;
+}
+function pgUndo(){if(!pg.undo)return;db=pg.undo;pg.undo=null;save(true);render();pgRepond('J’ai annulé le dernier changement.')}
+
+// Secours sans IA : ouvrir une page par mot-clé.
+function pgLocal(s){
+  const map=[[/nouveau dossier|creer un dossier/,'assistant'],[/pret|voiture de pret/,'prets'],[/planning|agenda|rendez.vous|demain|aujourd/,'planning'],[/relance|tache/,'taches'],[/expertise/,'expertises'],[/client/,'clients'],[/dossier|vehicule|atelier/,'vehicules'],[/sauvegarde|parametre|export/,'parametres'],[/cockpit|accueil/,'dashboard']];
+  const hit=map.find(([re])=>re.test(s));if(!hit)return '';
+  go(hit[1]);
+  return 'J’ouvre '+({assistant:'l’entretien de dossier',prets:'les prêts',planning:'le planning',taches:'les relances',expertises:'les expertises',clients:'les clients',vehicules:'les dossiers',parametres:'les sauvegardes',dashboard:'le cockpit'}[hit[1]])+'.';
+}
+
+function pgRender(){
+  const host=document.getElementById('pilotehost');if(!host)return;
+  const etat=pg.thinking?'⏳ Je réfléchis…':pg.listening?'🔴 Je t’écoute, parle maintenant…':pg.pending?'❓ J’attends ta confirmation (oui / non)':'Appuie sur le micro et parle';
+  if(!pg.open){host.innerHTML=`<button class="pg-fab ${pg.listening?'on':''}" onclick="pgOpen()" aria-label="Parler au pilote">🎙</button>`;return}
+  const log=pg.log.length?pg.log.slice(-12).map(m=>`<div class="pg-msg ${m.qui}">${esc(m.texte)}${m.done?`<span class="pg-done">✓ ${esc(m.done)}</span>`:''}</div>`).join('')
+    :`<div class="pg-msg pilote">Je t’écoute. Demande-moi ce que tu veux faire dans l’appli, par exemple :</div><div class="pg-chips">${PG_EXEMPLES.map(x=>`<button class="pg-chip" onclick="pgSend(this.textContent)">${esc(x)}</button>`).join('')}</div>`;
+  host.innerHTML=`<div class="pg-panel" role="dialog" aria-label="Pilote global">
+    <div class="pg-head"><div><strong>🎙 Pilote global</strong><small>Il comprend, agit sur toute l’appli et te répond à voix haute</small></div><button class="pg-x" onclick="pgClose()" aria-label="Fermer">✕</button></div>
+    <div class="pg-log" id="pgLog">${log}</div>
+    <div class="pg-foot">
+      <div class="pg-state">${etat}</div>
+      ${pg.error?`<div class="pg-warn">⚠ ${esc(pg.error)}</div>`:''}
+      <div class="pg-row"><button class="pg-mic ${pg.listening?'on':''}" onclick="pgMic()">${pg.listening?'■ Arrêter l’écoute':pg.thinking?'⏳ Patiente…':'🎙 Parler'}</button>${pg.undo?`<button class="pg-small" onclick="pgUndo()">↩ Annuler</button>`:''}</div>
+      <div class="pg-row"><button class="pg-small ${pg.mainsLibres?'ok':''}" onclick="pgToggleMains()">${pg.mainsLibres?'✓ Mains libres : il réécoute après chaque réponse':'Mains libres désactivé'}</button></div>
+      <form class="pg-text" onsubmit="pgTextSubmit(event)"><input id="pgInput" type="text" placeholder="Ou écris ta demande…" autocomplete="off"><button class="pg-small" type="submit">↗</button></form>
+    </div></div>`;
+  const l=document.getElementById('pgLog');if(l)l.scrollTop=l.scrollHeight;
+}
+
 render();
+pgRender();
 </script>
 </body>
 </html>
