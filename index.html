@@ -361,6 +361,72 @@ function render(){bottomNav(); const root=document.getElementById('root'); if(pa
 // Si l'IA est injoignable (fichier ouvert en local, quota atteint…), le pilote repasse sur les règles locales de la V7.
 const PILOTE_URL='/api/pilote';
 const SpeechRec=window.SpeechRecognition||window.webkitSpeechRecognition||null;
+
+// ── Voix de synthèse fiable (corrige le silence sur Chrome Android) ──────────
+// 1. Débloquée au premier appui sur l'écran (Chrome refuse de parler sinon).
+// 2. Jamais de cancel() juste avant speak() : on attend que la file soit vide
+//    (bug Chrome Android : la phrase est perdue).
+// 3. La phrase est gardée en mémoire (sinon Chrome la jette avant la fin).
+// 4. Si rien ne démarre, on réessaie une fois ; si Chrome ne dit toujours rien,
+//    on propose un bouton « Écouter » (un appui débloque toujours la voix).
+const tts={unlocked:false,current:null,voice:null,seq:0,bloque:''};
+function ttsPickVoice(){
+  const vs=window.speechSynthesis?.getVoices?.()||[];
+  tts.voice=vs.find(v=>/^fr[-_]FR$/i.test(v.lang)&&v.localService)||vs.find(v=>/^fr[-_]FR$/i.test(v.lang))||vs.find(v=>/^fr/i.test(v.lang))||null;
+}
+if(window.speechSynthesis){ttsPickVoice();try{window.speechSynthesis.addEventListener('voiceschanged',ttsPickVoice)}catch(e){}}
+function ttsUnlock(){
+  if(!window.speechSynthesis||tts.unlocked)return;
+  try{
+    const u=new SpeechSynthesisUtterance(' ');u.volume=0;u.lang='fr-FR';
+    window.speechSynthesis.resume();window.speechSynthesis.speak(u);tts.unlocked=true;
+  }catch(e){}
+}
+['pointerdown','touchstart','click','keydown'].forEach(ev=>document.addEventListener(ev,ttsUnlock,{capture:true,passive:true}));
+function ttsStop(){
+  tts.seq++;tts.current=null;
+  try{if(window.speechSynthesis&&(window.speechSynthesis.speaking||window.speechSynthesis.pending))window.speechSynthesis.cancel()}catch(e){}
+}
+// Lit le texte, puis appelle fini() quand c'est terminé (ou si la voix ne marche pas).
+function ttsSay(texte,fini){
+  const done=typeof fini==='function'?fini:()=>{};
+  const ss=window.speechSynthesis;
+  if(!ss||!texte){done();return}
+  const id=++tts.seq;tts.bloque='';
+  try{if(ss.speaking||ss.pending)ss.cancel()}catch(e){}
+  let essais=0,termine=false;
+  const fin=()=>{if(termine||id!==tts.seq)return;termine=true;tts.current=null;done()};
+  const lancer=()=>{
+    if(id!==tts.seq)return;
+    essais++;
+    const u=new SpeechSynthesisUtterance(texte);
+    u.lang='fr-FR';u.rate=1;u.pitch=1;u.volume=1;
+    if(!tts.voice)ttsPickVoice();
+    if(tts.voice)u.voice=tts.voice;
+    let parti=false;
+    u.onstart=()=>{parti=true};
+    u.onend=fin;
+    u.onerror=e=>{if(e.error==='interrupted'||e.error==='canceled')return;if(!parti&&essais<2)setTimeout(lancer,300);else{tts.bloque=texte;fin()}};
+    tts.current=u; // garde une référence : sinon Chrome peut l'effacer en cours de lecture
+    try{ss.resume();ss.speak(u)}catch(e){tts.bloque=texte;fin();return}
+    // Rien n'a démarré au bout de 2,5 s → on réessaie une fois, puis on abandonne proprement.
+    setTimeout(()=>{
+      if(id!==tts.seq||parti||termine)return;
+      if(essais<2){try{ss.cancel()}catch(e){}setTimeout(lancer,250)}
+      else{tts.bloque=texte;try{ss.cancel()}catch(e){}fin()}
+    },2500);
+    // Filet de sécurité : Chrome Android oublie parfois de signaler la fin.
+    setTimeout(()=>{if(id===tts.seq&&parti&&!termine&&!ss.speaking)fin()},Math.min(30000,1500+texte.length*90));
+  };
+  // Petite pause après un éventuel cancel() : c'est elle qui évite la phrase perdue.
+  setTimeout(lancer,ss.speaking||ss.pending?250:80);
+}
+// Rejoue la dernière phrase restée muette, directement dans l'appui (débloque toujours Chrome).
+function ttsRejouer(){
+  const t=tts.bloque;if(!t||!window.speechSynthesis)return;tts.bloque='';
+  try{ttsStop();const u=new SpeechSynthesisUtterance(t);u.lang='fr-FR';if(tts.voice)u.voice=tts.voice;tts.current=u;window.speechSynthesis.resume();window.speechSynthesis.speak(u);tts.unlocked=true}catch(e){}
+  pgRender();
+}
 const intakeFields=[
   {key:'client',label:'Client',q:'Quel est le nom du client ?'},
   {key:'modele',label:'Véhicule',q:'Quel est le véhicule ? Dis-moi la marque et le modèle.'},
@@ -377,7 +443,7 @@ const intakeFields=[
 const voice={phase:'idle',values:{},skipped:{},key:null,editOnly:null,transcript:'',error:'',listening:false,recognition:null,autopilot:false,spokenQuestion:'',intro:'',aiOff:false,aiQuestion:'',thinking:false,history:[]};
 function voiceNew(){
   if(voice.recognition){try{voice.recognition.abort()}catch(e){}}
-  if(window.speechSynthesis){window.speechSynthesis.cancel()}
+  ttsStop();
   Object.assign(voice,{phase:'intro',values:{},skipped:{},key:null,editOnly:null,transcript:'',error:'',listening:false,recognition:null,autopilot:false,spokenQuestion:'',intro:'',aiOff:false,aiQuestion:'',thinking:false,history:[]});
   render(); voiceSpeakCurrent();
 }
@@ -391,16 +457,7 @@ function voiceQuestion(){
 function voiceSpeak(t, autoListen=false){
   voice.error='';
   if(!window.speechSynthesis){voice.error='Lecture vocale non disponible dans ce navigateur.'; render();return}
-  try{
-    window.speechSynthesis.cancel();
-    const u=new SpeechSynthesisUtterance(t);
-    u.lang='fr-FR';u.rate=.97;u.pitch=1;u.volume=1;
-    const voices=window.speechSynthesis.getVoices();
-    const fr=voices.find(v=>v.lang.toLowerCase()==='fr-fr')||voices.find(v=>v.lang.toLowerCase().startsWith('fr'));
-    if(fr) u.voice=fr;
-    u.onend=()=>{if(autoListen&&voice.autopilot&&voice.phase!=='saved')setTimeout(voiceListen,250)};
-    window.speechSynthesis.speak(u);
-  }catch(e){voice.error='La lecture orale a échoué : '+e.message;render()}
+  ttsSay(t,()=>{if(autoListen&&voice.autopilot&&voice.phase!=='saved')setTimeout(voiceListen,250)});
 }
 function voiceSpeakCurrent(){voiceSpeak(voiceQuestion(),true)}
 function voiceListen(){
@@ -413,7 +470,7 @@ function voiceListen(){
   if(!SpeechRec){voice.error='Reconnaissance vocale non prise en charge. Utilise Chrome sur Android ou la réponse écrite.';render();return;}
   if(voice.listening)return;
   try{
-    if(window.speechSynthesis)window.speechSynthesis.cancel();
+    ttsStop();
     const recognition=new SpeechRec();
     recognition.lang='fr-FR';recognition.interimResults=false;recognition.continuous=false;recognition.maxAlternatives=1;
     voice.recognition=recognition;voice.listening=true;voice.error='';
@@ -424,7 +481,7 @@ function voiceListen(){
   }catch(e){voice.listening=false;voice.autopilot=false;voice.error='Impossible de démarrer le micro : '+e.message;render()}
 }
 function voiceAutoStart(){voice.autopilot=true;voiceListen()}
-function voiceStop(){voice.autopilot=false;if(voice.recognition){try{voice.recognition.abort()}catch(e){}}voice.listening=false;if(window.speechSynthesis)window.speechSynthesis.cancel();render()}
+function voiceStop(){voice.autopilot=false;if(voice.recognition){try{voice.recognition.abort()}catch(e){}}voice.listening=false;ttsStop();render()}
 function voiceTextSubmit(e){e.preventDefault();let input=document.getElementById('voiceAnswer');if(!input||voice.thinking)return;let t=input.value.trim();if(!t)return;input.value='';voiceApply(t)}
 function voiceClean(t){return t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[’]/g,"'").trim()}
 function voiceType(t){const s=voiceClean(t);if(/grele/.test(s))return 'Grêle';if(/bris de glace|pare.brise|vitre casse/.test(s))return 'Bris de glace';if(/stationnement|parking/.test(s))return 'Stationnement';if(/vandalisme|degradation volontaire/.test(s))return 'Vandalisme';if(/choc|collision|accident|accrochage/.test(s))return 'Collision';return t.trim()}
@@ -573,23 +630,23 @@ const PG_EXEMPLES=['Quelles voitures de prêt sont disponibles ?','Qu’est-ce q
 function pgId(){return crypto.randomUUID?.()||String(Date.now()+Math.random())}
 function pgMaintenant(){const d=new Date();const j=['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'][d.getDay()];return `${localISO(d)} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}, ${j}`}
 function pgOpen(){pg.open=true;pg.error='';pgRender();pgListen()}
-function pgClose(){pgStopMic();if(window.speechSynthesis)window.speechSynthesis.cancel();pg.open=false;pgRender()}
+function pgClose(){pgStopMic();ttsStop();pg.open=false;pgRender()}
 function pgToggleMains(){pg.mainsLibres=!pg.mainsLibres;pgRender()}
 function pgStopMic(){if(pg.recognition){try{pg.recognition.abort()}catch(e){}}pg.recognition=null;pg.listening=false}
 function pgPush(qui,texte,done=''){pg.log.push({qui,texte,done});if(pg.log.length>40)pg.log.splice(0,pg.log.length-40)}
 
+// Test du son : parle directement dans l'appui (le cas le plus sûr pour Chrome Android).
+function pgTestSon(){
+  pgStopMic();
+  if(!window.speechSynthesis){pg.error='Ce navigateur ne sait pas lire à voix haute. Utilise Chrome.';pgRender();return}
+  const n=(window.speechSynthesis.getVoices()||[]).filter(v=>/^fr/i.test(v.lang)).length;
+  ttsSay('Test du son. Si tu m’entends, la voix du pilote fonctionne.',()=>{
+    if(tts.bloque)pg.error='Aucun son : vérifie Paramètres du téléphone, puis Synthèse vocale : moteur Google, langue français installée.'+(n?'':' Aucune voix française trouvée sur ce téléphone.');
+    pgRender();
+  });
+}
 function pgSpeak(t){
-  if(!window.speechSynthesis||!t){return}
-  try{
-    window.speechSynthesis.cancel();
-    const u=new SpeechSynthesisUtterance(t);
-    u.lang='fr-FR';u.rate=1;u.pitch=1;
-    const vs=window.speechSynthesis.getVoices();
-    const fr=vs.find(v=>v.lang.toLowerCase()==='fr-fr')||vs.find(v=>v.lang.toLowerCase().startsWith('fr'));
-    if(fr)u.voice=fr;
-    u.onend=()=>{if(pg.mainsLibres&&pg.open&&!pg.thinking)setTimeout(pgListen,300)};
-    window.speechSynthesis.speak(u);
-  }catch(e){}
+  ttsSay(t,()=>{pgRender();if(pg.mainsLibres&&pg.open&&!pg.thinking&&!pg.listening&&!tts.bloque)setTimeout(pgListen,300)});
 }
 
 function pgListen(){
@@ -598,7 +655,7 @@ function pgListen(){
   if(!SpeechRec){pg.error='Ce navigateur ne reconnaît pas la voix. Utilise Chrome, ou écris ta demande en dessous.';pgRender();return}
   if(voice.listening||voice.autopilot)voiceStop(); // un seul micro à la fois
   try{
-    if(window.speechSynthesis)window.speechSynthesis.cancel();
+    ttsStop();
     const r=new SpeechRec();
     r.lang='fr-FR';r.interimResults=false;r.continuous=false;r.maxAlternatives=1;
     pg.recognition=r;pg.listening=true;pg.error='';
@@ -691,7 +748,8 @@ function pgRender(){
     <div class="pg-foot">
       <div class="pg-state">${etat}</div>
       ${pg.error?`<div class="pg-warn">⚠ ${esc(pg.error)}</div>`:''}
-      <div class="pg-row"><button class="pg-mic ${pg.listening?'on':''}" onclick="pgMic()">${pg.listening?'■ Arrêter l’écoute':pg.thinking?'⏳ Patiente…':'🎙 Parler'}</button>${pg.undo?`<button class="pg-small" onclick="pgUndo()">↩ Annuler</button>`:''}</div>
+      ${tts.bloque?`<div class="pg-warn">🔇 Chrome a bloqué la voix. <button class="pg-small ok" onclick="ttsRejouer()">🔊 Écouter la réponse</button></div>`:''}
+      <div class="pg-row"><button class="pg-mic ${pg.listening?'on':''}" onclick="pgMic()">${pg.listening?'■ Arrêter l’écoute':pg.thinking?'⏳ Patiente…':'🎙 Parler'}</button>${pg.undo?`<button class="pg-small" onclick="pgUndo()">↩ Annuler</button>`:''}<button class="pg-small" onclick="pgTestSon()" title="Tester la voix">🔊 Test</button></div>
       <div class="pg-row"><button class="pg-small ${pg.mainsLibres?'ok':''}" onclick="pgToggleMains()">${pg.mainsLibres?'✓ Mains libres : il réécoute après chaque réponse':'Mains libres désactivé'}</button></div>
       <form class="pg-text" onsubmit="pgTextSubmit(event)"><input id="pgInput" type="text" placeholder="Ou écris ta demande…" autocomplete="off"><button class="pg-small" type="submit">↗</button></form>
     </div></div>`;
