@@ -1,6 +1,7 @@
 // My I-Car V8 — fonction serveur du pilote IA.
-// Elle reçoit la conversation depuis l'appli, interroge Gemini avec la clé
-// GEMINI_API_KEY (variable secrète Netlify) et renvoie les champs du dossier.
+// Elle reçoit la conversation depuis l'appli, interroge l'IA (ChatGPT avec OPENAI_API_KEY,
+// Gemini en secours avec GEMINI_API_KEY — clés secrètes Netlify) et renvoie les champs du dossier.
+import { demanderIA, lireJSON } from '../lib/ia.mjs';
 
 const SYSTEME = `Tu es « le pilote » de My I-Car, l'assistant d'un atelier de carrosserie.
 Tu aides Aurel, le patron, à constituer un dossier véhicule en conversation orale. Tu le tutoies.
@@ -34,7 +35,6 @@ Réponds UNIQUEMENT avec ce JSON :
 
 const CHAMPS = ['client', 'modele', 'immatriculation', 'nature', 'description', 'telephone', 'assurance', 'expertise', 'dateRDV', 'priorite', 'prochaineAction'];
 
-const env = (k) => (globalThis.Netlify?.env?.get(k)) ?? process.env[k];
 const json = (data, status = 200) => new Response(JSON.stringify(data), {
   status,
   headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }
@@ -50,9 +50,6 @@ export default async (req) => {
       if (new URL(origin).host !== new URL(req.url).host) return json({ erreur: 'Origine refusée' }, 403);
     } catch { return json({ erreur: 'Origine refusée' }, 403); }
   }
-
-  const key = env('GEMINI_API_KEY');
-  if (!key) return json({ erreur: 'clé GEMINI_API_KEY absente dans Netlify' }, 500);
 
   let body;
   try { body = await req.json(); } catch { return json({ erreur: 'requête illisible' }, 400); }
@@ -73,37 +70,11 @@ Champs passés : ${JSON.stringify(passes)}
 Conversation :
 ${historique}`;
 
-  const modeles = [env('GEMINI_MODEL'), 'gemini-2.5-flash', 'gemini-flash-latest'].filter(Boolean);
-  let reponse, dernierStatut = 0;
-  for (const modele of modeles) {
-    const generationConfig = { temperature: 0.2, responseMimeType: 'application/json' };
-    if (modele.startsWith('gemini-2.5')) generationConfig.thinkingConfig = { thinkingBudget: 0 };
-    reponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modele}:generateContent`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: SYSTEME }] },
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        generationConfig
-      })
-    });
-    dernierStatut = reponse.status;
-    if (reponse.status !== 404 && reponse.status !== 400) break; // modèle introuvable → on essaie le suivant
-  }
-
-  if (!reponse.ok) {
-    const detail = (await reponse.text()).slice(0, 300);
-    const message = dernierStatut === 429 ? 'quota gratuit Gemini atteint, réessaie dans une minute'
-      : (dernierStatut === 403 || /API key/i.test(detail)) ? 'clé Gemini refusée, vérifie GEMINI_API_KEY'
-      : `Gemini a répondu ${dernierStatut}`;
-    return json({ erreur: message, detail }, 502);
-  }
-
-  const data = await reponse.json();
-  const texte = (data?.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('').trim()
-    .replace(/^```(?:json)?\s*/i, '').replace(/```$/, '');
-  let out;
-  try { out = JSON.parse(texte); } catch { return json({ erreur: 'réponse de l’IA illisible' }, 502); }
+  let resultat;
+  try { resultat = await demanderIA({ systeme: SYSTEME, prompt, maxSortie: 800 }); }
+  catch (e) { return json({ erreur: e.message, detail: e.detail || '' }, 502); }
+  const out = lireJSON(resultat.texte);
+  if (!out) return json({ erreur: 'réponse de l’IA illisible' }, 502);
 
   const propres = {};
   for (const [k, v] of Object.entries(out.valeurs || {})) {
@@ -113,7 +84,8 @@ ${historique}`;
     valeurs: propres,
     passes: (Array.isArray(out.passes) ? out.passes : []).filter(k => CHAMPS.includes(k)),
     question: String(out.question || '').slice(0, 400),
-    termine: out.termine === true
+    termine: out.termine === true,
+    ia: resultat.ia
   });
 };
 

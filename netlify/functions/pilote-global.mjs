@@ -2,7 +2,9 @@
 // Aurel parle (ou écrit) n'importe quelle demande ; Gemini lit l'état de l'appli
 // et renvoie une réponse à lire à voix haute + une liste d'actions à appliquer
 // (naviguer, ajouter, modifier, supprimer, lancer l'entretien de dossier).
-// La clé GEMINI_API_KEY reste secrète côté Netlify.
+// L'IA est ChatGPT (clé OPENAI_API_KEY) avec Gemini en secours (GEMINI_API_KEY) :
+// les clés restent secrètes côté Netlify. Voir netlify/lib/ia.mjs.
+import { demanderIA, lireJSON } from '../lib/ia.mjs';
 
 const SECTIONS = {
   vehicules: {
@@ -89,7 +91,6 @@ Règles :
 10. Après une action, confirme brièvement ce que tu as fait (ex. « C'est noté, la Clio est prêtée à Monsieur Martin jusqu'à vendredi. »).
 11. Si Aurel dit merci, c'est tout, ou au revoir, réponds brièvement sans action.`;
 
-const env = (k) => (globalThis.Netlify?.env?.get(k)) ?? process.env[k];
 const json = (data, status = 200) => new Response(JSON.stringify(data), {
   status,
   headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }
@@ -163,9 +164,6 @@ export default async (req) => {
     } catch { return json({ erreur: 'Origine refusée' }, 403); }
   }
 
-  const key = env('GEMINI_API_KEY');
-  if (!key) return json({ erreur: 'clé GEMINI_API_KEY absente dans Netlify' }, 500);
-
   let body;
   try { body = await req.json(); } catch { return json({ erreur: 'requête illisible' }, 400); }
 
@@ -190,47 +188,21 @@ ${historique || '(début de conversation)'}
 
 Aurel vient de dire : « ${phrase} »`;
 
-  // Si le quota gratuit du modèle principal est épuisé (429), on bascule sur un modèle plus léger.
-  const modeles = [...new Set([env('GEMINI_MODEL'), 'gemini-2.5-flash', 'gemini-flash-latest', 'gemini-2.5-flash-lite', 'gemini-flash-lite-latest'].filter(Boolean))];
-  let reponse, dernierStatut = 0;
-  for (const modele of modeles) {
-    // Réponse plafonnée : une réponse orale courte suffit, et c'est la partie la plus chère.
-    const generationConfig = { temperature: 0.2, responseMimeType: 'application/json', maxOutputTokens: 600 };
-    if (modele.startsWith('gemini-2.5')) generationConfig.thinkingConfig = { thinkingBudget: 0 };
-    reponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modele}:generateContent`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-      body: JSON.stringify({
-        // Les consignes fixes passent en premier et ne changent jamais : elles peuvent être mises en cache.
-        systemInstruction: { parts: [{ text: SYSTEME }] },
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        generationConfig
-      })
-    });
-    dernierStatut = reponse.status;
-    // modèle introuvable (404/400) ou quota épuisé (429) → on essaie le suivant
-    if (![400, 404, 429].includes(reponse.status)) break;
-  }
-
-  if (!reponse.ok) {
-    const detail = (await reponse.text()).slice(0, 300);
-    const message = dernierStatut === 429 ? 'quota gratuit Gemini atteint, réessaie dans une minute'
-      : (dernierStatut === 403 || /API key/i.test(detail)) ? 'clé Gemini refusée, vérifie GEMINI_API_KEY'
-      : `Gemini a répondu ${dernierStatut}`;
-    return json({ erreur: message, detail }, 502);
-  }
-
-  const data = await reponse.json();
-  const texte = (data?.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('').trim()
-    .replace(/^```(?:json)?\s*/i, '').replace(/```$/, '');
-  let out;
-  try { out = JSON.parse(texte); } catch { return json({ erreur: 'réponse de l’IA illisible' }, 502); }
+  // Réponse plafonnée : une réponse orale courte suffit, et c'est la partie la plus chère.
+  let resultat;
+  try { resultat = await demanderIA({ systeme: SYSTEME, prompt, maxSortie: 600 }); }
+  catch (e) { return json({ erreur: e.message, detail: e.detail || '' }, 502); }
+  const out = lireJSON(resultat.texte);
+  if (!out) return json({ erreur: 'réponse de l’IA illisible' }, 502);
 
   const actions = nettoieActions(out.actions);
   return json({
     reponse: court(out.reponse, 700) || 'Je n’ai pas compris, tu peux répéter ?',
     actions,
-    confirmation: out.confirmation === true && actions.some(a => a.type === 'supprimer')
+    confirmation: out.confirmation === true && actions.some(a => a.type === 'supprimer'),
+    ia: resultat.ia,
+    modele: resultat.modele,
+    avertissement: resultat.avertissement || ''
   });
 };
 
