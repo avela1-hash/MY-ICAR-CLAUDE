@@ -3,6 +3,7 @@
   "short_name": "My I-Car",
   "description": "Pilotage de l'atelier de carrosserie : dossiers, planning, voitures de prêt et pilote vocal.",
   "lang": "fr",
+  "id": "/",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
