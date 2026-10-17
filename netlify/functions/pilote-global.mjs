@@ -63,7 +63,8 @@ ${descriptionSchema}
 
 Pages de l'appli : dashboard (le cockpit), vehicules (dossiers), planning, prets, taches (relances), clients, expertises, assistant (entretien guidé pour créer un dossier), aide, parametres (sauvegardes).
 
-Tu reçois : la date et l'heure, la page affichée, toutes les données (chaque élément a un « id »), la conversation récente et la dernière phrase d'Aurel.
+Tu reçois : la date et l'heure, la page affichée, un RÉSUMÉ chiffré de l'appli, un EXTRAIT des données (seulement les éléments utiles à la demande, chacun avec une référence courte comme v3 ou p1), la conversation récente et la dernière phrase d'Aurel.
+Pour compter (« combien de dossiers en peinture »), utilise le résumé. Si ce que cherche Aurel n'est pas dans l'extrait, ne devine pas : dis que tu ne le trouves pas et demande une précision (nom du client, plaque, date).
 
 Tu réponds UNIQUEMENT avec ce JSON :
 {"reponse": "ce que tu dis à Aurel", "actions": [ ... ], "confirmation": false}
@@ -71,15 +72,15 @@ Tu réponds UNIQUEMENT avec ce JSON :
 Actions possibles :
 - {"type":"aller","page":"prets","recherche":"texte facultatif","statut":"statut facultatif"} → afficher une page, éventuellement filtrée
 - {"type":"ajouter","section":"prets","valeurs":{...}}
-- {"type":"modifier","section":"vehicules","id":"id exact","valeurs":{seulement les champs qui changent}}
-- {"type":"supprimer","section":"taches","id":"id exact"}
+- {"type":"modifier","section":"vehicules","id":"v3","valeurs":{seulement les champs qui changent}}
+- {"type":"supprimer","section":"taches","id":"t2"}
 - {"type":"entretien"} → lance l'entretien guidé de création de dossier (seulement si Aurel le demande ou dit qu'il veut « raconter » un nouveau dossier sans donner d'infos)
 
 Règles :
 1. « reponse » est lue par une voix de synthèse : 1 à 3 phrases courtes, naturelles, sans symboles, sans liste à puces, sans emoji. Pour une liste, cite au maximum 5 éléments puis dis combien il en reste.
 2. Pour répondre à une question, utilise UNIQUEMENT les données fournies. N'invente jamais rien. Si l'info n'existe pas, dis-le.
 3. Tu peux enchaîner plusieurs actions pour une seule demande (ex. : ajouter un prêt ET afficher la page des prêts ; créer un dossier ET une relance).
-4. Pour modifier ou supprimer, utilise l'id exact d'un élément existant. Si plusieurs éléments correspondent, ou aucun, ne fais aucune action et pose une question courte pour préciser.
+4. Pour modifier ou supprimer, utilise la référence exacte d'un élément de l'extrait (ex. v3). Si plusieurs éléments correspondent, ou aucun, ne fais aucune action et pose une question courte pour préciser.
 5. Toute suppression : mets "confirmation": true et demande à Aurel de confirmer dans « reponse » (ex. « Je supprime la relance Dupont, tu confirmes ? »). Ne mets jamais confirmation à true pour autre chose.
 6. Dates au format AAAA-MM-JJ calculées à partir de la date du jour (« demain », « jeudi », « dans une semaine »). Heures au format HH:MM. Pour les champs à liste, utilise exactement une des valeurs proposées.
 7. Quand une voiture de prêt part chez un client, mets son statut à « Prêté » ; quand elle revient, « Retourné ». Garde l'heure de départ dite par Aurel dans les notes du prêt, c'est important pour désigner le conducteur en cas d'amende.
@@ -95,21 +96,27 @@ const json = (data, status = 200) => new Response(JSON.stringify(data), {
 });
 const court = (v, n) => String(v ?? '').slice(0, n);
 
-// Ne garde que les champs connus, des textes courts : protège le quota et la qualité.
-function donneesCompactes(brut) {
-  const out = {};
+// Données en tableaux compacts (une ligne par élément) : bien moins de texte que du JSON,
+// donc moins cher. Plafonné pour que le coût reste borné même si la base grossit.
+const nettoieCase = v => String(v).replace(/\s+/g, ' ').replace(/\|/g, '/').trim();
+function donneesEnTableaux(brut) {
+  const blocs = [];
   for (const [section, def] of Object.entries(SECTIONS)) {
-    const liste = Array.isArray(brut?.[section]) ? brut[section] : [];
-    out[section] = liste.slice(0, 300).map(el => {
-      const r = { id: court(el?.id, 60) };
-      for (const champ of Object.keys(def.champs)) {
-        const v = el?.[champ];
-        if (v !== undefined && v !== null && String(v).trim()) r[champ] = court(v, champ === 'notes' ? 240 : 120);
-      }
-      return r;
-    });
+    const liste = (Array.isArray(brut?.[section]) ? brut[section] : []).slice(0, 40);
+    if (!liste.length) continue;
+    const cols = Object.keys(def.champs).filter(c => liste.some(el => el?.[c] !== undefined && el?.[c] !== null && String(el[c]).trim()));
+    const lignes = liste.map(el => [court(el?.id, 12), ...cols.map(c => {
+      const v = el?.[c];
+      return v === undefined || v === null || !String(v).trim() ? '-' : court(nettoieCase(v), c === 'notes' ? 100 : 80);
+    })].join(' | '));
+    blocs.push(`${section} (réf | ${cols.join(' | ')}) :\n${lignes.join('\n')}`);
   }
-  return out;
+  return blocs.join('\n\n') || '(aucun élément utile trouvé pour cette demande)';
+}
+
+function resumeCompact(r) {
+  if (!r || typeof r !== 'object') return '(pas de résumé)';
+  return court(JSON.stringify(r), 1500);
 }
 
 function nettoieValeurs(section, valeurs) {
@@ -166,37 +173,43 @@ export default async (req) => {
   if (!phrase) return json({ erreur: 'phrase vide' }, 400);
 
   const historique = (Array.isArray(body.historique) ? body.historique : [])
-    .slice(-16)
-    .map(m => `${m?.qui === 'aurel' ? 'Aurel' : 'Pilote'} : ${court(m?.texte, 600)}`)
+    .slice(-10)
+    .map(m => `${m?.qui === 'aurel' ? 'Aurel' : 'Pilote'} : ${court(m?.texte, 300)}`)
     .join('\n');
 
   const prompt = `Date et heure : ${court(body.maintenant, 40) || new Date().toISOString()}
 Page affichée : ${PAGES.includes(body.page) ? body.page : 'dashboard'}
 
-Données de l'appli :
-${JSON.stringify(donneesCompactes(body.donnees))}
+Résumé de l'appli : ${resumeCompact(body.resume)}
+
+Extrait des données utiles :
+${donneesEnTableaux(body.donnees)}
 
 Conversation récente :
 ${historique || '(début de conversation)'}
 
 Aurel vient de dire : « ${phrase} »`;
 
-  const modeles = [env('GEMINI_MODEL'), 'gemini-2.5-flash', 'gemini-flash-latest'].filter(Boolean);
+  // Si le quota gratuit du modèle principal est épuisé (429), on bascule sur un modèle plus léger.
+  const modeles = [...new Set([env('GEMINI_MODEL'), 'gemini-2.5-flash', 'gemini-flash-latest', 'gemini-2.5-flash-lite', 'gemini-flash-lite-latest'].filter(Boolean))];
   let reponse, dernierStatut = 0;
   for (const modele of modeles) {
-    const generationConfig = { temperature: 0.2, responseMimeType: 'application/json' };
+    // Réponse plafonnée : une réponse orale courte suffit, et c'est la partie la plus chère.
+    const generationConfig = { temperature: 0.2, responseMimeType: 'application/json', maxOutputTokens: 600 };
     if (modele.startsWith('gemini-2.5')) generationConfig.thinkingConfig = { thinkingBudget: 0 };
     reponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modele}:generateContent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
       body: JSON.stringify({
+        // Les consignes fixes passent en premier et ne changent jamais : elles peuvent être mises en cache.
         systemInstruction: { parts: [{ text: SYSTEME }] },
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         generationConfig
       })
     });
     dernierStatut = reponse.status;
-    if (reponse.status !== 404 && reponse.status !== 400) break; // modèle introuvable → on essaie le suivant
+    // modèle introuvable (404/400) ou quota épuisé (429) → on essaie le suivant
+    if (![400, 404, 429].includes(reponse.status)) break;
   }
 
   if (!reponse.ok) {

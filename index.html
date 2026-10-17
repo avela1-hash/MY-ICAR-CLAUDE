@@ -686,16 +686,25 @@ async function pgSend(t){
   // 3. Fin de conversation
   if(/^(stop|arrete|tais.toi|ferme|au revoir|merci c'est tout|c'est tout|ca sera tout)$/.test(s)){pgPush('pilote','À plus tard.');pgClose();return}
 
+  // 4. Simple navigation (« ouvre les prêts ») : faite sur place, sans appeler l'IA (gratuit et instantané)
+  const direct=pgNavDirecte(s);
+  if(direct){pgRepond(direct);return}
+
   pg.thinking=true;pgRender();
-  const historique=pg.log.slice(0,-1).slice(-16).map(m=>({qui:m.qui,texte:m.texte}));
+  // Seulement les 5 derniers échanges, raccourcis : l'IA n'a pas besoin de plus pour suivre le fil.
+  const historique=pg.log.slice(0,-1).slice(-10).map(m=>({qui:m.qui,texte:String(m.texte).slice(0,300)}));
+  const ctx=pgContexte(t);
+  pg.dernierEnvoi=ctx; // pour vérifier ce qui part à l'IA
   try{
     const ctrl=new AbortController();const timer=setTimeout(()=>ctrl.abort(),30000);
     const r=await fetch(GLOBAL_URL,{method:'POST',headers:{'Content-Type':'application/json'},signal:ctrl.signal,
-      body:JSON.stringify({phrase:t,historique,page,maintenant:pgMaintenant(),donnees:db})});
+      body:JSON.stringify({phrase:t,historique,page,maintenant:pgMaintenant(),resume:ctx.resume,donnees:ctx.donnees})});
     clearTimeout(timer);
     const d=await r.json().catch(()=>({erreur:'réponse illisible'}));
     if(!r.ok||d.erreur)throw Error(d.erreur||('erreur '+r.status));
-    const actions=Array.isArray(d.actions)?d.actions:[];
+    // Les éléments ont été envoyés sous des numéros courts (v1, p2…) : on retrouve leurs vrais identifiants.
+    const actions=(Array.isArray(d.actions)?d.actions:[]).map(a=>a.id?{...a,id:ctx.refs[a.id]||''}:a).filter(a=>!('id' in a)||a.id);
+    pgSouvenir(actions,ctx);
     if(d.confirmation){pg.pending=actions;pgRepond(d.reponse);return}
     if(actions.some(a=>a.type==='entretien')){pg.thinking=false;pgPush('pilote',d.reponse||'Je lance l’entretien de dossier.');pgClose();go('assistant');voiceNew();return}
     const n=pgApply(actions);
@@ -709,6 +718,169 @@ async function pgSend(t){
   }
 }
 
+// ── Économie : n'envoyer à l'IA que ce qui sert à la demande ─────────────────
+// Au lieu de toute la base (des dizaines de milliers de mots), on envoie :
+//  • un résumé chiffré (combien de dossiers par étape, de rendez-vous aujourd'hui…) ;
+//  • les éléments qui citent un nom, un modèle, une plaque ou un numéro de la phrase ;
+//  • pour les sujets évoqués (prêts, planning, relances…), seulement les éléments en cours ;
+//  • les éléments dont on vient de parler (pour « et passe-le en peinture »).
+// Les identifiants longs sont remplacés par des numéros courts (v1, p2…).
+const PG_MOTS_SECTION={
+  vehicules:/dossier|vehicule|atelier|peinture|travaux|chiffr|livr|priorit|carrosserie|sinistre|repar|en attente|a planifier|montant|portefeuille|devis/,
+  planning:/planning|rendez.vous|\brdv\b|agenda|demain|aujourd|ce soir|ce matin|cet apres|semaine|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|\bheures?\b|\d+ ?h\b|journee|programme/,
+  prets:/\bpret|prete|preter|dispo|rendu|rendre|\bretour|rentre|ramene|courtoisie|remplacement|amende|radar|\bpv\b|contravention|conduisait/,
+  taches:/relance|relancer|tache|rappel|a faire|penser a|pense a|oublie/,
+  clients:/client|telephone|numero|portable|mail|coordonnee/,
+  expertises:/expertise|expert/
+};
+const PG_STOP=new Set(('ai as es eu vu nos vos ici voir liste besoin faudrait avez avons sait sais the les des une est pour dans avec que qui quoi quel quelle quelles quels mon mes ton tes son ses sur pas plus moi toi lui leur elle ils elles fait faire fais mets met mettre passe passer ajoute ajouter supprime supprimer enleve montre affiche ouvre donne dis dit peux veux voudrais faut combien comment quand est cest ce cet cette ces tout tous toute toutes rien aussi alors bien deja encore apres avant jusqu jusqua demain aujourd hui matin soir semaine prochain prochaine dernier derniere lundi mardi mercredi jeudi vendredi samedi dimanche heure heures dossier dossiers vehicule vehicules voiture voitures pret prets prete preter client clients cliente monsieur madame mme planning rendez vous rdv relance relances tache taches expertise expertises statut priorite numero telephone disponible disponibles dispo libre etat point chez par deux trois oui non merci stp sil plait nouveau nouvelle change changer modifie modifier annule rentre rentree rendu revenu ramene qu il elle on je tu nous en et le la de du un au aux ou si ne se me te ma ta sa ca y a ya avoir etre sont ont va vont doit dois peut').split(' '));
+const PG_REF={vehicules:'v',planning:'r',prets:'p',taches:'t',clients:'c',expertises:'e'};
+const PG_CHAMPS={vehicules:['client','modele','immatriculation','statut','priorite','montant','notes'],planning:['date','heure','titre','responsable','statut'],prets:['nom','client','date_depart','date_retour','statut','notes'],taches:['titre','client','echeance','responsable','statut'],clients:['nom','telephone','email','vehicule'],expertises:['client','immatriculation','date','statut']};
+const PG_FINI={vehicules:'Livré',planning:'Terminé',prets:'Retourné',taches:'Terminée',expertises:'Réalisée'};
+
+function pgDecale(n){const d=new Date();d.setDate(d.getDate()+n);return localISO(d)}
+// Dates dont parle la phrase (pour ne prendre que ces jours-là dans le planning).
+function pgJours(s){
+  if(/apres.demain/.test(s))return [pgDecale(2)];
+  if(/demain/.test(s))return [pgDecale(1)];
+  if(/aujourd|ce matin|ce soir|cet apres|cette apres/.test(s))return [pgDecale(0)];
+  if(/semaine prochaine/.test(s)){const j=(8-new Date().getDay())%7||7;return Array.from({length:7},(_,i)=>pgDecale(j+i))}
+  const jours=['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+  const cites=jours.map((j,i)=>new RegExp('\\b'+j+'\\b').test(s)?i:-1).filter(i=>i>=0);
+  if(cites.length)return cites.map(i=>pgDecale(((i-new Date().getDay())+7)%7||7));
+  const mois=['janvier','fevrier','mars','avril','mai','juin','juillet','aout','septembre','octobre','novembre','decembre'];
+  const m=s.match(/\b(?:le )?(\d{1,2}|1er)(?: (janvier|fevrier|mars|avril|mai|juin|juillet|aout|septembre|octobre|novembre|decembre))?\b/);
+  if(m&&(m[2]||/\ble (\d{1,2}|1er)\b/.test(s))){
+    const jour=parseInt(m[1])||1;const now=new Date();let mo=m[2]?mois.indexOf(m[2]):now.getMonth();let an=now.getFullYear();
+    if(!m[2]&&jour<now.getDate()-3)mo++;
+    if(jour>=1&&jour<=31)return [localISO(new Date(an,mo,jour))];
+  }
+  return null; // pas de date précise → planning de la semaine à venir
+}
+
+function pgContexte(t){
+  const s=voiceClean(t).replace(/[’]/g,"'");
+  const compact=s.replace(/[^a-z0-9]/g,'');
+  const chiffres=t.replace(/\D/g,'');
+  const mots=[...new Set(s.split(/[^a-z0-9]+/).filter(w=>w&&!PG_STOP.has(w)&&(w.length>=2&&!/^\d{1,2}$/.test(w))))];
+  const historique=/amende|radar|\bpv\b|contravention|conduisait|qui avait|historique|a eu|depuis|derniere fois/.test(s);
+  const pertinent=Object.keys(PG_MOTS_SECTION).filter(k=>PG_MOTS_SECTION[k].test(s));
+  const bilan=/\bpoint\b|bilan|resume|situation|urgent|urgence|quoi de neuf|ma journee|a faire aujourd|mes priorites|\bpriorites\b/.test(s);
+  const creation=/^(?:ajoute|ajouter|cree|creer|note|noter|enregistre|programme|planifie|mets? un|nouveau|nouvelle)\b/.test(s);
+  const jours=pgJours(s);
+  const auj=localISO(), semaine=Array.from({length:8},(_,i)=>pgDecale(i-1));
+  const choix={};const ajoute=(sec,el)=>{(choix[sec]=choix[sec]||new Map()).set(el.id,el)};
+  const correspond=[];
+
+  // 1. Ce qui cite un nom, un modèle, une plaque ou un numéro de la phrase
+  for(const sec of Object.keys(PG_REF)){
+    if(historique&&sec!=='prets')continue; // amende / radar : seul l'historique des prêts compte
+    const candidats=[],compte={};
+    for(const el of db[sec]){
+      const brut=[el.client,el.nom,el.modele,el.immatriculation,el.titre,el.vehicule,el.email].filter(Boolean).join(' ');
+      const motsEl=voiceClean(brut).split(/[^a-z0-9]+/);
+      const touches=mots.filter(w=>motsEl.some(x=>x===w||(w.length>=4&&x.startsWith(w))));
+      touches.forEach(w=>compte[w]=(compte[w]||0)+1);
+      let bonus=0;
+      const plaque=String(el.immatriculation||'').replace(/[^a-z0-9]/gi,'').toLowerCase();
+      if(plaque.length>=5&&compact.includes(plaque))bonus+=3;
+      const tel=String(el.telephone||'').replace(/\D/g,'');
+      if(chiffres.length>=6&&tel.includes(chiffres))bonus+=3;
+      if(touches.length||bonus)candidats.push([touches,bonus,el]);
+    }
+    // Un mot trop courant (« assurance », « Clio »…) ne compte pas si un mot plus précis (un nom) existe
+    const precis=Object.keys(compte).filter(w=>compte[w]<=6);
+    const trouves=candidats.map(([touches,bonus,el])=>[touches.filter(w=>!precis.length||precis.includes(w)).length+bonus,el]).filter(x=>x[0]>0);
+    const dateDe=el=>el.date_depart||el.date||el.echeance||'';
+    trouves.sort((a,b)=>b[0]-a[0]||dateDe(b[1]).localeCompare(dateDe(a[1])));
+    let garde=trouves;
+    // Les éléments terminés (vieux rendez-vous, prêts rendus…) ne servent que pour l'historique
+    if(PG_FINI[sec]&&!historique){const fini=x=>x[1].statut===PG_FINI[sec];garde=[...garde.filter(x=>!fini(x)),...garde.filter(fini).slice(0,sec==='prets'?2:sec==='vehicules'?1:0)]}
+    for(const [,el] of garde.slice(0,historique?15:8)){ajoute(sec,el);correspond.push(el.id)}
+  }
+  // Amende à une date donnée : toutes les voitures qui étaient prêtées ce jour-là
+  if(historique&&jours){
+    const j=jours[0];const tmp=[];
+    db.prets.forEach(el=>{if(el.date_depart&&el.date_depart<=j&&(el.date_retour||el.date_depart)>=j)tmp.push(el)});
+    tmp.slice(0,15).forEach(el=>{ajoute('prets',el);correspond.push(el.id)});
+  }
+  // 2. Pour les sujets évoqués : seulement ce qui est en cours
+  const enCours=sec=>db[sec].filter(x=>x.statut!==PG_FINI[sec]);
+  if(pertinent.includes('prets'))enCours('prets').slice(0,30).forEach(el=>ajoute('prets',el));
+  if((pertinent.includes('planning')&&!historique)||bilan){
+    const dates=jours||(bilan?[auj,pgDecale(1)]:semaine);
+    db.planning.filter(x=>dates.includes(x.date)).sort((a,b)=>(a.date+a.heure).localeCompare(b.date+b.heure)).slice(0,30).forEach(el=>ajoute('planning',el));
+  }
+  if((pertinent.includes('taches')&&!creation)||bilan)enCours('taches').sort((a,b)=>String(a.echeance||'9').localeCompare(String(b.echeance||'9'))).slice(0,bilan?10:25).forEach(el=>ajoute('taches',el));
+  if((pertinent.includes('expertises')&&!creation)||bilan)enCours('expertises').slice(0,bilan?10:20).forEach(el=>ajoute('expertises',el));
+  if((pertinent.includes('vehicules')&&!creation&&!historique)||bilan){
+    // Une étape citée (« en peinture ») → seulement les dossiers à cette étape
+    const etape=(configs.vehicules.fields.find(f=>f[0]==='statut')[4]).find(e=>s.includes(voiceClean(e)));
+    // Dossier cité par son nom, ou dont on vient de parler (« mets-le en priorité 9 »)
+    const dossierCite=correspond.some(id=>db.vehicules.some(v=>v.id===id))||(!mots.length&&(pg.recents||[]).some(id=>db.vehicules.some(v=>v.id===id)));
+    const parPriorite=l=>l.sort((a,b)=>(+b.priorite||0)-(+a.priorite||0));
+    let liste;
+    if(bilan)liste=parPriorite(enCours('vehicules')).slice(0,10);
+    else if(dossierCite)liste=[];                       // un dossier précis est cité : lui seul suffit
+    else if(etape)liste=db.vehicules.filter(x=>x.statut===etape).slice(0,30);
+    else liste=parPriorite(enCours('vehicules')).slice(0,25);
+    liste.forEach(el=>ajoute('vehicules',el));
+  }
+  // 3. Ce dont on vient de parler
+  for(const id of pg.recents||[])for(const sec of Object.keys(PG_REF)){const el=db[sec].find(x=>x.id===id);if(el)ajoute(sec,el)}
+
+  // Envoi compact : numéros courts, champs utiles, notes raccourcies
+  const refs={},donnees={};
+  for(const [sec,m] of Object.entries(choix)){
+    let i=0;
+    donnees[sec]=[...m.values()].map(el=>{
+      const ref=PG_REF[sec]+(++i);refs[ref]=el.id;
+      const r={id:ref};
+      for(const c of PG_CHAMPS[sec]){const v=el[c];if(v!==undefined&&v!==null&&String(v).trim())r[c]=c==='notes'?String(v).replace(/\s+/g,' ').slice(0,90):String(v)}
+      return r;
+    });
+  }
+  // Résumé chiffré : de quoi répondre à « combien… » sans tout envoyer
+  const parEtape={};db.vehicules.forEach(x=>{const k=x.statut||'Sans étape';parEtape[k]=(parEtape[k]||0)+1});
+  const parc=[...new Set(db.prets.map(x=>x.nom).filter(Boolean))].map(nom=>{const actif=db.prets.filter(x=>x.nom===nom&&x.statut!=='Retourné').pop();return nom+' : '+(actif?actif.statut+(actif.client?' ('+actif.client+')':''):'Disponible')});
+  const resume={
+    dossiersParEtape:parEtape,
+    voituresDePret:parc,
+    rendezVous:{aujourdhui:db.planning.filter(x=>x.date===auj).length,demain:db.planning.filter(x=>x.date===pgDecale(1)).length},
+    relancesOuvertes:enCours('taches').length,
+    expertisesEnAttente:enCours('expertises').length,
+    clients:db.clients.length
+  };
+  return {resume,donnees,refs,correspond};
+}
+// Retient les éléments dont on vient de parler, pour les phrases qui suivent.
+function pgSouvenir(actions,ctx){
+  const ids=actions.map(a=>a.id).filter(Boolean);
+  if(ctx.correspond.length&&ctx.correspond.length<=4)ids.push(...ctx.correspond);
+  pg.recents=[...new Set([...ids,...(pg.recents||[])])].slice(0,8);
+}
+// « Ouvre les prêts », « montre-moi les dossiers en peinture » : fait sur place, sans IA.
+function pgNavDirecte(s){
+  const m=s.match(/^(?:ouvre|ouvrir|affiche|affiche.moi|montre.moi|montre|va (?:sur|dans|a|au|aux)|retourne (?:sur|au|a)|je veux voir|emmene.moi (?:sur|au|aux|a))\s+(.+)$/);
+  if(!m)return '';
+  const reste=m[1];
+  if(PG_MOTS_SECTION.planning.test(reste)&&/demain|aujourd|matin|soir|semaine|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|\d/.test(reste))return ''; // « le planning de demain » → l'IA le lit
+
+  const cible=[[/nouveau dossier|creer un dossier|entretien/,'assistant'],[/voitures? de pret|\bprets?\b/,'prets'],[/planning|agenda|rendez.vous/,'planning'],[/relances?|taches?/,'taches'],[/expertises?/,'expertises'],[/clients?/,'clients'],[/dossiers?|vehicules?|atelier/,'vehicules'],[/sauvegardes?|parametres?|export/,'parametres'],[/cockpit|accueil|tableau de bord/,'dashboard'],[/guide|aide/,'aide']].find(([re])=>re.test(reste));
+  if(!cible)return '';
+  const sec=cible[1];
+  const opts=configs[sec]?.fields.find(f=>f[0]==='statut')?.[4]||[];
+  const etape=opts.find(e=>reste.includes(voiceClean(e)));
+  let restant=reste;[cible[0],etape?new RegExp(voiceClean(etape)):null].forEach(re=>{if(re)restant=restant.replace(re,' ')});
+  const autres=restant.split(/[^a-z0-9]+/).filter(w=>w&&!PG_STOP.has(w)&&!/^(en|les?|la|des|du|de|mes|tous|toutes|liste|page|qui|sont|a|l|d)$/.test(w));
+  if(autres.length>1)return ''; // demande plus riche → l'IA s'en occupe
+  if(sec==='assistant'){go('assistant');return 'J’ouvre l’entretien de dossier.'}
+  page=sec;query=autres[0]||'';filter=etape||'';render();
+  const noms={prets:'les prêts',planning:'le planning',taches:'les relances',expertises:'les expertises',clients:'les clients',vehicules:'les dossiers',parametres:'les sauvegardes',dashboard:'le cockpit',aide:'le guide'};
+  if(configs[sec]&&(etape||query)){const n=filteredRows(sec).length;return `Voici ${noms[sec]}${etape?' à l’étape '+etape:''}${query?' pour '+query:''} : ${n?n+' résultat'+(n>1?'s':''):'aucun résultat'}.`}
+  return 'J’ouvre '+noms[sec]+'.';
+}
+
 // Applique les actions renvoyées par l'IA, en revérifiant tout côté appli.
 function pgApply(actions){
   const avant=clone(db);let n=0,nav=null;
@@ -717,7 +889,7 @@ function pgApply(actions){
     const c=configs[a.section];if(!c)continue;
     const permis=c.fields.map(f=>f[0]);
     const vals={};for(const [k,v] of Object.entries(a.valeurs||{}))if(permis.includes(k))vals[k]=String(v);
-    if(a.type==='ajouter'&&Object.keys(vals).length){db[a.section].push({id:pgId(),...vals});n++}
+    if(a.type==='ajouter'&&Object.keys(vals).length){const nid=pgId();db[a.section].push({id:nid,...vals});n++;pg.recents=[nid,...(pg.recents||[])].slice(0,8)}
     else if(a.type==='modifier'){const el=db[a.section].find(x=>x.id===a.id);if(el&&Object.keys(vals).length){Object.assign(el,vals);n++}}
     else if(a.type==='supprimer'){const avantLen=db[a.section].length;db[a.section]=db[a.section].filter(x=>x.id!==a.id);if(db[a.section].length<avantLen)n++}
   }
