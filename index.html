@@ -3,7 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>My I-Car V8</title>
+<title>My I-Car</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#06111f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="My I-Car">
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+<link rel="apple-touch-icon" href="/icons/icon-180.png">
 <style>
 :root{
   --bg:#06111f;
@@ -163,8 +170,8 @@ tr:hover td{background:rgba(255,255,255,.012)}
   padding:10px 10px calc(10px + env(safe-area-inset-bottom));
   background:linear-gradient(180deg,rgba(5,12,22,.88),rgba(5,12,22,.96));backdrop-filter:blur(16px);border-top:1px solid rgba(255,255,255,.05)
 }
-.mobile-nav-grid{max-width:900px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
-.mtab{border:0;background:transparent;color:#a3b4cb;border-radius:22px;padding:12px 6px 10px;font-size:12px;font-weight:800;line-height:1.15;display:flex;flex-direction:column;align-items:center;gap:6px}
+.mobile-nav-grid{max-width:900px;margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.mtab{border:0;background:transparent;color:#a3b4cb;border-radius:22px;padding:12px 2px 10px;min-width:0;font-size:12px;font-weight:800;line-height:1.15;display:flex;flex-direction:column;align-items:center;gap:6px}
 .mtab .ico{font-size:24px;line-height:1}
 .mtab.active{background:linear-gradient(180deg,rgba(59,142,127,.32),rgba(34,90,79,.24));color:#9ff5e6;border:1px solid rgba(115,224,205,.18)}
 #toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:#10283a;color:#e8f9ff;border:1px solid rgba(115,224,205,.2);padding:13px 18px;border-radius:16px;display:none;z-index:80;font-size:15px;font-weight:900}
@@ -184,6 +191,26 @@ tr:hover td{background:rgba(255,255,255,.012)}
   .section{padding:18px}
   .alert-item{padding:16px}
   .fields,.help-grid,.settings-grid{grid-template-columns:1fr}
+}
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:16px}
+.menu-tile{display:flex;align-items:center;gap:14px;padding:18px;text-align:left;color:inherit;font:inherit;cursor:pointer;border:1px solid rgba(255,255,255,.08)}
+.menu-tile:active{transform:scale(.98)}
+.menu-ico{width:46px;height:46px;flex:none;border-radius:16px;display:grid;place-items:center;font-size:22px;background:rgba(115,224,205,.14);color:#9ff6e6}
+.menu-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}.menu-txt strong{font-size:17px}.menu-txt small{color:#9db0cc;font-size:14px}
+.menu-count{font-weight:900;font-size:18px;color:#cfe0f5;background:rgba(255,255,255,.07);border-radius:12px;padding:6px 11px}
+.metric.click{cursor:pointer}.metric.click:active{transform:scale(.98)}
+ @media (max-width:760px){
+  .table-scroll{overflow:visible}
+  .table-card table,.table-card tbody,.table-card tr,.table-card td{display:block;width:100%;min-width:0}
+  .table-card thead{display:none}
+  .table-card tbody tr{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.07)}
+  .table-card td{border:0!important;padding:5px 0!important;display:flex;justify-content:space-between;align-items:center;gap:12px;text-align:right;white-space:normal}
+  .table-card td[data-label]::before{content:attr(data-label);color:#8aa0bf;font-size:13px;font-weight:800;text-align:left;flex:none;max-width:45%}
+  .table-card td:first-child{font-size:17px;font-weight:900}
+  .table-card td.td-actions{padding-top:10px!important}
+  .table-card .table-actions{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .table-card .btn-mini{padding:12px;font-size:15px}
+  .table-card td[colspan]{display:block}
 }
 @media (max-width:520px){.metrics{grid-template-columns:1fr}.hero h1{font-size:34px}.metric-num{font-size:44px}.section-title{font-size:19px}.mobile-nav-grid{gap:6px}.mtab{font-size:11px}.mtab .ico{font-size:22px}}
 
@@ -259,12 +286,15 @@ const sections=[
   ['vehicules','▤','Dossiers'],
   ['planning','▦','Planning'],
   ['prets','▬','Prêts'],
-  ['assistant','✦','Pilote']
+  ['assistant','✦','Dossier vocal'],
+  ['menu','☰','Plus']
 ];
+// Pages rangées sous « Plus » : l'onglet reste allumé quand on y est.
+const MENU_PAGES=['menu','clients','expertises','taches','aide','parametres'];
 const configs={
   expertises:{sing:'expertise',title:'Expertises',cols:[['client','Client'],['immatriculation','Immatriculation'],['date','Date RDV'],['statut','Statut'],['notes','Observations']],fields:[['client','Client','text',1],['immatriculation','Immatriculation','text'],['date','Date de rendez-vous','date'],['statut','Statut','select','',['Sans RDV','RDV fixé','Réalisée','À relancer']],['notes','Observations','textarea']]},
-  vehicules:{sing:'dossier',title:'Dossiers',cols:[['client','Client'],['modele','Véhicule'],['immatriculation','Immatriculation'],['statut','Étape'],['priorite','Priorité']],fields:[['client','Client','text',1],['modele','Modèle','text'],['immatriculation','Immatriculation','text'],['statut','Étape','select','',['À chiffrer','En attente','À planifier','En travaux','Peinture','Prêt à livrer','Livré']],['priorite','Priorité (1 à 10)','number'],['notes','Observations','textarea']]},
-  prets:{sing:'prêt',title:'Prêts',cols:[['nom','Véhicule de prêt'],['client','Client'],['date_depart','Départ'],['date_retour','Retour prévu'],['statut','Statut']],fields:[['nom','Véhicule de prêt','text',1],['client','Client bénéficiaire','text'],['date_depart','Date de départ','date'],['date_retour','Retour prévu','date'],['statut','Statut','select','',['Disponible','Réservé','Prêté','Retourné']],['notes','Observations','textarea']]},
+  vehicules:{sing:'dossier',title:'Dossiers',cols:[['client','Client'],['modele','Véhicule'],['immatriculation','Immatriculation'],['statut','Étape'],['priorite','Priorité']],fields:[['client','Client','text',1],['modele','Modèle','text'],['immatriculation','Immatriculation','text'],['statut','Étape','select','',['À chiffrer','En attente','À planifier','En travaux','Peinture','Prêt à livrer','Livré']],['priorite','Priorité (1 à 10)','number'],['montant','Montant estimé des travaux (€)','number'],['notes','Observations','textarea']]},
+  prets:{sing:'prêt',title:'Prêts',cols:[['nom','Véhicule de prêt'],['client','Client'],['date_depart','Départ',r=>dateHeure(r.date_depart,r.heure_depart)],['date_retour','Retour prévu',r=>dateHeure(r.date_retour,r.heure_retour)],['statut','Statut',r=>pretEnRetard(r)?'<span class="pill red">En retard</span>':status(r.statut)]],fields:[['nom','Véhicule de prêt','text',1],['client','Client bénéficiaire','text'],['telephone','Téléphone du client','tel'],['date_depart','Date de départ','date'],['heure_depart','Heure de départ','time'],['date_retour','Retour prévu le','date'],['heure_retour','Heure de retour prévue','time'],['statut','Statut','select','',['Disponible','Réservé','Prêté','Retourné']],['km_retour','Kilométrage au retour','number'],['notes','Observations','textarea']]},
   planning:{sing:'rendez-vous',title:'Planning',cols:[['date','Date'],['heure','Heure'],['titre','Intervention / RDV'],['responsable','Responsable'],['statut','Statut']],fields:[['date','Date','date',1],['heure','Heure','time'],['titre','Intervention / RDV','text',1],['responsable','Responsable','select','',['Enzo','IB','Brahim','Aurel','Autre']],['statut','Statut','select','',['Prévu','En cours','Terminé']],['notes','Observations','textarea']]},
   clients:{sing:'client',title:'Clients',cols:[['nom','Nom'],['telephone','Téléphone'],['email','E-mail'],['vehicule','Véhicule'],['notes','Observations']],fields:[['nom','Nom du client','text',1],['telephone','Téléphone','tel'],['email','E-mail','email'],['vehicule','Véhicule','text'],['notes','Observations','textarea']]},
   taches:{sing:'signal',title:'Pilote',cols:[['titre','Tâche / signal'],['client','Client'],['echeance','Échéance'],['responsable','Responsable'],['statut','Statut']],fields:[['titre','Tâche / signal','text',1],['client','Client','text'],['echeance','Échéance','date'],['responsable','Responsable','select','',['Enzo','IB','Brahim','Aurel','Autre']],['statut','Statut','select','',['À faire','En cours','Terminée']],['notes','Observations','textarea']]}
@@ -289,8 +319,11 @@ function load(){
 function save(silent=false){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(db)); if(!silent) toast('Enregistré sur cet appareil');}catch(e){alert('Sauvegarde locale indisponible.')}}
 function toast(t){const e=document.getElementById('toast');e.textContent=t;e.style.display='block';clearTimeout(window.__tt);window.__tt=setTimeout(()=>e.style.display='none',2200)}
 function go(p){page=p;query='';filter='';render()}
+function dateHeure(d,h){if(!d&&!h)return '—';const t=d?d.split('-').reverse().join('/'):'';return esc([t,h].filter(Boolean).join(' à '))}
+// Une voiture prêtée est en retard si l'heure (ou, sans heure, la journée) de retour prévue est passée.
+function pretEnRetard(x){if(x.statut!=='Prêté'||!x.date_retour)return false;const fin=new Date(x.date_retour+'T'+(x.heure_retour||'23:59'));return !isNaN(fin)&&fin<new Date()}
 function countActive(){return db.vehicules.filter(x=>String(x.statut||'')!=='Livré').length}
-function countRisk(){return db.expertises.filter(x=>x.statut==='Sans RDV'||!x.date).length + db.taches.filter(x=>x.statut!=='Terminée').length}
+function countRisk(){return db.prets.filter(pretEnRetard).length + db.expertises.filter(x=>x.statut==='Sans RDV'||!x.date).length + db.taches.filter(x=>x.statut!=='Terminée').length}
 function countLoansActive(){return db.prets.filter(x=>x.statut==='Prêté').length}
 function countLoansAvailable(){return db.prets.filter(x=>x.statut==='Disponible').length}
 function portfolioAmount(){let total=0; db.vehicules.forEach(x=>{const m=parseFloat(String(x.montant||'').replace(',','.')); if(!isNaN(m) && String(x.statut||'')!=='Livré') total+=m}); return total}
@@ -305,7 +338,7 @@ function status(v){
   return `<span class="pill ${cl}">${esc(s||'—')}</span>`;
 }
 function bottomNav(){
-  document.getElementById('mobiletabs').innerHTML=sections.map(s=>`<button class="mtab ${page===s[0]?'active':''}" onclick="go('${s[0]}')"><span class="ico">${s[1]}</span><span>${s[2]}</span></button>`).join('');
+  document.getElementById('mobiletabs').innerHTML=sections.map(s=>`<button class="mtab ${page===s[0]||(s[0]==='menu'&&MENU_PAGES.includes(page))?'active':''}" onclick="go('${s[0]}')" aria-label="${s[2]}"><span class="ico">${s[1]}</span><span>${s[2]}</span></button>`).join('');
 }
 function hero(){
   const risk=countRisk();
@@ -315,6 +348,7 @@ function linkedVehicule(e){const plate=String(e.immatriculation||'').replace(/[^
 function dashboard(){
   const active=countActive(), risk=countRisk(), loansA=countLoansActive(), loansD=countLoansAvailable(), amount=portfolioAmount(), today=todayCount();
   const alerts=[
+    ...db.prets.filter(pretEnRetard).map(x=>({icon:'⏰', cls:'icon-red', title:`Voiture pas rentrée · ${x.nom||'Prêt'}${x.client?' · '+x.client:''}`, desc:`Retour prévu le ${dateHeure(x.date_retour,x.heure_retour)}${x.telephone?' · tél. '+x.telephone:''}. Appelle le client.`, link:'prets'})),
     ...db.expertises.filter(x=>x.statut==='Sans RDV'||!x.date).map(x=>{const v=linkedVehicule(x); return {icon:'!', cls:'icon-red', title:`Expertise à débloquer · ${[x.client,v?.modele||x.immatriculation].filter(Boolean).join(' · ')||'Dossier'}`, desc:`${v?.priorite?'Priorité '+v.priorite+'/10 · ':''}${x.date?'expertise prévue le '+x.date:'aucun rendez-vous d’expertise fixé.'}`, link:'expertises'}}),
     ...db.vehicules.filter(x=>['En attente','À planifier','Peinture'].includes(x.statut)).map(x=>({icon:'⚠', cls:'icon-amber', title:`Livraison menacée · ${x.modele||x.immatriculation||x.client||'Dossier'}`, desc:`Étape actuelle : ${x.statut}. ${x.notes?x.notes:'Point à surveiller dans le flux.'}`, link:'vehicules'})),
     ...db.taches.filter(x=>x.statut!=='Terminée').map(x=>({icon:'•', cls:'icon-amber', title:`Relance à faire · ${x.client||x.titre||'Signal'}`, desc:`${x.titre||'Action à arbitrer'}${x.echeance?' · échéance '+x.echeance:''}`, link:'taches'}))
@@ -322,10 +356,10 @@ function dashboard(){
   const topAdvice=alerts[0] ? `Je commencerais par « ${alerts[0].title} ». ${alerts[0].desc} Une vérification maintenant peut éviter une mauvaise surprise.` : `Aucun blocage fort détecté pour le moment. Tu peux te concentrer sur l’organisation de demain et la préparation des prochains passages atelier.`;
   return hero()+`<div class="voice-entry"><div><h3>🎙️ Ton pilote, à voix haute</h3><p>Demande-lui n’importe quoi : prêter une voiture, ce que tu as demain, passer un dossier en peinture, créer une relance… Il le fait et te répond à l’oral.</p></div><button class="btn btn-primary" onclick="pgOpen()">Parler au pilote ↗</button></div>
   <div class="grid metrics">
-    <div class="card metric"><div><div class="metric-label">Dossiers actifs</div><div class="metric-num white">${active}</div></div><div class="metric-sub">Tous les véhicules en cours</div></div>
-    <div class="card metric"><div><div class="metric-label">Points à risque</div><div class="metric-num orange">${risk}</div></div><div class="metric-sub">À surveiller dans le flux</div></div>
-    <div class="card metric"><div><div class="metric-label">Prêts mobilisés</div><div class="metric-num white">${loansA}<span style="font-size:.55em;color:#b0c1d9">/${loansD}</span></div></div><div class="metric-sub">${loansD} véhicule(s) disponible(s)</div></div>
-    <div class="card metric"><div><div class="metric-label">Travaux en portefeuille</div><div class="metric-num white">${amount?new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(amount):'0 €'}</div></div><div class="metric-sub">Montant estimé, non encaissé</div></div>
+    <div class="card metric click" onclick="go('vehicules')"><div><div class="metric-label">Dossiers actifs</div><div class="metric-num white">${active}</div></div><div class="metric-sub">Tous les véhicules en cours</div></div>
+    <div class="card metric click" onclick="go('taches')"><div><div class="metric-label">Points à risque</div><div class="metric-num orange">${risk}</div></div><div class="metric-sub">À surveiller dans le flux</div></div>
+    <div class="card metric click" onclick="go('prets')"><div><div class="metric-label">Prêts mobilisés</div><div class="metric-num white">${loansA}<span style="font-size:.55em;color:#b0c1d9">/${loansD}</span></div></div><div class="metric-sub">${loansD} véhicule(s) disponible(s)</div></div>
+    <div class="card metric click" onclick="go('vehicules')"><div><div class="metric-label">Travaux en portefeuille</div><div class="metric-num white">${amount?new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(amount):'0 €'}</div></div><div class="metric-sub">Montant estimé, non encaissé</div></div>
   </div>
   <section class="card section"><div class="section-head"><div class="section-title">⚡ Ce qui mérite ton attention</div><div class="section-badge badge-amber">${alerts.length} alerte(s)</div></div><div class="alert-list">${alerts.length?alerts.map(a=>`<div class="alert-item"><div class="alert-icon ${a.cls}">${a.icon}</div><div class="alert-body"><strong>${esc(a.title)}</strong><p>${esc(a.desc)}</p><div class="alert-actions"><span class="text-link mint" onclick="go('${a.link}')">Voir le dossier ↗</span></div></div></div>`).join(''):`<div class="empty">Aucune alerte à afficher.</div>`}</div></section>
   <div class="grid two-col">
@@ -335,12 +369,26 @@ function dashboard(){
 }
 function header(title, subtitle, action=''){return `<section class="card section"><div class="section-head"><div><div class="section-title">${title}</div><div style="margin-top:8px;color:#9db0cc;font-size:16px;line-height:1.5">${subtitle}</div></div>${action}</div>`}
 function filteredRows(section){return db[section].filter(x=>(!query||Object.values(x).some(y=>String(y??'').toLowerCase().includes(query.toLowerCase())))&&(!filter||x.statut===filter))}
-function table(section){const c=configs[section], rows=filteredRows(section);return `<div class="card table-card"><div class="table-scroll"><table><thead><tr>${c.cols.map(col=>`<th>${col[1]}</th>`).join('')}<th>Actions</th></tr></thead><tbody>${rows.length?rows.map(r=>`<tr>${c.cols.map(col=>`<td>${col[0]==='statut'?status(r[col[0]]):`<span class="${col[0]==='notes'?'t-muted':''}">${esc(r[col[0]]||'—')}</span>`}</td>`).join('')}<td><div class="table-actions"><button class="btn-mini btn-edit" onclick="edit('${section}','${r.id}')">Modifier</button><button class="btn-mini btn-del" onclick="removeItem('${section}','${r.id}')">Supprimer</button></div></td></tr>`).join(''):`<tr><td colspan="${c.cols.length+1}"><div class="empty">Aucun élément pour le moment.</div></td></tr>`}</tbody></table></div><div class="table-foot">${rows.length} résultat(s)</div></div>`}
+function table(section){const c=configs[section], rows=filteredRows(section);return `<div class="card table-card"><div class="table-scroll"><table><thead><tr>${c.cols.map(col=>`<th>${col[1]}</th>`).join('')}<th>Actions</th></tr></thead><tbody>${rows.length?rows.map(r=>`<tr>${c.cols.map(col=>`<td data-label="${col[1]}">${col[2]?col[2](r):col[0]==='statut'?status(r[col[0]]):`<span class="${col[0]==='notes'?'t-muted':''}">${esc(r[col[0]]||'—')}</span>`}</td>`).join('')}<td class="td-actions"><div class="table-actions"><button class="btn-mini btn-edit" onclick="edit('${section}','${r.id}')">Modifier</button><button class="btn-mini btn-del" onclick="removeItem('${section}','${r.id}')">Supprimer</button></div></td></tr>`).join(''):`<tr><td colspan="${c.cols.length+1}"><div class="empty">Aucun élément pour le moment.</div></td></tr>`}</tbody></table></div><div class="table-foot">${rows.length} résultat(s)</div></div>`}
 function listing(section){
   const c=configs[section];
   const statuses=[...new Set(db[section].map(x=>x.statut).filter(Boolean))];
   const subtitle={vehicules:'Tes dossiers atelier, les étapes de réparation et les priorités.',planning:'Le planning de l’atelier et des rendez-vous.',prets:'La gestion des voitures de prêt.',taches:'Les signaux, relances et actions du pilote.',clients:'Tes clients et leurs coordonnées.',expertises:'Les expertises et les rendez-vous à organiser.'}[section] || '';
   return header(c.title,subtitle,`<button class="btn btn-primary" onclick="edit('${section}')">+ Ajouter</button>`)+`<div class="toolbar"><div class="grow"><input class="search" value="${esc(query)}" oninput="query=this.value;render()" placeholder="Rechercher un client, une immatriculation, un dossier…"></div><div class="w240"><select class="select" onchange="filter=this.value;render()"><option value="">Tous les statuts</option>${statuses.map(s=>`<option ${s===filter?'selected':''}>${esc(s)}</option>`).join('')}</select></div></div>${table(section)}</section>`
+}
+function menuPage(){
+  const tuiles=[
+    ['vehicules','▤','Dossiers','Les véhicules à l’atelier',db.vehicules.length],
+    ['planning','▦','Planning','Rendez-vous et interventions',db.planning.length],
+    ['prets','▬','Voitures de prêt','Qui a quelle voiture',db.prets.length],
+    ['clients','☺','Clients','Coordonnées et véhicules',db.clients.length],
+    ['expertises','⌕','Expertises','Rendez-vous d’expert',db.expertises.length],
+    ['taches','✦','Relances','Ce qu’il reste à faire',db.taches.filter(x=>x.statut!=='Terminée').length],
+    ['assistant','🎙','Nouveau dossier à la voix','Entretien guidé',''],
+    ['parametres','⇩','Sauvegardes','Exporter, importer, effacer',''],
+    ['aide','?','Guide','Comment se servir de l’appli','']
+  ];
+  return header('Toute l’appli','Touche une rubrique pour l’ouvrir.')+`<div class="menu-grid">${tuiles.map(([p,i,t,d,n])=>`<button class="card menu-tile" onclick="go('${p}')"><span class="menu-ico">${i}</span><span class="menu-txt"><strong>${t}</strong><small>${d}</small></span>${n!==''?`<span class="menu-count">${n}</span>`:''}</button>`).join('')}</div></section>`;
 }
 function help(){return header('Guide de démarrage','Un parcours simple pour comprendre l’application sans jargon.')+`<div class="notice" style="margin-bottom:16px"><b>But de cette version :</b> t’offrir une interface sombre, premium, très lisible, qui met en avant ce qui compte vraiment dans le garage.</div><div class="help-grid"><div class="card step-card"><div class="step-num">1</div><h3>Commence par les dossiers</h3><p>Ajoute les véhicules dans “Dossiers” pour suivre où ils en sont : attente, planification, travaux, peinture, livraison.</p></div><div class="card step-card"><div class="step-num">2</div><h3>Utilise le cockpit</h3><p>Le cockpit fait ressortir les points à risque et les alertes du flux atelier. Il t’aide à voir tout de suite ce qui bloque.</p></div><div class="card step-card"><div class="step-num">3</div><h3>Prépare la journée</h3><p>Le planning et les signaux du pilote permettent d’anticiper demain et de limiter les oublis.</p></div><div class="card step-card"><div class="step-num">4</div><h3>Sauvegarde localement</h3><p>Pour l’instant, tes données restent sur cet appareil. Pense à exporter régulièrement dans les paramètres.</p></div></div></section>`}
 function settings(){return header('Paramètres','Sauvegarder, importer, exporter ou remettre à zéro la démonstration.')+`<div class="settings-grid"><div class="card settings-card"><h3>Sauvegardes</h3><p>Les données sont enregistrées localement sur cet appareil et dans ce navigateur. Tu peux exporter un fichier JSON pour conserver ton test.</p><div class="buttons" style="justify-content:flex-start"><button class="btn btn-primary" onclick="exportData()">↓ Exporter</button><button class="btn btn-dark" onclick="document.getElementById('importFile').click()">↑ Importer</button><input id="importFile" type="file" accept=".json,application/json" hidden onchange="importData(event)"></div></div><div class="card settings-card"><h3>Réinitialisation</h3><p>Si tu veux refaire un essai propre avec le nouveau design, tu peux effacer les données locales.</p><div class="buttons" style="justify-content:flex-start"><button class="btn btn-dark" style="border-color:rgba(221,115,130,.2);color:#ffc3ce;background:rgba(221,115,130,.12)" onclick="resetAll()">Effacer les données</button></div></div></div></section>`}
@@ -355,7 +403,7 @@ function removeItem(section,id){if(confirm('Supprimer définitivement cet élém
 function exportData(){const a=document.createElement('a'); const blob=new Blob([JSON.stringify({app:'My I-Car',version:8,data:db,exportedAt:new Date().toISOString()},null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); a.href=url; a.download='my-icar-v8-sauvegarde-'+new Date().toISOString().slice(0,10)+'.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1200)}
 async function importData(e){const f=e.target.files[0]; if(!f) return; try{const d=JSON.parse(await f.text()); const raw=d.data||d; if(!Object.keys(initial).every(k=>Array.isArray(raw[k]))) throw Error('Structure invalide'); if(!confirm('Remplacer toutes les données locales ?')) return; db=raw; save(true); render(); toast('Import terminé')}catch(err){alert('Fichier invalide : '+err.message)}}
 function resetAll(){if(confirm('Effacer toutes les données locales de My I-Car V8 ?')){db=clone(initial); save(true); render(); toast('Données effacées')}}
-function render(){bottomNav(); const root=document.getElementById('root'); if(page==='dashboard') root.innerHTML=dashboard(); else if(['vehicules','planning','prets','taches','expertises','clients'].includes(page)) root.innerHTML=listing(page); else if(page==='assistant') root.innerHTML=assistantPage(); else if(page==='aide') root.innerHTML=help(); else root.innerHTML=settings();}
+function render(){bottomNav(); const root=document.getElementById('root'); if(page==='dashboard') root.innerHTML=dashboard(); else if(['vehicules','planning','prets','taches','expertises','clients'].includes(page)) root.innerHTML=listing(page); else if(page==='assistant') root.innerHTML=assistantPage(); else if(page==='aide') root.innerHTML=help(); else if(page==='menu') root.innerHTML=menuPage(); else root.innerHTML=settings(); window.scrollTo(0,0);}
 
 // V8 - Pilote IA : la conversation passe par la fonction Netlify /api/pilote (Gemini, clé cachée côté serveur).
 // Si l'IA est injoignable (fichier ouvert en local, quota atteint…), le pilote repasse sur les règles locales de la V7.
@@ -940,6 +988,8 @@ function pgRender(){
 
 render();
 pgRender();
+if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('/sw.js').catch(()=>{});
+setInterval(()=>{if(page==='dashboard'&&!document.getElementById('modalhost').innerHTML)render()},60000);
 </script>
 </body>
 </html>

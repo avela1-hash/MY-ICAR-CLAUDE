@@ -26,8 +26,9 @@ const SECTIONS = {
   prets: {
     nom: 'Voitures de prêt',
     champs: {
-      nom: 'texte (la voiture de prêt)', client: 'texte', date_depart: 'AAAA-MM-JJ', date_retour: 'AAAA-MM-JJ',
-      statut: ['Disponible', 'Réservé', 'Prêté', 'Retourné'], notes: 'texte (mets-y l\'heure de départ/retour si elle est dite)'
+      nom: 'texte (la voiture de prêt)', client: 'texte', telephone: 'texte (téléphone du client)',
+      date_depart: 'AAAA-MM-JJ', heure_depart: 'HH:MM', date_retour: 'AAAA-MM-JJ', heure_retour: 'HH:MM',
+      statut: ['Disponible', 'Réservé', 'Prêté', 'Retourné'], km_retour: 'nombre (kilométrage relevé au retour)', notes: 'texte'
     }
   },
   taches: {
@@ -85,7 +86,7 @@ Règles :
 4. Pour modifier ou supprimer, utilise la référence exacte d'un élément de l'extrait (ex. v3). Si plusieurs éléments correspondent, ou aucun, ne fais aucune action et pose une question courte pour préciser.
 5. Toute suppression : mets "confirmation": true et demande à Aurel de confirmer dans « reponse » (ex. « Je supprime la relance Dupont, tu confirmes ? »). Ne mets jamais confirmation à true pour autre chose.
 6. Dates au format AAAA-MM-JJ calculées à partir de la date du jour (« demain », « jeudi », « dans une semaine »). Heures au format HH:MM. Pour les champs à liste, utilise exactement une des valeurs proposées.
-7. Quand une voiture de prêt part chez un client, mets son statut à « Prêté » ; quand elle revient, « Retourné ». Garde l'heure de départ dite par Aurel dans les notes du prêt, c'est important pour désigner le conducteur en cas d'amende.
+7. Quand une voiture de prêt part chez un client, mets son statut à « Prêté » ; quand elle revient, « Retourné ». Remplis heure_depart (l'heure dite, sinon l'heure actuelle quand la voiture part maintenant) : c'est indispensable pour désigner le conducteur en cas d'amende. Au retour, note km_retour si Aurel donne le kilométrage.
 8. Si la demande est floue, pose UNE question courte sans faire d'action.
 9. La transcription vient d'un micro : ignore le bruit sans rapport (télé, autre personne). Si la phrase n'a aucun sens pour l'atelier, demande-lui de répéter.
 10. Après une action, confirme brièvement ce que tu as fait (ex. « C'est noté, la Clio est prêtée à Monsieur Martin jusqu'à vendredi. »).

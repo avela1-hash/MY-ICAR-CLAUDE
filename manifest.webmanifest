@@ -1,0 +1,17 @@
+{
+  "name": "My I-Car",
+  "short_name": "My I-Car",
+  "description": "Pilotage de l'atelier de carrosserie : dossiers, planning, voitures de prêt et pilote vocal.",
+  "lang": "fr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#06111f",
+  "theme_color": "#06111f",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
