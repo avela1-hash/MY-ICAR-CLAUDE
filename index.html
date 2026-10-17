@@ -701,7 +701,8 @@ async function pgSend(t){
     const r=await fetch(GLOBAL_URL,{method:'POST',headers:{'Content-Type':'application/json'},signal:ctrl.signal,
       body:JSON.stringify({phrase:t,historique,page,maintenant:pgMaintenant(),resume:ctx.resume,donnees:ctx.donnees})});
     clearTimeout(timer);
-    const d=await r.json().catch(()=>({erreur:'réponse illisible'}));
+    const brut=await r.text();let d;
+    try{d=JSON.parse(brut)}catch{d={erreur:r.status===404?'fonction serveur introuvable (404) : le site n’a pas été redéployé':(r.status===502||r.status===504||/timed out|timeout/i.test(brut))?'le serveur a dépassé 10 secondes ('+r.status+')':'réponse illisible du serveur ('+r.status+' : '+brut.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim().slice(0,80)+')'}}
     if(!r.ok||d.erreur)throw Error(d.erreur||('erreur '+r.status));
     pgNoteIA(d);
     // Les éléments ont été envoyés sous des numéros courts (v1, p2…) : on retrouve leurs vrais identifiants.
