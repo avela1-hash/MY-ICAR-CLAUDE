@@ -290,7 +290,7 @@ const sections=[
   ['menu','☰','Plus']
 ];
 // Pages rangées sous « Plus » : l'onglet reste allumé quand on y est.
-const MENU_PAGES=['menu','clients','expertises','taches','aide','parametres'];
+const MENU_PAGES=['menu','clients','expertises','taches','aide','parametres','installer'];
 const configs={
   expertises:{sing:'expertise',title:'Expertises',cols:[['client','Client'],['immatriculation','Immatriculation'],['date','Date RDV'],['statut','Statut'],['notes','Observations']],fields:[['client','Client','text',1],['immatriculation','Immatriculation','text'],['date','Date de rendez-vous','date'],['statut','Statut','select','',['Sans RDV','RDV fixé','Réalisée','À relancer']],['notes','Observations','textarea']]},
   vehicules:{sing:'dossier',title:'Dossiers',cols:[['client','Client'],['modele','Véhicule'],['immatriculation','Immatriculation'],['statut','Étape'],['priorite','Priorité']],fields:[['client','Client','text',1],['modele','Modèle','text'],['immatriculation','Immatriculation','text'],['statut','Étape','select','',['À chiffrer','En attente','À planifier','En travaux','Peinture','Prêt à livrer','Livré']],['priorite','Priorité (1 à 10)','number'],['montant','Montant estimé des travaux (€)','number'],['notes','Observations','textarea']]},
@@ -386,7 +386,8 @@ function menuPage(){
     ['taches','✦','Relances','Ce qu’il reste à faire',db.taches.filter(x=>x.statut!=='Terminée').length],
     ['assistant','🎙','Nouveau dossier à la voix','Entretien guidé',''],
     ['parametres','⇩','Sauvegardes','Exporter, importer, effacer',''],
-    ['aide','?','Guide','Comment se servir de l’appli','']
+    ['aide','?','Guide','Comment se servir de l’appli',''],
+    ...(installEtat().installee?[]:[['installer','📲','Installer l’appli','Icône sur l’écran d’accueil','']])
   ];
   return header('Toute l’appli','Touche une rubrique pour l’ouvrir.')+`<div class="menu-grid">${tuiles.map(([p,i,t,d,n])=>`<button class="card menu-tile" onclick="go('${p}')"><span class="menu-ico">${i}</span><span class="menu-txt"><strong>${t}</strong><small>${d}</small></span>${n!==''?`<span class="menu-count">${n}</span>`:''}</button>`).join('')}</div></section>`;
 }
@@ -403,7 +404,35 @@ function removeItem(section,id){if(confirm('Supprimer définitivement cet élém
 function exportData(){const a=document.createElement('a'); const blob=new Blob([JSON.stringify({app:'My I-Car',version:8,data:db,exportedAt:new Date().toISOString()},null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); a.href=url; a.download='my-icar-v8-sauvegarde-'+new Date().toISOString().slice(0,10)+'.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1200)}
 async function importData(e){const f=e.target.files[0]; if(!f) return; try{const d=JSON.parse(await f.text()); const raw=d.data||d; if(!Object.keys(initial).every(k=>Array.isArray(raw[k]))) throw Error('Structure invalide'); if(!confirm('Remplacer toutes les données locales ?')) return; db=raw; save(true); render(); toast('Import terminé')}catch(err){alert('Fichier invalide : '+err.message)}}
 function resetAll(){if(confirm('Effacer toutes les données locales de My I-Car V8 ?')){db=clone(initial); save(true); render(); toast('Données effacées')}}
-function render(){bottomNav(); const root=document.getElementById('root'); if(page==='dashboard') root.innerHTML=dashboard(); else if(['vehicules','planning','prets','taches','expertises','clients'].includes(page)) root.innerHTML=listing(page); else if(page==='assistant') root.innerHTML=assistantPage(); else if(page==='aide') root.innerHTML=help(); else if(page==='menu') root.innerHTML=menuPage(); else root.innerHTML=settings(); window.scrollTo(0,0);}
+
+// Installation sur l'écran d'accueil. Chrome envoie « beforeinstallprompt » quand il accepte d'installer l'appli :
+// on garde l'événement pour le bouton « Installer » (sans preventDefault, Chrome peut toujours proposer l'installation lui-même).
+// Sur Android, l'appli est ensuite fabriquée par Google et posée par le Play Store : si cette étape échoue, Chrome affiche
+// « Impossible d'installer My I-Car », d'où les solutions de secours affichées sur la page.
+let installEvt=null, installLancee=false;
+window.addEventListener('beforeinstallprompt',e=>{installEvt=e;if(page==='installer')render()});
+window.addEventListener('appinstalled',()=>{installEvt=null;installLancee=false;toast('My I-Car est installée : ouvre-la depuis l’écran d’accueil');if(page==='installer')render()});
+function installEtat(){const essai=location.hostname.match(/^.+--(.+\.netlify\.app)$/);return {installee:matchMedia('(display-mode: standalone)').matches||navigator.standalone===true,iphone:/iPhone|iPad|iPod/.test(navigator.userAgent),principale:essai?essai[1]:''}}
+async function installer(){const e=installEvt;if(!e)return;installEvt=null;try{await e.prompt();installLancee=(await e.userChoice).outcome==='accepted'}catch(err){}render()}
+function installPage(){
+  const s=installEtat();
+  const etat=s.installee?'✓ Tu utilises déjà l’appli installée sur cet appareil.'
+    :installLancee?'⏳ Installation lancée&nbsp;: l’icône My I-Car arrive sur l’écran d’accueil d’ici une minute. Si Chrome répond «&nbsp;Impossible d’installer&nbsp;», suis l’étape 2.'
+    :installEvt?'✓ Chrome est prêt à installer My I-Car sur cet appareil.'
+    :s.iphone?'Sur iPhone, l’installation passe par le bouton Partager (étape 3).'
+    :'Chrome ne propose pas le bouton sur cette page&nbsp;: passe par son menu ⋮ (étape 1). Si l’appli est déjà installée, ouvre-la depuis l’écran d’accueil.';
+  const etapes=[
+    ['1','Android avec Chrome','Menu ⋮ en haut à droite, puis «&nbsp;Ajouter à l’écran d’accueil&nbsp;» (ou «&nbsp;Installer l’appli&nbsp;»), puis «&nbsp;Installer&nbsp;».'],
+    ['2','Chrome répond «&nbsp;Impossible d’installer&nbsp;»&nbsp;?','Sur Android, l’appli est fabriquée par Google puis posée par le Play Store. Mets à jour Chrome et le Play Store, vérifie que le Play Store est connecté à ton compte Google et qu’il reste de la place, redémarre le téléphone puis réessaie. En attendant, choisis «&nbsp;Créer un raccourci&nbsp;» au lieu de «&nbsp;Installer&nbsp;»&nbsp;: l’icône ouvre la même appli dans Chrome, avec les mêmes données.'],
+    ['3','iPhone','Ouvre le site dans Safari, touche le bouton Partager puis «&nbsp;Sur l’écran d’accueil&nbsp;».'],
+    ['4','Pas de bouton d’installation&nbsp;?','Si le lien s’est ouvert dans une autre appli (Gmail, WhatsApp, GitHub…), touche «&nbsp;Ouvrir dans Chrome&nbsp;»&nbsp;: on ne peut pas installer depuis ces fenêtres, ni en navigation privée.']
+  ];
+  return header('Installer l’appli','Pour ouvrir My I-Car depuis l’écran d’accueil du téléphone, comme une vraie appli.')
+    +`<div class="notice" style="margin-bottom:16px">${etat}${installEvt&&!s.installee?`<div class="buttons" style="justify-content:flex-start"><button class="btn btn-primary" onclick="installer()">📲 Installer My I-Car</button></div>`:''}</div>`
+    +(s.principale?`<div class="notice" style="margin-bottom:16px;background:rgba(243,179,94,.10);border-color:rgba(243,179,94,.25);color:#ffd8a0">⚠ Tu es sur une adresse d’essai (<b>${esc(location.hostname)}</b>)&nbsp;: elle ne suit pas forcément les mises à jour. Installe plutôt l’appli depuis l’adresse principale <b>${esc(s.principale)}</b>. Les données ne passent pas d’une adresse à l’autre&nbsp;: exporte-les ici (Sauvegardes), puis importe-les là-bas.<div class="buttons" style="justify-content:flex-start"><button class="btn btn-dark" onclick="go('parametres')">⇩ Sauvegardes</button><a class="btn btn-secondary" href="https://${esc(s.principale)}/">Ouvrir l’adresse principale</a></div></div>`:'')
+    +`<div class="help-grid">${etapes.map(([n,t,p])=>`<div class="card step-card"><div class="step-num">${n}</div><h3>${t}</h3><p>${p}</p></div>`).join('')}</div></section>`;
+}
+function render(){bottomNav(); const root=document.getElementById('root'); if(page==='dashboard') root.innerHTML=dashboard(); else if(['vehicules','planning','prets','taches','expertises','clients'].includes(page)) root.innerHTML=listing(page); else if(page==='assistant') root.innerHTML=assistantPage(); else if(page==='aide') root.innerHTML=help(); else if(page==='menu') root.innerHTML=menuPage(); else if(page==='installer') root.innerHTML=installPage(); else root.innerHTML=settings(); window.scrollTo(0,0);}
 
 // V8 - Pilote IA : la conversation passe par la fonction Netlify /api/pilote (Gemini, clé cachée côté serveur).
 // Si l'IA est injoignable (fichier ouvert en local, quota atteint…), le pilote repasse sur les règles locales de la V7.
