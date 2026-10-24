@@ -1,7 +1,7 @@
 // My I-Car — branchement commun vers l'IA, utilisé par les deux pilotes.
 //
-// 1. ChatGPT (OpenAI) si la variable secrète OPENAI_API_KEY existe sur Netlify.
-// 2. Sinon, ou si OpenAI refuse (crédit épuisé, clé invalide…), Gemini avec GEMINI_API_KEY.
+// 1. Gemini (gratuit) avec GEMINI_API_KEY.
+// 2. ChatGPT seulement si Gemini n'a pas de clé, ou si IA_PRIORITE = openai.
 //
 // Réglages facultatifs (variables Netlify) :
 //   OPENAI_MODEL  : modèle OpenAI (par défaut gpt-6-luna, rapide et ~20 fois moins cher que gpt-6-sol)
@@ -78,62 +78,94 @@ async function demanderOpenAI({ systeme, prompt, maxSortie }) {
 }
 
 // ── Gemini (Google) ─────────────────────────────────────────────────────────
+// Google renomme régulièrement ses modèles : au lieu d'une liste figée, on demande à Google
+// la liste des modèles Flash disponibles pour TA clé (une fois, puis gardée en mémoire).
+let modelesDecouverts = null;
+const versionDe = (nom) => parseFloat((nom.match(/gemini-(\d+(?:\.\d+)?)/) || [])[1] || '0');
+async function decouvrirModeles(key) {
+  if (modelesDecouverts) return modelesDecouverts;
+  try {
+    const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', {
+      headers: { 'x-goog-api-key': key }, signal: AbortSignal.timeout(Math.min(1800, restant()))
+    });
+    if (!r.ok) return [];
+    const data = await r.json();
+    const noms = (data.models || [])
+      .filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
+      .map(m => String(m.name || '').replace(/^models\//, ''))
+      .filter(n => /^gemini-[\d.]+-flash/.test(n) && !/image|tts|audio|live|embed|thinking|exp|preview|\d{3,}$/.test(n));
+    const flash = noms.filter(n => !/lite/.test(n)).sort((a, b) => versionDe(b) - versionDe(a));
+    const lite = noms.filter(n => /lite/.test(n)).sort((a, b) => versionDe(b) - versionDe(a));
+    modelesDecouverts = [...flash.slice(0, 2), ...lite.slice(0, 2)];
+    return modelesDecouverts;
+  } catch { return []; }
+}
+
 async function demanderGemini({ systeme, prompt, maxSortie }) {
   const key = env('GEMINI_API_KEY');
-  // Si le quota gratuit du modèle principal est épuisé (429), on bascule sur un modèle plus léger.
-  const modeles = [...new Set([env('GEMINI_MODEL'), 'gemini-2.5-flash', 'gemini-flash-latest', 'gemini-2.5-flash-lite', 'gemini-flash-lite-latest'].filter(Boolean))];
-  let reponse, dernierStatut = 0, modeleUtilise = '';
+  const decouverts = await decouvrirModeles(key);
+  // Si le quota gratuit d'un modèle est épuisé (429) ou s'il n'existe plus (404), on passe au suivant.
+  const modeles = [...new Set([env('GEMINI_MODEL'), ...decouverts, 'gemini-flash-latest', 'gemini-flash-lite-latest', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'].filter(Boolean))];
+  let reponse, dernierStatut = 0, modeleUtilise = '', dernierDetail = '';
   for (const modele of modeles) {
-    const generationConfig = { temperature: 0.2, responseMimeType: 'application/json', maxOutputTokens: maxSortie };
-    if (modele.startsWith('gemini-2.5')) generationConfig.thinkingConfig = { thinkingBudget: 0 };
     if (finAppel - Date.now() < 1000) break;
-    try {
-    reponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modele}:generateContent`, {
-      method: 'POST', signal: delai(),
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: systeme }] },
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        generationConfig
-      })
-    });
-    } catch (e) { throw tropLong(e) ? new ErreurIA('Gemini trop lent à répondre') : e; }
-    dernierStatut = reponse.status; modeleUtilise = modele;
-    // modèle introuvable (404/400) ou quota épuisé (429) → on essaie le suivant
+    // Réflexion réduite au minimum : le pilote doit répondre vite (Netlify coupe à 10 s).
+    const reflexion = /gemini-2\./.test(modele) ? { thinkingBudget: 0 } : { thinkingLevel: 'low' };
+    for (const avecReflexion of [true, false]) {
+      const generationConfig = { temperature: 0.2, responseMimeType: 'application/json', maxOutputTokens: maxSortie + 800 };
+      if (avecReflexion) generationConfig.thinkingConfig = reflexion;
+      try {
+        reponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modele}:generateContent`, {
+          method: 'POST', signal: delai(),
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: systeme }] },
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            generationConfig
+          })
+        });
+      } catch (e) { throw tropLong(e) ? new ErreurIA('Gemini trop lent à répondre') : e; }
+      dernierStatut = reponse.status; modeleUtilise = modele;
+      if (reponse.status === 400 && avecReflexion) { dernierDetail = (await reponse.text()).slice(0, 300); continue; } // réglage refusé : on réessaie sans
+      break;
+    }
+    if (reponse.ok) break;
     if (![400, 404, 429].includes(reponse.status)) break;
+    dernierDetail = (await reponse.text()).slice(0, 300);
   }
   if (!reponse) throw new ErreurIA('l’IA a mis trop de temps à répondre');
   if (!reponse.ok) {
-    const detail = (await reponse.text()).slice(0, 300);
+    const detail = dernierDetail || (await reponse.text().catch(() => '')).slice(0, 300);
     const message = dernierStatut === 429 ? 'quota gratuit Gemini atteint, réessaie dans une minute'
-      : (dernierStatut === 403 || /API key/i.test(detail)) ? 'clé Gemini refusée, vérifie GEMINI_API_KEY'
+      : (dernierStatut === 403 || /API key/i.test(detail)) ? 'clé Gemini refusée, vérifie GEMINI_API_KEY sur Netlify'
       : `Gemini a répondu ${dernierStatut}`;
     throw new ErreurIA(message, detail);
   }
   const data = await reponse.json();
-  const texte = (data?.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('').trim();
+  const texte = (data?.candidates?.[0]?.content?.parts || []).filter(p => !p.thought).map(p => p.text || '').join('').trim();
+  if (!texte) throw new ErreurIA('Gemini a renvoyé une réponse vide');
   return { texte, ia: 'Gemini', modele: modeleUtilise };
 }
 
 // ── Point d'entrée ──────────────────────────────────────────────────────────
+// Gemini (gratuit) passe EN PREMIER. ChatGPT (payant) ne sert que si GEMINI_API_KEY manque,
+// ou si tu ajoutes sur Netlify la variable IA_PRIORITE = openai.
 // Renvoie { texte, ia, modele, avertissement? } ; lève une ErreurIA si aucune IA ne répond.
 export async function demanderIA({ systeme, prompt, maxSortie = 600 }) {
   finAppel = Date.now() + LIMITE_MS;
   const aOpenAI = !!env('OPENAI_API_KEY'), aGemini = !!env('GEMINI_API_KEY');
-  if (!aOpenAI && !aGemini) throw new ErreurIA('aucune clé IA sur Netlify (OPENAI_API_KEY ou GEMINI_API_KEY)');
-  if (aOpenAI) {
-    // S'il y a Gemini en secours, ChatGPT n'a que 5,5 s : il reste du temps pour Gemini.
-    const finTotale = finAppel;
-    if (aGemini) finAppel = Date.now() + 5500;
-    try { return await demanderOpenAI({ systeme, prompt, maxSortie }); }
-    catch (e) {
-      if (!aGemini) throw e;
-      finAppel = finTotale;
-      const secours = await demanderGemini({ systeme, prompt, maxSortie });
-      return { ...secours, avertissement: `ChatGPT indisponible (${e.message}), réponse par Gemini` };
-    }
+  if (!aOpenAI && !aGemini) throw new ErreurIA('aucune clé IA sur Netlify (GEMINI_API_KEY)');
+  const openaiDabord = aOpenAI && (!aGemini || String(env('IA_PRIORITE') || '').toLowerCase() === 'openai');
+  if (!openaiDabord) return demanderGemini({ systeme, prompt, maxSortie });
+  const finTotale = finAppel;
+  if (aGemini) finAppel = Date.now() + 5500;
+  try { return await demanderOpenAI({ systeme, prompt, maxSortie }); }
+  catch (e) {
+    if (!aGemini) throw e;
+    finAppel = finTotale;
+    const secours = await demanderGemini({ systeme, prompt, maxSortie });
+    return { ...secours, avertissement: `ChatGPT indisponible (${e.message}), réponse par Gemini` };
   }
-  return demanderGemini({ systeme, prompt, maxSortie });
 }
 
 // Lit le JSON renvoyé par l'IA (enlève d'éventuels ```json … ```).

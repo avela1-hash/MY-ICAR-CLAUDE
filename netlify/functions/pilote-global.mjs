@@ -12,7 +12,12 @@ const SECTIONS = {
     champs: {
       client: 'texte', modele: 'texte (marque et modèle)', immatriculation: 'texte AA-123-AA',
       statut: ['À chiffrer', 'En attente', 'À planifier', 'En travaux', 'Peinture', 'Prêt à livrer', 'Livré'],
-      priorite: 'entier 1 à 10', montant: 'nombre en euros', notes: 'texte'
+      telephone: 'texte', sinistre: 'texte (ce qui est arrivé)', assurance: 'texte',
+      expertise: ['À prévoir', 'RDV fixé', 'Faite', 'Non nécessaire'],
+      prochaine_action: 'texte', date_action: 'AAAA-MM-JJ',
+      responsable: ['Enzo', 'IB', 'Brahim', 'Aurel', 'Autre'],
+      priorite: 'entier 1 à 10', montant: 'nombre en euros', notes: 'texte',
+      manque: 'LECTURE SEULE : infos encore manquantes dans ce dossier'
     }
   },
   planning: {
@@ -77,6 +82,8 @@ Actions possibles :
 - {"type":"ajouter","section":"prets","valeurs":{...}}
 - {"type":"modifier","section":"vehicules","id":"v3","valeurs":{seulement les champs qui changent}}
 - {"type":"supprimer","section":"taches","id":"t2"}
+- {"type":"retenir","texte":"consigne"} → mémorise une consigne durable quand Aurel dit « retiens que », « à partir de maintenant », « tu dois toujours »
+- {"type":"question","champ":"un champ de vehicules ou autre","question":"la question"} → ajoute une question récurrente à poser pour chaque dossier
 - {"type":"entretien"} → lance l'entretien guidé de création de dossier (seulement si Aurel le demande ou dit qu'il veut « raconter » un nouveau dossier sans donner d'infos)
 
 Règles :
@@ -90,7 +97,11 @@ Règles :
 8. Si la demande est floue, pose UNE question courte sans faire d'action.
 9. La transcription vient d'un micro : ignore le bruit sans rapport (télé, autre personne). Si la phrase n'a aucun sens pour l'atelier, demande-lui de répéter.
 10. Après une action, confirme brièvement ce que tu as fait (ex. « C'est noté, la Clio est prêtée à Monsieur Martin jusqu'à vendredi. »).
-11. Si Aurel dit merci, c'est tout, ou au revoir, réponds brièvement sans action.`;
+11. Si Aurel dit merci, c'est tout, ou au revoir, réponds brièvement sans action.
+12. TON RÔLE PRINCIPAL : remplir les dossiers au fil de la conversation. Dès qu'Aurel donne une info sur un véhicule ou un client, enregistre-la tout de suite (ajouter ou modifier dans vehicules), sans demander la permission. Si aucun dossier ne correspond, crée-le.
+13. Ensuite, regarde la colonne « manque » du dossier dont vous parlez et pose UNE seule question : la première des QUESTIONS RÉCURRENTES qui manque, dite naturellement. S'il répond « passe » ou « je sais pas », passe à la suivante sans y revenir. Les réponses aux questions de champ « autre » vont dans notes, sous la forme « question : réponse ».
+14. Si Aurel demande de compléter les dossiers, prends le plus prioritaire auquel il manque des infos, nomme-le et pose la première question.
+15. Suis toujours les CONSIGNES APPRISES, elles passent avant tes habitudes.`;
 
 const json = (data, status = 200) => new Response(JSON.stringify(data), {
   status,
@@ -125,7 +136,7 @@ function nettoieValeurs(section, valeurs) {
   const def = SECTIONS[section]?.champs || {};
   const propres = {};
   for (const [k, v] of Object.entries(valeurs || {})) {
-    if (!(k in def) || v === null || v === undefined) continue;
+    if (!(k in def) || k === 'manque' || v === null || v === undefined) continue;
     let s = String(v).trim().slice(0, 600);
     if (Array.isArray(def[k]) && s && !def[k].includes(s)) continue; // valeur hors liste → ignorée
     propres[k] = s;
@@ -147,6 +158,10 @@ function nettoieActions(actions) {
       if (Object.keys(valeurs).length) out.push({ type, section: a.section, id: court(a.id, 60), valeurs });
     } else if (type === 'supprimer' && SECTIONS[a.section] && a.id) {
       out.push({ type, section: a.section, id: court(a.id, 60) });
+    } else if (type === 'retenir' && a.texte) {
+      out.push({ type, texte: court(a.texte, 300) });
+    } else if (type === 'question' && a.question) {
+      out.push({ type, champ: court(a.champ || 'autre', 30), question: court(a.question, 200) });
     } else if (type === 'entretien') {
       out.push({ type });
     }
@@ -176,7 +191,19 @@ export default async (req) => {
     .map(m => `${m?.qui === 'aurel' ? 'Aurel' : 'Pilote'} : ${court(m?.texte, 300)}`)
     .join('\n');
 
-  const prompt = `Date et heure : ${court(body.maintenant, 40) || new Date().toISOString()}
+  const edu = body.education && typeof body.education === 'object' ? body.education : {};
+  const questions = (Array.isArray(edu.questions) ? edu.questions : []).slice(0, 25)
+    .map(q => `- ${court(q?.champ, 30)} : ${court(q?.question, 200)}`).join('\n');
+  const consignes = (Array.isArray(edu.consignes) ? edu.consignes : []).slice(0, 30)
+    .map(c => `- ${court(c, 300)}`).join('\n');
+
+  const prompt = `QUESTIONS RÉCURRENTES (dans l'ordre, champ : question) :
+${questions || '(aucune)'}
+
+CONSIGNES APPRISES :
+${consignes || '(aucune)'}
+
+Date et heure : ${court(body.maintenant, 40) || new Date().toISOString()}
 Page affichée : ${PAGES.includes(body.page) ? body.page : 'dashboard'}
 
 Résumé de l'appli : ${resumeCompact(body.resume)}

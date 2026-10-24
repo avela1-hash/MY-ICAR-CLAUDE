@@ -265,10 +265,16 @@ tr:hover td{background:rgba(255,255,255,.012)}
 .pg-text{display:flex;gap:8px}.pg-text input{flex:1;min-width:0;background:#08172b;border:1px solid rgba(157,181,214,.26);border-radius:14px;padding:12px;color:#f3f7ff;font-size:16px}
 .pg-warn{color:#ffd190;background:rgba(243,179,94,.10);border:1px solid rgba(243,179,94,.18);border-radius:13px;padding:9px 11px;font-size:13.5px;line-height:1.4}
 @media(max-width:600px){.pg-panel{right:8px;left:8px;width:auto;bottom:96px;max-height:calc(100vh - 120px)}.pg-fab{right:14px;bottom:98px}}
+.edu-row{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.edu-txt{flex:1;min-width:0;font-size:16px;overflow-wrap:anywhere}.edu-txt small{color:#94a3bf;font-size:12px}
+.edu-sw{width:48px;height:28px;border-radius:99px;border:1px solid rgba(115,224,205,.3);background:rgba(255,255,255,.04);position:relative;flex:0 0 auto}
+.edu-sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#64799a;transition:left .15s}
+.edu-sw.on{background:rgba(115,224,205,.18)}.edu-sw.on::after{left:23px;background:#73e0cd}
+.edu-form{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.edu-form .search{flex:1;min-width:220px}.edu-form .select{width:auto;min-width:180px}
 </style>
 </head>
 <body>
-<div class="topbar"><div class="topbar-inner"><div class="brand"><div class="mark"><img src="data:image/png;base64,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" alt="Logo My I-Car"></div><div><div class="brand-title">My I-Car <span class="ver">V9</span></div><div class="brand-sub">Cockpit atelier • pilotage intelligent de carrosserie</div></div></div><div class="top-badge" id="iaBadge">Pilote IA</div></div></div>
+<div class="topbar"><div class="topbar-inner"><div class="brand"><div class="mark"><img src="data:image/png;base64,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" alt="Logo My I-Car"></div><div><div class="brand-title">My I-Car <span class="ver">V11</span></div><div class="brand-sub">Cockpit atelier • pilotage intelligent de carrosserie</div></div></div><div class="top-badge" id="iaBadge">Pilote IA</div></div></div>
 <div class="wrap">
   <main id="root"></main>
 </div>
@@ -290,10 +296,10 @@ const sections=[
   ['menu','☰','Plus']
 ];
 // Pages rangées sous « Plus » : l'onglet reste allumé quand on y est.
-const MENU_PAGES=['menu','clients','expertises','taches','aide','parametres'];
+const MENU_PAGES=['menu','clients','expertises','taches','aide','parametres','education'];
 const configs={
   expertises:{sing:'expertise',title:'Expertises',cols:[['client','Client'],['immatriculation','Immatriculation'],['date','Date RDV'],['statut','Statut'],['notes','Observations']],fields:[['client','Client','text',1],['immatriculation','Immatriculation','text'],['date','Date de rendez-vous','date'],['statut','Statut','select','',['Sans RDV','RDV fixé','Réalisée','À relancer']],['notes','Observations','textarea']]},
-  vehicules:{sing:'dossier',title:'Dossiers',cols:[['client','Client'],['modele','Véhicule'],['immatriculation','Immatriculation'],['statut','Étape'],['priorite','Priorité']],fields:[['client','Client','text',1],['modele','Modèle','text'],['immatriculation','Immatriculation','text'],['statut','Étape','select','',['À chiffrer','En attente','À planifier','En travaux','Peinture','Prêt à livrer','Livré']],['priorite','Priorité (1 à 10)','number'],['montant','Montant estimé des travaux (€)','number'],['notes','Observations','textarea']]},
+  vehicules:{sing:'dossier',title:'Dossiers',cols:[['client','Client'],['modele','Véhicule'],['immatriculation','Immatriculation'],['statut','Étape'],['priorite','Priorité']],fields:[['client','Client','text',1],['modele','Modèle','text'],['immatriculation','Immatriculation','text'],['statut','Étape','select','',['À chiffrer','En attente','À planifier','En travaux','Peinture','Prêt à livrer','Livré']],['priorite','Priorité (1 à 10)','number'],['telephone','Téléphone client','tel'],['sinistre','Sinistre','text'],['assurance','Assurance','text'],['expertise','Expertise','select','',['À prévoir','RDV fixé','Faite','Non nécessaire']],['prochaine_action','Prochaine action','text'],['date_action','Pour quand','date'],['responsable','Responsable','select','',['Enzo','IB','Brahim','Aurel','Autre']],['montant','Montant estimé des travaux (€)','number'],['notes','Observations','textarea']]},
   prets:{sing:'prêt',title:'Prêts',cols:[['nom','Véhicule de prêt'],['client','Client'],['date_depart','Départ',r=>dateHeure(r.date_depart,r.heure_depart)],['date_retour','Retour prévu',r=>dateHeure(r.date_retour,r.heure_retour)],['statut','Statut',r=>pretEnRetard(r)?'<span class="pill red">En retard</span>':status(r.statut)]],fields:[['nom','Véhicule de prêt','text',1],['client','Client bénéficiaire','text'],['telephone','Téléphone du client','tel'],['date_depart','Date de départ','date'],['heure_depart','Heure de départ','time'],['date_retour','Retour prévu le','date'],['heure_retour','Heure de retour prévue','time'],['statut','Statut','select','',['Disponible','Réservé','Prêté','Retourné']],['km_retour','Kilométrage au retour','number'],['notes','Observations','textarea']]},
   planning:{sing:'rendez-vous',title:'Planning',cols:[['date','Date'],['heure','Heure'],['titre','Intervention / RDV'],['responsable','Responsable'],['statut','Statut']],fields:[['date','Date','date',1],['heure','Heure','time'],['titre','Intervention / RDV','text',1],['responsable','Responsable','select','',['Enzo','IB','Brahim','Aurel','Autre']],['statut','Statut','select','',['Prévu','En cours','Terminé']],['notes','Observations','textarea']]},
   clients:{sing:'client',title:'Clients',cols:[['nom','Nom'],['telephone','Téléphone'],['email','E-mail'],['vehicule','Véhicule'],['notes','Observations']],fields:[['nom','Nom du client','text',1],['telephone','Téléphone','tel'],['email','E-mail','email'],['vehicule','Véhicule','text'],['notes','Observations','textarea']]},
@@ -316,7 +322,7 @@ function load(){
   }catch(e){}
   return clone(initial)
 }
-function save(silent=false){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(db)); if(!silent) toast('Enregistré sur cet appareil');}catch(e){alert('Sauvegarde locale indisponible.')}}
+function save(silent=false){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(db)); if(!silent) toast(sync.etat==='ok'?'Enregistré pour toute l’équipe':'Enregistré');}catch(e){toast('Mémoire du téléphone pleine : exporte une sauvegarde')} if(typeof syncPlus==='function')syncPlus()}
 function toast(t){const e=document.getElementById('toast');e.textContent=t;e.style.display='block';clearTimeout(window.__tt);window.__tt=setTimeout(()=>e.style.display='none',2200)}
 function go(p){page=p;query='';filter='';render()}
 function dateHeure(d,h){if(!d&&!h)return '—';const t=d?d.split('-').reverse().join('/'):'';return esc([t,h].filter(Boolean).join(' à '))}
@@ -385,13 +391,14 @@ function menuPage(){
     ['expertises','⌕','Expertises','Rendez-vous d’expert',db.expertises.length],
     ['taches','✦','Relances','Ce qu’il reste à faire',db.taches.filter(x=>x.statut!=='Terminée').length],
     ['assistant','🎙','Nouveau dossier à la voix','Entretien guidé',''],
+    ['education','🎓','Éduquer le pilote','Ses questions et tes consignes',''],
     ['parametres','⇩','Sauvegardes','Exporter, importer, effacer',''],
     ['aide','?','Guide','Comment se servir de l’appli','']
   ];
   return header('Toute l’appli','Touche une rubrique pour l’ouvrir.')+`<div class="menu-grid">${tuiles.map(([p,i,t,d,n])=>`<button class="card menu-tile" onclick="go('${p}')"><span class="menu-ico">${i}</span><span class="menu-txt"><strong>${t}</strong><small>${d}</small></span>${n!==''?`<span class="menu-count">${n}</span>`:''}</button>`).join('')}</div></section>`;
 }
 function help(){return header('Guide de démarrage','Un parcours simple pour comprendre l’application sans jargon.')+`<div class="notice" style="margin-bottom:16px"><b>But de cette version :</b> t’offrir une interface sombre, premium, très lisible, qui met en avant ce qui compte vraiment dans le garage.</div><div class="help-grid"><div class="card step-card"><div class="step-num">1</div><h3>Commence par les dossiers</h3><p>Ajoute les véhicules dans “Dossiers” pour suivre où ils en sont : attente, planification, travaux, peinture, livraison.</p></div><div class="card step-card"><div class="step-num">2</div><h3>Utilise le cockpit</h3><p>Le cockpit fait ressortir les points à risque et les alertes du flux atelier. Il t’aide à voir tout de suite ce qui bloque.</p></div><div class="card step-card"><div class="step-num">3</div><h3>Prépare la journée</h3><p>Le planning et les signaux du pilote permettent d’anticiper demain et de limiter les oublis.</p></div><div class="card step-card"><div class="step-num">4</div><h3>Sauvegarde localement</h3><p>Pour l’instant, tes données restent sur cet appareil. Pense à exporter régulièrement dans les paramètres.</p></div></div></section>`}
-function settings(){return header('Paramètres','Sauvegarder, importer, exporter ou remettre à zéro la démonstration.')+`<div class="settings-grid"><div class="card settings-card"><h3>Sauvegardes</h3><p>Les données sont enregistrées localement sur cet appareil et dans ce navigateur. Tu peux exporter un fichier JSON pour conserver ton test.</p><div class="buttons" style="justify-content:flex-start"><button class="btn btn-primary" onclick="exportData()">↓ Exporter</button><button class="btn btn-dark" onclick="document.getElementById('importFile').click()">↑ Importer</button><input id="importFile" type="file" accept=".json,application/json" hidden onchange="importData(event)"></div></div><div class="card settings-card"><h3>Réinitialisation</h3><p>Si tu veux refaire un essai propre avec le nouveau design, tu peux effacer les données locales.</p><div class="buttons" style="justify-content:flex-start"><button class="btn btn-dark" style="border-color:rgba(221,115,130,.2);color:#ffc3ce;background:rgba(221,115,130,.12)" onclick="resetAll()">Effacer les données</button></div></div></div></section>`}
+function settings(){return header('Paramètres','Sauvegarder, importer ou exporter les données de l’atelier.')+`<div class="settings-grid">${syncCarte()}<div class="card settings-card"><h3>Sauvegardes</h3><p>Les données sont enregistrées localement sur cet appareil et dans ce navigateur. Tu peux exporter un fichier JSON pour conserver ton test.</p><div class="buttons" style="justify-content:flex-start"><button class="btn btn-primary" onclick="exportData()">↓ Exporter</button><button class="btn btn-dark" onclick="document.getElementById('importFile').click()">↑ Importer</button><input id="importFile" type="file" accept=".json,application/json" hidden onchange="importData(event)"></div></div><div class="card settings-card"><h3>Réinitialisation</h3><p>Si tu veux refaire un essai propre avec le nouveau design, tu peux effacer les données locales.</p><div class="buttons" style="justify-content:flex-start"><button class="btn btn-dark" style="border-color:rgba(221,115,130,.2);color:#ffc3ce;background:rgba(221,115,130,.12)" onclick="resetAll()">Effacer les données</button></div></div></div></section>`}
 function edit(section,id=''){
   const c=configs[section], obj=db[section].find(x=>x.id===id)||{};
   const fields=c.fields.map(([key,label,type,required,opts])=>`<div class="field"><label for="f_${key}">${label}</label>${type==='textarea'?`<textarea id="f_${key}" name="${key}">${esc(obj[key])}</textarea>`:type==='select'?`<select id="f_${key}" name="${key}"><option value="">Choisir…</option>${opts.map(v=>`<option value="${esc(v)}" ${v===obj[key]?'selected':''}>${esc(v)}</option>`).join('')}</select>`:`<input id="f_${key}" name="${key}" type="${type}" value="${esc(obj[key])}" ${required?'required':''}>`}</div>`).join('');
@@ -403,7 +410,7 @@ function removeItem(section,id){if(confirm('Supprimer définitivement cet élém
 function exportData(){const a=document.createElement('a'); const blob=new Blob([JSON.stringify({app:'My I-Car',version:8,data:db,exportedAt:new Date().toISOString()},null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); a.href=url; a.download='my-icar-v8-sauvegarde-'+new Date().toISOString().slice(0,10)+'.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1200)}
 async function importData(e){const f=e.target.files[0]; if(!f) return; try{const d=JSON.parse(await f.text()); const raw=d.data||d; if(!Object.keys(initial).every(k=>Array.isArray(raw[k]))) throw Error('Structure invalide'); if(!confirm('Remplacer toutes les données locales ?')) return; db=raw; save(true); render(); toast('Import terminé')}catch(err){alert('Fichier invalide : '+err.message)}}
 function resetAll(){if(confirm('Effacer toutes les données locales de My I-Car V8 ?')){db=clone(initial); save(true); render(); toast('Données effacées')}}
-function render(){bottomNav(); const root=document.getElementById('root'); if(page==='dashboard') root.innerHTML=dashboard(); else if(['vehicules','planning','prets','taches','expertises','clients'].includes(page)) root.innerHTML=listing(page); else if(page==='assistant') root.innerHTML=assistantPage(); else if(page==='aide') root.innerHTML=help(); else if(page==='menu') root.innerHTML=menuPage(); else root.innerHTML=settings(); window.scrollTo(0,0);}
+function render(){bottomNav(); const root=document.getElementById('root'); if(page==='dashboard') root.innerHTML=dashboard(); else if(['vehicules','planning','prets','taches','expertises','clients'].includes(page)) root.innerHTML=listing(page); else if(page==='assistant') root.innerHTML=assistantPage(); else if(page==='aide') root.innerHTML=help(); else if(page==='menu') root.innerHTML=menuPage(); else if(page==='education') root.innerHTML=eduPage(); else root.innerHTML=settings(); window.scrollTo(0,0);}
 
 // V8 - Pilote IA : la conversation passe par la fonction Netlify /api/pilote (Gemini, clé cachée côté serveur).
 // Si l'IA est injoignable (fichier ouvert en local, quota atteint…), le pilote repasse sur les règles locales de la V7.
@@ -661,8 +668,7 @@ function assistantPage(){
   ${voice.transcript?`<div class="voice-transcript">Dernière réponse : « ${esc(voice.transcript)} »</div>`:''}`;
   return `<section class="hero"><div class="kicker">✦ Copilote de dossier</div><h1>Parle. Je construis le dossier.</h1><p>Une information à la fois, sans perdre le fil. Le pilote prépare la fiche et te demande confirmation avant de l’enregistrer.</p></section><div class="voice-shell"><section class="voice-panel"><div class="kicker">🎙️ Entretien guidé</div><div class="voice-title">${voice.phase==='review'?'Vérification finale':voice.phase==='saved'?'Dossier prêt':'Création interactive'}</div>${content}${voice.error?`<div class="voice-warning">⚠ ${esc(voice.error)}</div>`:''}</section><aside class="voice-panel voice-side"><h3>Comment ça marche ?</h3><div class="voice-feature">1. Tu racontes le dossier à ta façon.</div><div class="voice-feature">2. Le pilote IA comprend tout ce que tu dis, même plusieurs infos d’un coup.</div><div class="voice-feature">3. Il pose seulement les questions qui manquent.</div><div class="voice-feature">4. Il te montre le récap, tu corriges en parlant, puis tu confirmes.</div><p>${voice.aiOff?'⚠ Pilote IA injoignable pour l’instant : questions classiques (règles locales).':'Le pilote utilise l’IA (ChatGPT, ou Gemini en secours) via ton site Netlify. Tes clés restent cachées sur le serveur.'}</p><p>${micOK?'✅ Reconnaissance vocale détectée dans ce navigateur.':'⚠ Reconnaissance vocale indisponible dans ce navigateur. La saisie écrite reste utilisable.'}</p><p>Le navigateur peut demander l’autorisation d’utiliser le micro. Selon l’appareil, tu devras retoucher le bouton micro à chaque réponse.</p><div class="voice-tip">Tu peux dire « passe », « je ne sais pas », « annuler » ou « enregistre » lors de la confirmation.</div><div class="voice-controls"><button class="btn btn-dark" onclick="go('expertises')">Expertises</button><button class="btn btn-dark" onclick="go('clients')">Clients</button><button class="btn btn-dark" onclick="go('taches')">Relances</button><button class="btn btn-dark" onclick="go('parametres')">Sauvegardes</button></div></aside></div>`;
 }
-// Ajoute un montant estimé saisissable ; un portefeuille vide affiche 0 et non un montant fictif.
-configs.vehicules.fields.push(['montant','Montant estimé (€)','number']);
+
 
 // ───────────────────────────────────────────────────────────────────────────
 // V9 — PILOTE GLOBAL À VOIX HAUTE
@@ -672,7 +678,7 @@ configs.vehicules.fields.push(['montant','Montant estimé (€)','number']);
 // Les suppressions demandent une confirmation ; chaque changement peut être annulé.
 // ───────────────────────────────────────────────────────────────────────────
 const GLOBAL_URL='/api/pilote-global';
-const PG_PAGES=['dashboard','vehicules','planning','prets','taches','clients','expertises','assistant','aide','parametres'];
+const PG_PAGES=['dashboard','vehicules','planning','prets','taches','clients','expertises','assistant','aide','parametres','education'];
 const pg={open:false,listening:false,thinking:false,mainsLibres:true,log:[],pending:null,undo:null,error:'',recognition:null};
 const PG_EXEMPLES=['Quelles voitures de prêt sont disponibles ?','Qu’est-ce que j’ai demain au planning ?','Prête la Clio à Monsieur Martin jusqu’à vendredi','Passe le dossier Dupont en peinture'];
 
@@ -747,7 +753,7 @@ async function pgSend(t){
   try{
     const ctrl=new AbortController();const timer=setTimeout(()=>ctrl.abort(),30000);
     const r=await fetch(GLOBAL_URL,{method:'POST',headers:{'Content-Type':'application/json'},signal:ctrl.signal,
-      body:JSON.stringify({phrase:t,historique,page,maintenant:pgMaintenant(),resume:ctx.resume,donnees:ctx.donnees})});
+      body:JSON.stringify({phrase:t,historique,page,maintenant:pgMaintenant(),resume:ctx.resume,donnees:ctx.donnees,education:{questions:eduActives(),consignes:edu().consignes}})});
     clearTimeout(timer);
     const brut=await r.text();let d;
     try{d=JSON.parse(brut)}catch{d={erreur:r.status===404?'fonction serveur introuvable (404) : le site n’a pas été redéployé':(r.status===502||r.status===504||/timed out|timeout/i.test(brut))?'le serveur a dépassé 10 secondes ('+r.status+')':'réponse illisible du serveur ('+r.status+' : '+brut.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim().slice(0,80)+')'}}
@@ -786,7 +792,7 @@ const PG_MOTS_SECTION={
 };
 const PG_STOP=new Set(('ai as es eu vu nos vos ici voir liste besoin faudrait avez avons sait sais the les des une est pour dans avec que qui quoi quel quelle quelles quels mon mes ton tes son ses sur pas plus moi toi lui leur elle ils elles fait faire fais mets met mettre passe passer ajoute ajouter supprime supprimer enleve montre affiche ouvre donne dis dit peux veux voudrais faut combien comment quand est cest ce cet cette ces tout tous toute toutes rien aussi alors bien deja encore apres avant jusqu jusqua demain aujourd hui matin soir semaine prochain prochaine dernier derniere lundi mardi mercredi jeudi vendredi samedi dimanche heure heures dossier dossiers vehicule vehicules voiture voitures pret prets prete preter client clients cliente monsieur madame mme planning rendez vous rdv relance relances tache taches expertise expertises statut priorite numero telephone disponible disponibles dispo libre etat point chez par deux trois oui non merci stp sil plait nouveau nouvelle change changer modifie modifier annule rentre rentree rendu revenu ramene qu il elle on je tu nous en et le la de du un au aux ou si ne se me te ma ta sa ca y a ya avoir etre sont ont va vont doit dois peut').split(' '));
 const PG_REF={vehicules:'v',planning:'r',prets:'p',taches:'t',clients:'c',expertises:'e'};
-const PG_CHAMPS={vehicules:['client','modele','immatriculation','statut','priorite','montant','notes'],planning:['date','heure','titre','responsable','statut'],prets:['nom','client','date_depart','date_retour','statut','notes'],taches:['titre','client','echeance','responsable','statut'],clients:['nom','telephone','email','vehicule'],expertises:['client','immatriculation','date','statut']};
+const PG_CHAMPS={vehicules:['client','modele','immatriculation','statut','telephone','sinistre','assurance','expertise','prochaine_action','date_action','responsable','priorite','montant','notes','manque'],planning:['date','heure','titre','responsable','statut'],prets:['nom','client','date_depart','date_retour','statut','notes'],taches:['titre','client','echeance','responsable','statut'],clients:['nom','telephone','email','vehicule'],expertises:['client','immatriculation','date','statut']};
 const PG_FINI={vehicules:'Livré',planning:'Terminé',prets:'Retourné',taches:'Terminée',expertises:'Réalisée'};
 
 function pgDecale(n){const d=new Date();d.setDate(d.getDate()+n);return localISO(d)}
@@ -887,7 +893,8 @@ function pgContexte(t){
     donnees[sec]=[...m.values()].map(el=>{
       const ref=PG_REF[sec]+(++i);refs[ref]=el.id;
       const r={id:ref};
-      for(const c of PG_CHAMPS[sec]){const v=el[c];if(v!==undefined&&v!==null&&String(v).trim())r[c]=c==='notes'?String(v).replace(/\s+/g,' ').slice(0,90):String(v)}
+      const el2=sec==='vehicules'?{...el,manque:eduManque(el).map(q=>q.champ).join(', ')}:el;
+      for(const c of PG_CHAMPS[sec]){const v=el2[c];if(v!==undefined&&v!==null&&String(v).trim())r[c]=c==='notes'?String(v).replace(/\s+/g,' ').slice(0,90):String(v)}
       return r;
     });
   }
@@ -944,6 +951,8 @@ function pgApply(actions){
   const avant=clone(db);let n=0,nav=null;
   for(const a of actions||[]){
     if(a.type==='aller'&&PG_PAGES.includes(a.page)){nav=a;continue}
+    if(a.type==='retenir'&&a.texte){edu().consignes.push(String(a.texte).slice(0,300));n++;continue}
+    if(a.type==='question'&&a.question){edu().questions.push({champ:EDU_CHAMPS[a.champ]?a.champ:'autre',question:String(a.question).slice(0,200),actif:true});n++;continue}
     const c=configs[a.section];if(!c)continue;
     const permis=c.fields.map(f=>f[0]);
     const vals={};for(const [k,v] of Object.entries(a.valeurs||{}))if(permis.includes(k))vals[k]=String(v);
@@ -986,8 +995,139 @@ function pgRender(){
   const l=document.getElementById('pgLog');if(l)l.scrollTop=l.scrollHeight;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// V11 — ÉDUCATION DU PILOTE : questions récurrentes + consignes (partagées avec l'équipe)
+// ─────────────────────────────────────────────────────────────────────────────
+const EDU_CHAMPS={client:'Client',modele:'Véhicule',immatriculation:'Immatriculation',telephone:'Téléphone',sinistre:'Sinistre',assurance:'Assurance',expertise:'Expertise',prochaine_action:'Prochaine action',date_action:'Pour quand',responsable:'Responsable',priorite:'Priorité',montant:'Montant',autre:'Autre (rangé dans les observations)'};
+const EDU_DEFAUT={questions:[
+  {champ:'client',question:'Comment s’appelle le client ?',actif:true},
+  {champ:'modele',question:'Quelle marque et quel modèle ?',actif:true},
+  {champ:'immatriculation',question:'Tu as la plaque ?',actif:true},
+  {champ:'telephone',question:'Le numéro du client ?',actif:true},
+  {champ:'sinistre',question:'Qu’est-ce qui est arrivé à la voiture ?',actif:true},
+  {champ:'assurance',question:'C’est quelle assurance ?',actif:true},
+  {champ:'expertise',question:'L’expertise est faite, prévue, ou pas besoin ?',actif:true},
+  {champ:'prochaine_action',question:'C’est quoi la prochaine chose à faire ?',actif:true},
+  {champ:'date_action',question:'Pour quand ?',actif:true},
+  {champ:'priorite',question:'Priorité de 1 à 10 ?',actif:false},
+  {champ:'montant',question:'Tu as une idée du montant ?',actif:false}
+],consignes:['Réponses courtes, on se tutoie.','Une seule question à la fois.']};
+function edu(){if(!db.education||!Array.isArray(db.education.questions)||!Array.isArray(db.education.consignes))db.education=clone(EDU_DEFAUT);return db.education}
+function eduActives(){return edu().questions.filter(q=>q.actif).map(q=>({champ:q.champ,question:q.question}))}
+function eduManque(el){return edu().questions.filter(q=>q.actif&&(q.champ==='autre'?!String(el.notes||'').toLowerCase().includes(String(q.question).toLowerCase().slice(0,18)):!String(el[q.champ]??'').trim()))}
+function eduSave(){save(true);render()}
+function eduToggle(i){const q=edu().questions[i];if(q){q.actif=!q.actif;eduSave()}}
+function eduUp(i){const Q=edu().questions;if(i>0){[Q[i-1],Q[i]]=[Q[i],Q[i-1]];eduSave()}}
+function eduDel(i){edu().questions.splice(i,1);eduSave()}
+function eduDelC(i){edu().consignes.splice(i,1);eduSave()}
+function eduAddQ(e){e.preventDefault();const f=e.target;const q=f.q.value.trim();if(!q){toast('Écris la question');return}edu().questions.push({champ:f.c.value||'autre',question:q.slice(0,200),actif:true});eduSave();toast('Question ajoutée')}
+function eduAddC(e){e.preventDefault();const t=e.target.t.value.trim();if(!t)return;edu().consignes.push(t.slice(0,300));eduSave();toast('Consigne retenue')}
+function eduReset(){if(confirm('Remettre les questions et consignes de départ ?')){db.education=clone(EDU_DEFAUT);eduSave()}}
+function eduPage(){
+  const E=edu();
+  const incomplets=db.vehicules.filter(v=>v.statut!=='Livré'&&eduManque(v).length).length;
+  return header('🎓 Éduquer le pilote','Le pilote pose ces questions, une par une, dès qu’un dossier n’a pas la réponse. Tu peux aussi lui dire « retiens que… » en parlant.')+
+  `<div class="notice" style="margin-bottom:16px">${incomplets} dossier(s) en cours ont encore des réponses manquantes. Dis au pilote « complète les dossiers ».</div>
+  <div class="card" style="padding:18px;margin-bottom:16px"><h3 style="margin:0 0 10px">Questions récurrentes</h3>
+  ${E.questions.map((q,i)=>`<div class="edu-row"><button class="edu-sw ${q.actif?'on':''}" onclick="eduToggle(${i})" aria-label="${q.actif?'Désactiver':'Activer'}"></button><div class="edu-txt"><div>${esc(q.question)}</div><small>${esc(EDU_CHAMPS[q.champ]||q.champ)}</small></div><button class="btn-mini btn-edit" onclick="eduUp(${i})" aria-label="Monter">↑</button><button class="btn-mini btn-del" onclick="eduDel(${i})" aria-label="Supprimer">✕</button></div>`).join('')}
+  <form class="edu-form" onsubmit="eduAddQ(event)"><input name="q" class="search" placeholder="Nouvelle question (ex : Le client a besoin d’une voiture de prêt ?)"><select name="c" class="select">${Object.entries(EDU_CHAMPS).map(([k,l])=>`<option value="${k}" ${k==='autre'?'selected':''}>${esc(l)}</option>`).join('')}</select><button class="btn btn-primary">+ Ajouter</button></form></div>
+  <div class="card" style="padding:18px"><h3 style="margin:0 0 10px">Consignes que le pilote suit toujours</h3>
+  ${E.consignes.map((c,i)=>`<div class="edu-row"><div class="edu-txt">${esc(c)}</div><button class="btn-mini btn-del" onclick="eduDelC(${i})" aria-label="Supprimer">✕</button></div>`).join('')||'<p class="t-muted">Aucune consigne.</p>'}
+  <form class="edu-form" onsubmit="eduAddC(event)"><input name="t" class="search" placeholder="Ex : quand je dis grêle, mets une relance assurance à J+2"><button class="btn btn-primary">+ Ajouter</button></form>
+  <div class="buttons" style="justify-content:flex-start"><button class="btn btn-dark" onclick="eduReset()">Remettre par défaut</button></div></div></section>`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// V11 — BASE PARTAGÉE : tout le monde voit les mêmes données (Netlify Blobs)
+// ─────────────────────────────────────────────────────────────────────────────
+var sync={etat:'off',code:'',base:null,timer:null,enCours:false,encore:false,derniere:''};
+const SYNC_SECS=['expertises','vehicules','prets','clients','taches','planning'];
+try{sync.code=localStorage.getItem('myicar_code')||'';sync.base=JSON.parse(localStorage.getItem('myicar_base')||'null')}catch(e){}
+function syncPlus(){if(!sync.code)return;clearTimeout(sync.timer);sync.timer=setTimeout(syncNow,700)}
+function syncMarque(){
+  const base=sync.base||{},now=new Date().toISOString();db.supprimes=db.supprimes||{};
+  for(const sec of SYNC_SECS){
+    const avant=new Map((base[sec]||[]).map(x=>[x.id,JSON.stringify(x)]));
+    for(const el of db[sec]||[]){if(!el.id)el.id=pgId();const p=avant.get(el.id);if(p===undefined||p!==JSON.stringify(el))el.maj=now}
+    const ids=new Set((db[sec]||[]).map(x=>x.id));
+    for(const x of base[sec]||[])if(!ids.has(x.id))db.supprimes[x.id]=now;
+  }
+  if(JSON.stringify(db.education||null)!==JSON.stringify(base.education||null))db.educationMaj=now;
+}
+function syncFusion(a,b){
+  b=b||{};const out={...clone(initial)};
+  const supp={...(b.supprimes||{})};for(const [k,v] of Object.entries(a.supprimes||{}))if(!supp[k]||v>supp[k])supp[k]=v;
+  const limite=new Date(Date.now()-90*864e5).toISOString();
+  for(const k of Object.keys(supp))if(supp[k]<limite)delete supp[k];
+  for(const sec of SYNC_SECS){
+    const m=new Map();
+    for(const el of b[sec]||[])if(el&&el.id)m.set(el.id,el);
+    for(const el of a[sec]||[]){if(!el||!el.id)continue;const s=m.get(el.id);if(!s||String(el.maj||'')>String(s.maj||''))m.set(el.id,el)}
+    out[sec]=[...m.values()].filter(el=>!(supp[el.id]&&supp[el.id]>=String(el.maj||'')));
+  }
+  out.supprimes=supp;
+  const eduA=String(a.educationMaj||''),eduB=String(b.educationMaj||'');
+  const prendA=a.education&&(!b.education||eduA>eduB);
+  out.education=clone(prendA?a.education:(b.education||a.education||EDU_DEFAUT));out.educationMaj=prendA?eduA:(eduB||eduA);
+  return out;
+}
+async function syncApi(methode,corps){
+  const r=await fetch('/api/donnees',{method:methode,cache:'no-store',headers:{'Content-Type':'application/json','x-code-equipe':sync.code},body:corps?JSON.stringify(corps):undefined});
+  let d={};try{d=await r.json()}catch(e){}
+  return{status:r.status,d};
+}
+function syncTranquille(){const a=document.activeElement;return !document.getElementById('modalhost').innerHTML&&!(a&&a.closest&&a.closest('#root')&&/INPUT|TEXTAREA|SELECT/.test(a.tagName))}
+async function syncNow(){
+  if(!sync.code)return;
+  if(sync.enCours){sync.encore=true;return}
+  sync.enCours=true;
+  try{
+    syncMarque();
+    for(let essai=0;essai<4;essai++){
+      const g=await syncApi('GET');
+      if(g.status===401){sync.etat='code';syncBadge();syncDemanderCode('Ce code d’équipe n’est pas le bon.');return}
+      if(g.status===503){sync.etat='nonconfig';return}
+      if(g.status!==200)throw Error('serveur '+g.status);
+      const serveur=g.d.data||null;
+      const fusion=syncFusion(db,serveur);
+      if(JSON.stringify(fusion)!==JSON.stringify(serveur)){
+        const p=await syncApi('PUT',{version:g.d.version||0,data:fusion});
+        if(p.status===409)continue;
+        if(p.status!==200)throw Error('serveur '+p.status);
+      }
+      const change=JSON.stringify(fusion)!==JSON.stringify(db);
+      db=fusion;sync.base=clone(fusion);
+      try{localStorage.setItem(STORAGE_KEY,JSON.stringify(db));localStorage.setItem('myicar_base',JSON.stringify(sync.base))}catch(e){}
+      sync.etat='ok';sync.derniere=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+      if(change&&syncTranquille())render();
+      return;
+    }
+    throw Error('trop d’enregistrements simultanés');
+  }catch(e){sync.etat='horsligne'}
+  finally{sync.enCours=false;syncBadge();if(sync.encore){sync.encore=false;syncPlus()}}
+}
+function syncBadge(){
+  const t={ok:'🟢 Partagé avec l’équipe',horsligne:'🟠 Hors ligne · enregistré sur le téléphone',code:'🔒 Code d’équipe à saisir',nonconfig:'⚪ Base partagée pas encore activée',off:'⚪ Sur ce téléphone seulement'}[sync.etat]||'';
+  const e=document.querySelector('.brand-sub');if(e)e.textContent=t;
+}
+function syncDemanderCode(msg=''){
+  document.getElementById('modalhost').innerHTML=`<div class="modalback"><div class="modal"><h2>🔒 Code d’équipe</h2><p class="t-muted" style="font-size:16px;line-height:1.5">Ce code protège les données de l’atelier. Il est le même pour Aurel, Enzo et Brahim.</p>${msg?`<div class="voice-warning">${esc(msg)}</div>`:''}<form onsubmit="syncValiderCode(event)"><div class="field"><input id="codeEq" type="password" autocomplete="current-password" placeholder="Code d’équipe" style="font-size:20px"></div><div class="buttons"><button type="button" class="btn btn-dark" onclick="closeModal();sync.etat=sync.code?sync.etat:'off';syncBadge()">Plus tard</button><button class="btn btn-primary">Valider</button></div></form></div></div>`;
+  setTimeout(()=>document.getElementById('codeEq')?.focus(),50);
+}
+function syncValiderCode(e){e.preventDefault();const v=document.getElementById('codeEq').value.trim();if(!v)return;sync.code=v;try{localStorage.setItem('myicar_code',v)}catch(_){}closeModal();toast('Connexion à la base…');syncNow()}
+function syncOublier(){if(!confirm('Déconnecter ce téléphone de la base partagée ? Les données restent sur le téléphone.'))return;sync.code='';sync.etat='off';try{localStorage.removeItem('myicar_code')}catch(e){}syncBadge();render()}
+function syncCarte(){
+  const etat={ok:'Les données sont partagées en direct avec toute l’équipe. Dernière synchro : '+sync.derniere+'.',horsligne:'Pas de réseau pour l’instant. Tout est gardé sur le téléphone et partira dès le retour du réseau.',code:'Saisis le code d’équipe pour rejoindre la base partagée.',nonconfig:'La base partagée n’est pas encore activée sur Netlify : il faut créer la variable CODE_EQUIPE.',off:'Ce téléphone n’est pas relié à la base partagée.'}[sync.etat];
+  return `<div class="card settings-card"><h3>Base partagée</h3><p>${esc(etat)}</p><div class="buttons" style="justify-content:flex-start">${sync.code?`<button class="btn btn-primary" onclick="syncNow().then(render)">⟳ Synchroniser</button><button class="btn btn-dark" onclick="syncOublier()">Déconnecter</button>`:`<button class="btn btn-primary" onclick="syncDemanderCode()">🔒 Saisir le code d’équipe</button>`}</div></div>`;
+}
+setInterval(()=>{if(document.visibilityState==='visible')syncNow()},20000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')syncNow()});
+window.addEventListener('online',()=>syncNow());
+
 render();
 pgRender();
+syncBadge();
+if(sync.code)syncNow();else syncDemanderCode();
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('/sw.js').catch(()=>{});
 setInterval(()=>{if(page==='dashboard'&&!document.getElementById('modalhost').innerHTML)render()},60000);
 </script>
