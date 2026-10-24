@@ -1,6 +1,6 @@
 // My I-Car : rend l'appli installable et permet de l'ouvrir même sans réseau.
 // Toujours la dernière version quand il y a du réseau ; l'IA (/api/) n'est jamais mise en cache.
-const CACHE = 'myicar-v11';
+const CACHE = 'myicar-v12';
 const BASE = ['/', '/index.html', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(BASE)).then(() => self.skipWaiting()));

@@ -158,6 +158,16 @@ tr:hover td{background:rgba(255,255,255,.012)}
 .field{margin-bottom:14px}
 .field label{display:block;font-size:14px;font-weight:900;color:#d5e4fb;margin-bottom:8px}
 .field textarea{min-height:100px;resize:vertical}
+.contrat{background:#f4f1e8;color:#1a1a1a;border-radius:16px;padding:16px;font-size:15px;line-height:1.55;margin:4px 0 14px}
+.contrat h3{margin:0 0 6px;color:#1a1a1a}
+.sig-titre{font-size:14px;font-weight:900;color:#d5e4fb;margin:4px 0 8px}
+.sig-wrap{border:2px dashed var(--amber);border-radius:16px;background:#fff;position:relative;touch-action:none}
+.sig-wrap.done{border:2px solid var(--green)}
+.sig-wrap canvas{display:block;width:100%;height:180px;touch-action:none}
+.sig-ph{position:absolute;inset:0;display:grid;place-items:center;color:#9a8f7a;font-weight:800;pointer-events:none}
+.sig-img{background:#fff;border-radius:12px;max-height:120px;max-width:100%;display:block;margin-bottom:8px}
+.photo-permis{max-height:180px;max-width:100%;border-radius:12px;border:1px solid var(--line);margin-top:8px;display:block}
+.sms-texte{white-space:pre-wrap;user-select:all;background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:14px;font-size:15px;line-height:1.5}
 .buttons{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-top:20px}
 .notice{padding:18px;border-radius:20px;background:linear-gradient(180deg,rgba(19,43,56,.9),rgba(14,34,48,.88));border:1px solid rgba(115,224,205,.18);color:#d2edf0;font-size:16px;line-height:1.6}
 .help-grid,.settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
@@ -274,7 +284,7 @@ tr:hover td{background:rgba(255,255,255,.012)}
 </style>
 </head>
 <body>
-<div class="topbar"><div class="topbar-inner"><div class="brand"><div class="mark"><img src="data:image/png;base64,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" alt="Logo My I-Car"></div><div><div class="brand-title">My I-Car <span class="ver">V11</span></div><div class="brand-sub">Cockpit atelier • pilotage intelligent de carrosserie</div></div></div><div class="top-badge" id="iaBadge">Pilote IA</div></div></div>
+<div class="topbar"><div class="topbar-inner"><div class="brand"><div class="mark"><img src="data:image/png;base64,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" alt="Logo My I-Car"></div><div><div class="brand-title">My I-Car <span class="ver">V12</span></div><div class="brand-sub">Cockpit atelier • pilotage intelligent de carrosserie</div></div></div><div class="top-badge" id="iaBadge">Pilote IA</div></div></div>
 <div class="wrap">
   <main id="root"></main>
 </div>
@@ -300,7 +310,7 @@ const MENU_PAGES=['menu','clients','expertises','taches','aide','parametres','ed
 const configs={
   expertises:{sing:'expertise',title:'Expertises',cols:[['client','Client'],['immatriculation','Immatriculation'],['date','Date RDV'],['statut','Statut'],['notes','Observations']],fields:[['client','Client','text',1],['immatriculation','Immatriculation','text'],['date','Date de rendez-vous','date'],['statut','Statut','select','',['Sans RDV','RDV fixé','Réalisée','À relancer']],['notes','Observations','textarea']]},
   vehicules:{sing:'dossier',title:'Dossiers',cols:[['client','Client'],['modele','Véhicule'],['immatriculation','Immatriculation'],['statut','Étape'],['priorite','Priorité']],fields:[['client','Client','text',1],['modele','Modèle','text'],['immatriculation','Immatriculation','text'],['statut','Étape','select','',['À chiffrer','En attente','À planifier','En travaux','Peinture','Prêt à livrer','Livré']],['priorite','Priorité (1 à 10)','number'],['telephone','Téléphone client','tel'],['sinistre','Sinistre','text'],['assurance','Assurance','text'],['expertise','Expertise','select','',['À prévoir','RDV fixé','Faite','Non nécessaire']],['prochaine_action','Prochaine action','text'],['date_action','Pour quand','date'],['responsable','Responsable','select','',['Enzo','IB','Brahim','Aurel','Autre']],['montant','Montant estimé des travaux (€)','number'],['notes','Observations','textarea']]},
-  prets:{sing:'prêt',title:'Prêts',cols:[['nom','Véhicule de prêt'],['client','Client'],['date_depart','Départ',r=>dateHeure(r.date_depart,r.heure_depart)],['date_retour','Retour prévu',r=>dateHeure(r.date_retour,r.heure_retour)],['statut','Statut',r=>pretEnRetard(r)?'<span class="pill red">En retard</span>':status(r.statut)]],fields:[['nom','Véhicule de prêt','text',1],['client','Client bénéficiaire','text'],['telephone','Téléphone du client','tel'],['date_depart','Date de départ','date'],['heure_depart','Heure de départ','time'],['date_retour','Retour prévu le','date'],['heure_retour','Heure de retour prévue','time'],['statut','Statut','select','',['Disponible','Réservé','Prêté','Retourné']],['km_retour','Kilométrage au retour','number'],['notes','Observations','textarea']]},
+  prets:{sing:'prêt',title:'Prêts',cols:[['nom','Véhicule de prêt'],['client','Client'],['date_depart','Départ',r=>dateHeure(r.date_depart,r.heure_depart)],['date_retour','Retour prévu',r=>dateHeure(r.date_retour,r.heure_retour)],['statut','Statut',r=>pretEnRetard(r)?'<span class="pill red">En retard</span>':status(r.statut)],['signature','Contrat',r=>r.signature?'<span class="pill green">✍️ Signé</span>':r.statut==='Prêté'?'<span class="pill red">Non signé</span>':'—']],fields:[['nom','Véhicule de prêt','text',1],['client','Client bénéficiaire','text'],['telephone','Téléphone du client','tel'],['date_depart','Date de départ','date'],['heure_depart','Heure de départ','time'],['date_retour','Retour prévu le','date'],['heure_retour','Heure de retour prévue','time'],['statut','Statut','select','',['Disponible','Réservé','Prêté','Retourné']],['km_retour','Kilométrage au retour','number'],['notes','Observations','textarea']]},
   planning:{sing:'rendez-vous',title:'Planning',cols:[['date','Date'],['heure','Heure'],['titre','Intervention / RDV'],['responsable','Responsable'],['statut','Statut']],fields:[['date','Date','date',1],['heure','Heure','time'],['titre','Intervention / RDV','text',1],['responsable','Responsable','select','',['Enzo','IB','Brahim','Aurel','Autre']],['statut','Statut','select','',['Prévu','En cours','Terminé']],['notes','Observations','textarea']]},
   clients:{sing:'client',title:'Clients',cols:[['nom','Nom'],['telephone','Téléphone'],['email','E-mail'],['vehicule','Véhicule'],['notes','Observations']],fields:[['nom','Nom du client','text',1],['telephone','Téléphone','tel'],['email','E-mail','email'],['vehicule','Véhicule','text'],['notes','Observations','textarea']]},
   taches:{sing:'signal',title:'Pilote',cols:[['titre','Tâche / signal'],['client','Client'],['echeance','Échéance'],['responsable','Responsable'],['statut','Statut']],fields:[['titre','Tâche / signal','text',1],['client','Client','text'],['echeance','Échéance','date'],['responsable','Responsable','select','',['Enzo','IB','Brahim','Aurel','Autre']],['statut','Statut','select','',['À faire','En cours','Terminée']],['notes','Observations','textarea']]}
@@ -374,7 +384,7 @@ function dashboard(){
   </div>`;
 }
 function header(title, subtitle, action=''){return `<section class="card section"><div class="section-head"><div><div class="section-title">${title}</div><div style="margin-top:8px;color:#9db0cc;font-size:16px;line-height:1.5">${subtitle}</div></div>${action}</div>`}
-function filteredRows(section){return db[section].filter(x=>(!query||Object.values(x).some(y=>String(y??'').toLowerCase().includes(query.toLowerCase())))&&(!filter||x.statut===filter))}
+function filteredRows(section){return db[section].filter(x=>(!query||Object.values(x).some(y=>!String(y??'').startsWith('data:')&&String(y??'').toLowerCase().includes(query.toLowerCase())))&&(!filter||x.statut===filter))}
 function table(section){const c=configs[section], rows=filteredRows(section);return `<div class="card table-card"><div class="table-scroll"><table><thead><tr>${c.cols.map(col=>`<th>${col[1]}</th>`).join('')}<th>Actions</th></tr></thead><tbody>${rows.length?rows.map(r=>`<tr>${c.cols.map(col=>`<td data-label="${col[1]}">${col[2]?col[2](r):col[0]==='statut'?status(r[col[0]]):`<span class="${col[0]==='notes'?'t-muted':''}">${esc(r[col[0]]||'—')}</span>`}</td>`).join('')}<td class="td-actions"><div class="table-actions"><button class="btn-mini btn-edit" onclick="edit('${section}','${r.id}')">Modifier</button><button class="btn-mini btn-del" onclick="removeItem('${section}','${r.id}')">Supprimer</button></div></td></tr>`).join(''):`<tr><td colspan="${c.cols.length+1}"><div class="empty">Aucun élément pour le moment.</div></td></tr>`}</tbody></table></div><div class="table-foot">${rows.length} résultat(s)</div></div>`}
 function listing(section){
   const c=configs[section];
@@ -403,10 +413,18 @@ function settings(){return header('Paramètres','Sauvegarder, importer ou export
 function edit(section,id=''){
   const c=configs[section], obj=db[section].find(x=>x.id===id)||{};
   const fields=c.fields.map(([key,label,type,required,opts])=>`<div class="field"><label for="f_${key}">${label}</label>${type==='textarea'?`<textarea id="f_${key}" name="${key}">${esc(obj[key])}</textarea>`:type==='select'?`<select id="f_${key}" name="${key}"><option value="">Choisir…</option>${opts.map(v=>`<option value="${esc(v)}" ${v===obj[key]?'selected':''}>${esc(v)}</option>`).join('')}</select>`:`<input id="f_${key}" name="${key}" type="${type}" value="${esc(obj[key])}" ${required?'required':''}>`}</div>`).join('');
-  document.getElementById('modalhost').innerHTML=`<div class="modalback" onclick="closeModal()"><div class="modal" onclick="event.stopPropagation()"><h2>${id?'Modifier':'Ajouter'} ${c.sing}</h2><div class="notice" style="margin-bottom:16px">Formulaire agrandi pour être plus évident à utiliser sur mobile comme sur PC.</div><form onsubmit="submitEntry(event,'${section}','${id}')"><div class="fields">${fields}</div><div class="buttons"><button type="button" class="btn btn-dark" onclick="closeModal()">Annuler</button><button type="submit" class="btn btn-primary">Enregistrer</button></div></form></div></div>`;
+  document.getElementById('modalhost').innerHTML=`<div class="modalback" onclick="closeModal()"><div class="modal" onclick="event.stopPropagation()"><h2>${id?'Modifier':'Ajouter'} ${c.sing}</h2><div class="notice" style="margin-bottom:16px">Formulaire agrandi pour être plus évident à utiliser sur mobile comme sur PC.</div><form onsubmit="submitEntry(event,'${section}','${id}')"><div class="fields">${fields}</div>${section==='prets'?pretExtra(obj):''}<div class="buttons"><button type="button" class="btn btn-dark" onclick="closeModal()">Annuler</button><button type="submit" class="btn btn-primary">Enregistrer</button></div></form></div></div>`;
+  if(section==='prets')pretInit(obj);
 }
 function closeModal(){document.getElementById('modalhost').innerHTML=''}
-function submitEntry(e,section,id){e.preventDefault(); const values=Object.fromEntries(new FormData(e.target)); if(id){Object.assign(db[section].find(x=>x.id===id),values)} else {db[section].push({id:crypto.randomUUID?.()||String(Date.now()),...values})} save(); closeModal(); render();}
+function submitEntry(e,section,id){e.preventDefault(); const values=Object.fromEntries(new FormData(e.target));
+  if(section==='prets'&&!pretValider(values,id)) return;
+  const avant=section==='vehicules'&&id?eduManque(db.vehicules.find(x=>x.id===id)||{}).length:Infinity;
+  let el; if(id){el=db[section].find(x=>x.id===id);Object.assign(el,values)} else {el={id:crypto.randomUUID?.()||String(Date.now()),...values};db[section].push(el)}
+  save(); closeModal(); render();
+  if(section==='vehicules') dossierComplet(el,avant);
+  if(section==='prets'&&pretTmp.sms) smsSheet(el);
+}
 function removeItem(section,id){if(confirm('Supprimer définitivement cet élément ?')){db[section]=db[section].filter(x=>x.id!==id); save(); render();}}
 function exportData(){const a=document.createElement('a'); const blob=new Blob([JSON.stringify({app:'My I-Car',version:8,data:db,exportedAt:new Date().toISOString()},null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); a.href=url; a.download='my-icar-v8-sauvegarde-'+new Date().toISOString().slice(0,10)+'.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1200)}
 async function importData(e){const f=e.target.files[0]; if(!f) return; try{const d=JSON.parse(await f.text()); const raw=d.data||d; if(!Object.keys(initial).every(k=>Array.isArray(raw[k]))) throw Error('Structure invalide'); if(!confirm('Remplacer toutes les données locales ?')) return; db=raw; save(true); render(); toast('Import terminé')}catch(err){alert('Fichier invalide : '+err.message)}}
@@ -978,6 +996,7 @@ function pgNavDirecte(s){
 // Applique les actions renvoyées par l'IA, en revérifiant tout côté appli.
 function pgApply(actions){
   const avant=clone(db);let n=0,nav=null;
+  const manqueAvant=new Map(db.vehicules.map(v=>[v.id,eduManque(v).length]));
   for(const a of actions||[]){
     if(a.type==='aller'&&PG_PAGES.includes(a.page)){nav=a;continue}
     if(a.type==='retenir'&&a.texte){edu().consignes.push(String(a.texte).slice(0,300));n++;continue}
@@ -989,7 +1008,7 @@ function pgApply(actions){
     else if(a.type==='modifier'){const el=db[a.section].find(x=>x.id===a.id);if(el&&Object.keys(vals).length){Object.assign(el,vals);n++}}
     else if(a.type==='supprimer'){const avantLen=db[a.section].length;db[a.section]=db[a.section].filter(x=>x.id!==a.id);if(db[a.section].length<avantLen)n++}
   }
-  if(n){pg.undo=avant;save(true)}
+  if(n){pg.undo=avant;save(true);for(const v of db.vehicules)if(dossierComplet(v,manqueAvant.has(v.id)?manqueAvant.get(v.id):Infinity))break}
   if(nav){page=nav.page;query=nav.recherche||'';filter=nav.statut||''}
   if(n||nav)render();
   return n;
@@ -1111,6 +1130,7 @@ async function syncNow(){
   if(sync.enCours){sync.encore=true;return}
   sync.enCours=true;
   try{
+    await photosEnvoyer();
     syncMarque();
     for(let essai=0;essai<4;essai++){
       const g=await syncApi('GET');
@@ -1152,6 +1172,111 @@ function syncCarte(){
 setInterval(()=>{if(document.visibilityState==='visible')syncNow()},20000);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')syncNow()});
 window.addEventListener('online',()=>syncNow());
+
+// ─────────────────────────────────────────────────────────────────────────────
+// V12 — PRÊTS : contrat signé au doigt, photo du permis, SMS de confirmation
+// ─────────────────────────────────────────────────────────────────────────────
+var pretTmp={permis:'',pad:null,sms:false};
+function dh(d,h){return [d?d.split('-').reverse().join('/'):'',h].filter(Boolean).join(' à ')}
+function pretExtra(obj){
+  return `<div class="field"><label for="f_permis">Photo du permis de conduire</label><input id="f_permis" type="file" accept="image/*" capture="environment" onchange="pretPhoto(event)"><img id="permisApercu" class="photo-permis" hidden alt="Permis de conduire"></div>
+  <div class="contrat"><h3>Contrat de prêt de véhicule</h3><p style="margin:0">Je soussigné(e) <b id="cNom">${esc(obj.client||'……')}</b> reconnais recevoir le véhicule <b id="cVoit">${esc(obj.nom||'……')}</b> prêté par le garage à la date et l’heure indiquées. Je suis <b>seul(e) responsable de toutes les infractions</b> commises pendant le prêt (radar, stationnement, péage…) et j’accepte d’être <b>désigné(e) comme conducteur</b> auprès de l’administration. Je m’engage à rendre le véhicule à l’heure prévue, dans l’état où je l’ai reçu.</p></div>
+  ${obj.signature?`<div class="sig-titre">Signé le ${esc(obj.signe_le?new Date(obj.signe_le).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'}):'')}</div><img class="sig-img" src="${esc(obj.signature)}" alt="Signature du client"><div class="sig-titre">Pour refaire signer, signe à nouveau ci-dessous</div>`:'<div class="sig-titre">Signature du client (obligatoire quand la voiture part)</div>'}
+  <div class="sig-wrap" id="sigWrap"><canvas id="sig"></canvas><div class="sig-ph" id="sigPh">✍️ Signer ici avec le doigt</div></div>
+  <div class="buttons" style="justify-content:flex-start;margin-top:8px"><button type="button" class="btn-mini btn-edit" onclick="pretTmp.pad&&pretTmp.pad.effacer()">Effacer la signature</button>${obj.id&&obj.statut==='Prêté'?`<button type="button" class="btn-mini btn-edit" onclick="smsSheet(db.prets.find(x=>x.id==='${esc(obj.id)}'))">📱 SMS de confirmation</button>`:''}</div>`;
+}
+function pretInit(obj){
+  pretTmp={permis:'',pad:sigPad(),sms:false};
+  const lie=(champ,cible)=>{const i=document.getElementById('f_'+champ);if(i)i.addEventListener('input',()=>{document.getElementById(cible).textContent=i.value||'……'})};
+  lie('client','cNom');lie('nom','cVoit');
+  const img=document.getElementById('permisApercu');
+  if(obj.permis){img.src=obj.permis;img.hidden=false}
+  else if(obj.permis_photo)photoCharger(obj.permis_photo).then(src=>{if(src&&img.isConnected){img.src=src;img.hidden=false}});
+}
+async function pretPhoto(e){
+  const f=e.target.files[0];if(!f)return;
+  try{pretTmp.permis=await reduirePhoto(f,1000,.6);const img=document.getElementById('permisApercu');img.src=pretTmp.permis;img.hidden=false}
+  catch(err){toast('Photo illisible, réessaie')}
+}
+function pretValider(values,id){
+  const obj=(id&&db.prets.find(x=>x.id===id))||{};
+  if(pretTmp.permis){values.permis=pretTmp.permis;values.permis_photo=''}
+  const signe=pretTmp.pad&&!pretTmp.pad.vide()?pretTmp.pad.image():'';
+  if(signe){values.signature=signe;values.signe_le=new Date().toISOString()}
+  if(values.statut==='Prêté'&&!signe&&!obj.signature){
+    toast('⚠️ La signature du client est obligatoire pour faire partir la voiture');
+    document.getElementById('sigWrap')?.scrollIntoView({block:'center'});
+    return false;
+  }
+  if(values.statut==='Prêté'&&!values.date_depart)values.date_depart=new Date().toLocaleDateString('en-CA');
+  if(values.statut==='Prêté'&&!values.heure_depart)values.heure_depart=new Date().toTimeString().slice(0,5);
+  pretTmp.sms=values.statut==='Prêté'&&(obj.statut!=='Prêté'||!!signe);
+  return true;
+}
+function sigPad(){
+  const c=document.getElementById('sig'),w=document.getElementById('sigWrap'),ph=document.getElementById('sigPh');
+  const ratio=window.devicePixelRatio||1;c.width=(c.offsetWidth||600)*ratio;c.height=180*ratio;
+  const g=c.getContext('2d');g.scale(ratio,ratio);g.lineWidth=2.6;g.lineCap='round';g.lineJoin='round';g.strokeStyle='#14213d';
+  let trace=false,utilise=false,der=null;
+  const pos=e=>{const r=c.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]};
+  c.onpointerdown=e=>{e.preventDefault();try{c.setPointerCapture(e.pointerId)}catch(_){}trace=true;der=pos(e)};
+  c.onpointermove=e=>{if(!trace)return;const p=pos(e);g.beginPath();g.moveTo(...der);g.lineTo(...p);g.stroke();der=p;if(!utilise){utilise=true;ph.hidden=true;w.classList.add('done')}};
+  c.onpointerup=c.onpointercancel=()=>trace=false;
+  return{
+    vide:()=>!utilise,
+    effacer:()=>{g.clearRect(0,0,c.width,c.height);utilise=false;ph.hidden=false;w.classList.remove('done')},
+    // Image réduite (environ 10 Ko) pour que la base de l'équipe reste légère.
+    image:()=>{const t=document.createElement('canvas');t.width=Math.min(c.width,400);t.height=Math.round(c.height*t.width/c.width);const tg=t.getContext('2d');tg.fillStyle='#fff';tg.fillRect(0,0,t.width,t.height);tg.drawImage(c,0,0,t.width,t.height);return t.toDataURL('image/png')}
+  };
+}
+function reduirePhoto(file,max,qualite){return new Promise((ok,ko)=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,max/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',qualite))};im.onerror=ko;im.src=r.result};r.onerror=ko;r.readAsDataURL(file)})}
+function smsTexte(p){return `Bonjour ${p.client||''}, vous avez pris le ${dh(p.date_depart,p.heure_depart)||'—'} le véhicule ${p.nom||''} prêté par notre garage${p.date_retour?`, à rendre le ${dh(p.date_retour,p.heure_retour)}`:''}. Vous avez signé être seul responsable des infractions pendant le prêt et accepté d'être désigné conducteur. Merci de répondre OUI pour confirmer.`}
+function smsSheet(p){
+  if(!p)return;
+  const t=smsTexte(p),tel=String(p.telephone||'').replace(/[^\d+]/g,'');
+  document.getElementById('modalhost').innerHTML=`<div class="modalback" onclick="closeModal()"><div class="modal" onclick="event.stopPropagation()"><h2>✅ Prêt enregistré</h2><p class="t-muted" style="margin-top:-8px">Envoie ce SMS au client. Il doit répondre « OUI ».</p><div class="sms-texte" id="smsT">${esc(t)}</div><p>Numéro : <b>${esc(p.telephone||'non renseigné')}</b></p><div class="buttons"><button type="button" class="btn btn-dark" onclick="closeModal()">Plus tard</button><button type="button" class="btn btn-secondary" onclick="smsCopier()">Copier le texte</button>${tel?`<a class="btn btn-primary" style="text-decoration:none" href="sms:${esc(tel)}?body=${encodeURIComponent(t)}">📱 Ouvrir Messages</a>`:''}</div></div></div>`;
+}
+async function smsCopier(){const t=document.getElementById('smsT').textContent;try{await navigator.clipboard.writeText(t);toast('Texte copié')}catch(e){const r=document.createRange();r.selectNodeContents(document.getElementById('smsT'));getSelection().removeAllRanges();getSelection().addRange(r);toast('Texte sélectionné : copie-le')}}
+
+// Photos des permis : rangées à part sur Netlify (/api/photo) pour que la base reste légère.
+// Tant que la base partagée n'est pas active (ou sans réseau), la photo reste sur le téléphone.
+var photosCache={};
+async function photoCharger(id){
+  if(photosCache[id])return photosCache[id];
+  if(!sync.code)return '';
+  try{const r=await fetch('/api/photo?id='+encodeURIComponent(id),{headers:{'x-code-equipe':sync.code}});if(!r.ok)return '';const d=await r.json();return photosCache[id]=d.data||''}catch(e){return ''}
+}
+async function photosEnvoyer(){
+  if(!sync.code)return;
+  for(const el of db.prets){
+    if(!String(el.permis||'').startsWith('data:'))continue;
+    let r;
+    try{r=await fetch('/api/photo',{method:'POST',headers:{'Content-Type':'application/json','x-code-equipe':sync.code},body:JSON.stringify({data:el.permis})})}catch(e){return}
+    if(r.status===400||r.status===413)continue;
+    if(!r.ok)return;
+    const d=await r.json().catch(()=>({}));
+    if(d.id){photosCache[d.id]=el.permis;el.permis_photo=d.id;delete el.permis}
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// V12 — LA MARSEILLAISE quand un dossier est complet
+// ─────────────────────────────────────────────────────────────────────────────
+function dossierComplet(el,manqueAvant){
+  if(!el||!eduActives().length||!(manqueAvant>0)||eduManque(el).length)return false;
+  fanfare(el);return true;
+}
+function fanfare(el){
+  try{
+    const A=new (window.AudioContext||window.webkitAudioContext)();
+    const N={D4:293.66,E4:329.63,'F#4':369.99,G4:392,A4:440,B4:493.88,C5:523.25,D5:587.33};
+    const seq=[['D4',.75],['D4',.25],['G4',1],['G4',1],['A4',1],['A4',1],['D5',1.5],['B4',.5],['G4',.75],['G4',.25],['B4',.75],['G4',.25],['E4',1],['C5',2],['A4',.75],['F#4',.25],['G4',2]];
+    const temps=.32;let t=A.currentTime+.05;
+    for(const [n,d] of seq){const o=A.createOscillator(),g=A.createGain();o.type='triangle';o.frequency.value=N[n];g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.22,t+.02);g.gain.setValueAtTime(.22,t+d*temps*.8);g.gain.linearRampToValueAtTime(0,t+d*temps*.98);o.connect(g).connect(A.destination);o.start(t);o.stop(t+d*temps);t+=d*temps}
+    setTimeout(()=>A.close(),(t-A.currentTime)*1000+400);
+  }catch(e){}
+  setTimeout(()=>toast('🇫🇷 Dossier complet'+(el&&el.client?' : '+el.client:'')+' !'),400);
+}
 
 render();
 pgRender();
