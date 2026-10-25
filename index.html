@@ -300,6 +300,8 @@ tr:hover td{background:rgba(255,255,255,.012)}
 .cal-mc{aspect-ratio:1/1.15;border:1px solid #E6E8EC;background:#fff;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:4px;padding-top:7px;font:inherit;color:#14213D;cursor:pointer;transition:transform .15s}
 .cal-mc b{font-size:15px}.cal-mc small{font-size:10px;font-weight:800;color:#5B6475}.cal-mc.hors{opacity:.35}
 .cal-mc.auj{border:2px solid #2F62C9}.cal-mc.sel{background:#14213D;color:#fff;border-color:#14213D}.cal-mc:active{transform:scale(.94)}
+.cal-jour.autre:not(.sel){background:#F1EEE8!important;border-color:#E2DCD0!important}.cal-jour.autre:not(.sel) b,.cal-jour.autre:not(.sel) small{color:#7A6A4F!important}
+.cal-jour.premier:not(.sel){box-shadow:inset 3px 0 0 #A86B12}.cal-jour.premier small{font-weight:800}
 .cal-astuce{font-size:12.5px;color:#5B6475;text-align:center;margin:18px 0 4px}
 .cal-jour{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 0 7px;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);color:inherit;font:inherit;cursor:pointer;min-height:66px}
 .cal-jour small{font-size:11px;color:#5B6475;text-transform:uppercase}.cal-jour b{font-size:19px}
@@ -1735,8 +1737,10 @@ function planningPage(){
   const jours=[...Array(7)].map((_,i)=>{const d=new Date(lundi);d.setDate(lundi.getDate()+i);return d});
   const mois=sel.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
   const bande=ds=>ds.map(d=>{const iso=calISO(d),evs=calDuJour(iso);const pts=evs.slice(0,4).map(e=>`<i style="background:${CAL_TYPES[calType(e)].c}"></i>`).join('');
-    return `<button class="cal-jour${iso===auj?' auj':''}${iso===cal.jour?' sel':''}" style="${iso===cal.jour?'':calJourFond(iso)}" onclick="calAller('${iso}')" aria-label="${esc(d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}))}, ${evs.length} rendez-vous"><small>${d.toLocaleDateString('fr-FR',{weekday:'short'}).replace('.','')}</small><b>${d.getDate()}</b><span class="cal-points">${pts}</span></button>`}).join('');
+    const autre=d.getMonth()!==sel.getMonth(),pr=d.getDate()===1;
+    return `<button class="cal-jour${iso===auj?' auj':''}${iso===cal.jour?' sel':''}${autre?' autre':''}${pr?' premier':''}" style="${iso===cal.jour?'':calJourFond(iso)}" onclick="calAller('${iso}')" aria-label="${esc(d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}))}, ${evs.length} rendez-vous"><small>${pr?d.toLocaleDateString('fr-FR',{month:'short'}).replace('.',''):d.toLocaleDateString('fr-FR',{weekday:'short'}).replace('.','')}</small><b>${d.getDate()}</b><span class="cal-points">${pts}</span></button>`}).join('');
   const semaine=bande(jours);
+  const apres2=bande(jours.map(d=>{const x=new Date(d);x.setDate(d.getDate()+14);return x}));
   const suivants=jours.map(d=>{const x=new Date(d);x.setDate(d.getDate()+7);return x});
   const prochaine=bande(suivants);
   const avant=bande(jours.map(d=>{const x=new Date(d);x.setDate(d.getDate()-7);return x}));
@@ -1747,7 +1751,7 @@ function planningPage(){
   return header('Planning','',`<button class="btn btn-primary" onclick="calAjouter()">+ Ajouter</button>`)+calOnglets()
   +`<div class="cal-nav"><button class="cal-btn" onclick="calDecaler(-7)" aria-label="Semaine précédente">‹</button><span class="cal-mois">${esc(mois)}</span>${cal.jour!==auj?`<button class="cal-btn" onclick="calAller('${auj}')">Aujourd’hui</button>`:''}<button class="cal-btn" onclick="calDecaler(7)" aria-label="Semaine suivante">›</button></div>
   <div id="calSemaine" class="${cal.anim||''}"><div class="cal-sp-titre cal-sa-titre">Semaine d’avant</div><div class="cal-semaine cal-sa">${avant}</div><div class="cal-sp-titre cal-sc-titre">Cette semaine</div><div class="cal-semaine">${semaine}</div>
-  <div class="cal-sp-titre">Semaine d’après</div><div class="cal-semaine cal-sp">${prochaine}</div></div>
+  <div class="cal-sp-titre">Semaine d’après</div><div class="cal-semaine cal-sp">${prochaine}</div><div class="cal-sp-titre">Dans 2 semaines</div><div class="cal-semaine cal-sp">${apres2}</div></div>
   <div class="cal-legende">${Object.values(CAL_TYPES).map(T=>`<span style="--c:${T.c};--t:${T.t}">● ${T.nom}</span>`).join('')}</div>
   <div id="calZone" class="${cal.anim||''}"><div class="cal-titre">${cal.jour===auj?'Aujourd’hui · ':cal.jour===calISO(new Date(Date.now()+864e5))?'Demain · ':''}${esc(sel.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}))}</div>
   ${liste}<div class="cal-astuce">← Glisse le doigt pour changer de jour · sur la barre des jours pour changer de semaine →</div></div>
