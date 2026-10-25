@@ -86,7 +86,7 @@ async function decouvrirModeles(key) {
   if (modelesDecouverts) return modelesDecouverts;
   try {
     const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', {
-      headers: { 'x-goog-api-key': key }, signal: AbortSignal.timeout(Math.min(1800, restant()))
+      headers: { 'x-goog-api-key': key }, signal: AbortSignal.timeout(Math.min(1200, restant()))
     });
     if (!r.ok) return [];
     const data = await r.json();
@@ -96,16 +96,20 @@ async function decouvrirModeles(key) {
       .filter(n => /^gemini-[\d.]+-flash/.test(n) && !/image|tts|audio|live|embed|thinking|exp|preview|\d{3,}$/.test(n));
     const flash = noms.filter(n => !/lite/.test(n)).sort((a, b) => versionDe(b) - versionDe(a));
     const lite = noms.filter(n => /lite/.test(n)).sort((a, b) => versionDe(b) - versionDe(a));
-    modelesDecouverts = [...flash.slice(0, 2), ...lite.slice(0, 2)];
+    // Les « lite » d'abord : beaucoup plus rapides et rarement surchargés. Le pilote doit répondre en quelques secondes.
+    modelesDecouverts = [...lite.slice(0, 2), ...flash.slice(0, 2)];
     return modelesDecouverts;
   } catch { return []; }
 }
+
+// Le modèle qui vient de répondre est réessayé en premier la fois suivante.
+let dernierBonModele = '';
 
 async function demanderGemini({ systeme, prompt, maxSortie }) {
   const key = env('GEMINI_API_KEY');
   const decouverts = await decouvrirModeles(key);
   // Si le quota gratuit d'un modèle est épuisé (429) ou s'il n'existe plus (404), on passe au suivant.
-  const modeles = [...new Set([env('GEMINI_MODEL'), ...decouverts, 'gemini-flash-latest', 'gemini-flash-lite-latest', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'].filter(Boolean))];
+  const modeles = [...new Set([env('GEMINI_MODEL'), dernierBonModele, ...decouverts, 'gemini-flash-lite-latest', 'gemini-2.5-flash-lite', 'gemini-flash-latest', 'gemini-2.5-flash'].filter(Boolean))];
   let reponse, dernierStatut = 0, modeleUtilise = '', dernierDetail = '';
   for (const modele of modeles) {
     if (finAppel - Date.now() < 1000) break;
@@ -116,7 +120,8 @@ async function demanderGemini({ systeme, prompt, maxSortie }) {
       if (avecReflexion) generationConfig.thinkingConfig = reflexion;
       try {
         reponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modele}:generateContent`, {
-          method: 'POST', signal: delai(),
+          // Chaque modèle a au plus 4,5 s, sauf s'il ne reste plus d'autre chance.
+          method: 'POST', signal: AbortSignal.timeout(Math.min(restant(), 4500)),
           headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
           body: JSON.stringify({
             systemInstruction: { parts: [{ text: systeme }] },
@@ -124,17 +129,21 @@ async function demanderGemini({ systeme, prompt, maxSortie }) {
             generationConfig
           })
         });
-      } catch (e) { throw tropLong(e) ? new ErreurIA('Gemini trop lent à répondre') : e; }
+      } catch (e) {
+        if (!tropLong(e)) throw e;
+        reponse = null; dernierStatut = 504; modeleUtilise = modele; break; // trop lent : modèle suivant
+      }
       dernierStatut = reponse.status; modeleUtilise = modele;
       if (reponse.status === 400 && avecReflexion) { dernierDetail = (await reponse.text()).slice(0, 300); continue; } // réglage refusé : on réessaie sans
       break;
     }
+    if (!reponse) continue;
     if (reponse.ok) break;
     // modèle introuvable (400/404), quota épuisé (429) ou serveur Google surchargé (500/502/503/504) → modèle suivant
     if (![400, 404, 429, 500, 502, 503, 504].includes(reponse.status)) break;
     dernierDetail = (await reponse.text()).slice(0, 300);
   }
-  if (!reponse) throw new ErreurIA('l’IA a mis trop de temps à répondre');
+  if (!reponse) throw new ErreurIA('Gemini trop lent à répondre, réessaie');
   if (!reponse.ok) {
     const detail = dernierDetail || (await reponse.text().catch(() => '')).slice(0, 300);
     const message = dernierStatut === 429 ? 'quota gratuit Gemini atteint, réessaie dans une minute'
@@ -146,6 +155,7 @@ async function demanderGemini({ systeme, prompt, maxSortie }) {
   const data = await reponse.json();
   const texte = (data?.candidates?.[0]?.content?.parts || []).filter(p => !p.thought).map(p => p.text || '').join('').trim();
   if (!texte) throw new ErreurIA('Gemini a renvoyé une réponse vide');
+  dernierBonModele = modeleUtilise;
   return { texte, ia: 'Gemini', modele: modeleUtilise };
 }
 
