@@ -305,6 +305,7 @@ tr:hover td{background:rgba(255,255,255,.012)}
 .cal-jour.mois-suiv2:not(.sel),.cal-mc.mois-suiv2:not(.sel){background:#E8F0EA!important;border-color:#CFE0D3!important}.cal-jour.mois-suiv2:not(.sel) b,.cal-jour.mois-suiv2:not(.sel) small,.cal-mc.mois-suiv2:not(.sel) b{color:#3F6B4C!important}
 .cal-jour.premier:not(.sel){box-shadow:inset 3px 0 0 #A86B12}.cal-jour.premier small{font-weight:800}
 .cal-legmois .ls2{background:#E8F0EA;color:#3F6B4C}.cal-legmois{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:-4px 0 16px}.cal-legmois span{text-align:center;font-size:12.5px;font-weight:800;padding:7px 0;border-radius:10px;text-transform:capitalize}.cal-legmois .lp{background:#E9EEF5;color:#4F6280}.cal-legmois .lc{background:#fff;border:1px solid #E6E8EC;color:#14213D}.cal-legmois .ls{background:#F3EEE4;color:#7A6A4F}
+@keyframes calFlash{0%{background:rgba(47,98,201,.10)}100%{background:transparent}}.cal-flash{animation:calFlash 1s ease-out;border-radius:16px}
 .cal-astuce{font-size:12.5px;color:#5B6475;text-align:center;margin:18px 0 4px}
 .cal-jour{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 0 7px;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);color:inherit;font:inherit;cursor:pointer;min-height:66px}
 .cal-jour small{font-size:11px;color:#5B6475;text-transform:uppercase}.cal-jour b{font-size:19px}
@@ -1715,6 +1716,8 @@ function calMoisClasse(d){
   const n=(d.getFullYear()*12+d.getMonth())-(a.getFullYear()*12+a.getMonth());
   return n<0?' mois-prec':n===0?'':n%2===1?' mois-suiv':' mois-suiv2';
 }
+// Toucher une date : on l'ouvre (vue Jour) et on descend directement sur ses rendez-vous
+function calOuvrir(iso){cal.mode='jour';calAller(iso);setTimeout(()=>{const z=document.getElementById('calZone');if(z){const y=z.getBoundingClientRect().top+window.scrollY-90;window.scrollTo({top:y,behavior:'smooth'});z.classList.remove('cal-flash');void z.offsetWidth;z.classList.add('cal-flash')}},60)}
 function calMode(m){cal.anim='';cal.mode=m;render()}
 function calMois(n){const d=calDate(cal.jour);d.setDate(1);d.setMonth(d.getMonth()+n);cal.anim=n>0?'cal-anim-g':'cal-anim-d';cal.jour=calISO(d);render();cal.anim=''}
 function calOnglets(){return `<div class="cal-modes" role="tablist">${[['jour','Jour'],['semaine','Semaine'],['mois','Mois']].map(([m,l])=>`<button role="tab" aria-selected="${cal.mode===m}" class="${cal.mode===m?'on':''}" onclick="calMode('${m}')">${l}</button>`).join('')}</div>`}
@@ -1727,7 +1730,7 @@ function planningSemaine(){
   const f=d=>d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
   const dansSemaine=auj>=calISO(lundi)&&auj<=calISO(dim);
   const jours=[...Array(7)].map((_,i)=>{const d=new Date(lundi);d.setDate(lundi.getDate()+i);const iso=calISO(d),evs=calDuJour(iso);
-    return `<div class="cal-sj${iso===auj?' auj':''}"><button class="cal-sj-tete" onclick="calAller('${iso}');calMode('jour')"><b>${esc(d.toLocaleDateString('fr-FR',{weekday:'long'}))}</b><span>${d.getDate()} ${esc(d.toLocaleDateString('fr-FR',{month:'short'}))}${iso===auj?' · aujourd’hui':''}</span></button>${evs.length?evs.map(calLigne).join(''):'<div class="cal-sj-vide">—</div>'}</div>`}).join('');
+    return `<div class="cal-sj${iso===auj?' auj':''}"><button class="cal-sj-tete" onclick="calOuvrir('${iso}')"><b>${esc(d.toLocaleDateString('fr-FR',{weekday:'long'}))}</b><span>${d.getDate()} ${esc(d.toLocaleDateString('fr-FR',{month:'short'}))}${iso===auj?' · aujourd’hui':''}</span></button>${evs.length?evs.map(calLigne).join(''):'<div class="cal-sj-vide">—</div>'}</div>`}).join('');
   return calEntete(`Semaine du ${f(lundi)} au ${f(dim)}`,'calDecaler(-7)','calDecaler(7)',dansSemaine?'':`<button class="cal-btn" onclick="calAller('${auj}')">Cette semaine</button>`).replace('class="cal-mois"','class="cal-mois" style="text-transform:none;font-size:15px"')
     +`<div id="calZone" class="${cal.anim||''}">${jours}<div class="cal-astuce">← Glisse le doigt pour changer de semaine →</div></div></section>`;
 }
@@ -1739,7 +1742,7 @@ function planningMois(){
   const derniere=cases.findLastIndex(d=>d.getMonth()===sel.getMonth());const nb=Math.ceil((derniere+1)/7)*7;
   const grille=cases.slice(0,nb).map(d=>{const iso=calISO(d),evs=calDuJour(iso),hors=d.getMonth()!==sel.getMonth();
     const pts=evs.slice(0,3).map(e=>`<i style="background:${e.statut==='Terminé'?'#C5CAD3':CAL_TYPES[calType(e)].c}"></i>`).join('');
-    return `<button class="cal-mc${calMoisClasse(d,sel)}${iso===auj?' auj':''}${iso===cal.jour?' sel':''}" style="${iso===cal.jour||hors?'':calJourFond(iso)}" onclick="calAller('${iso}');calMode('jour')" aria-label="${esc(d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}))}, ${evs.length} rendez-vous"><b>${d.getDate()}</b><span class="cal-points">${pts}</span>${evs.length>3?`<small>+${evs.length-3}</small>`:''}</button>`}).join('');
+    return `<button class="cal-mc${calMoisClasse(d,sel)}${iso===auj?' auj':''}${iso===cal.jour?' sel':''}" style="${iso===cal.jour||hors?'':calJourFond(iso)}" onclick="calOuvrir('${iso}')" aria-label="${esc(d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}))}, ${evs.length} rendez-vous"><b>${d.getDate()}</b><span class="cal-points">${pts}</span>${evs.length>3?`<small>+${evs.length-3}</small>`:''}</button>`}).join('');
   const titre=sel.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
   const ceMois=auj.slice(0,7)===cal.jour.slice(0,7);
   return calEntete(titre,'calMois(-1)','calMois(1)',ceMois?'':`<button class="cal-btn" onclick="calAller('${auj}')">Ce mois</button>`)
@@ -1756,7 +1759,7 @@ function planningPage(){
   const mois=sel.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
   const bande=ds=>ds.map(d=>{const iso=calISO(d),evs=calDuJour(iso);const pts=evs.slice(0,4).map(e=>`<i style="background:${CAL_TYPES[calType(e)].c}"></i>`).join('');
     const pr=d.getDate()===1;
-    return `<button class="cal-jour${iso===auj?' auj':''}${iso===cal.jour?' sel':''}${calMoisClasse(d,sel)}${pr?' premier':''}" style="${iso===cal.jour?'':calJourFond(iso)}" onclick="calAller('${iso}')" aria-label="${esc(d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}))}, ${evs.length} rendez-vous"><small>${pr?d.toLocaleDateString('fr-FR',{month:'short'}).replace('.',''):d.toLocaleDateString('fr-FR',{weekday:'short'}).replace('.','')}</small><b>${d.getDate()}</b><span class="cal-points">${pts}</span></button>`}).join('');
+    return `<button class="cal-jour${iso===auj?' auj':''}${iso===cal.jour?' sel':''}${calMoisClasse(d,sel)}${pr?' premier':''}" style="${iso===cal.jour?'':calJourFond(iso)}" onclick="calOuvrir('${iso}')" aria-label="${esc(d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}))}, ${evs.length} rendez-vous"><small>${pr?d.toLocaleDateString('fr-FR',{month:'short'}).replace('.',''):d.toLocaleDateString('fr-FR',{weekday:'short'}).replace('.','')}</small><b>${d.getDate()}</b><span class="cal-points">${pts}</span></button>`}).join('');
   const semaine=bande(jours);
   const apres2=bande(jours.map(d=>{const x=new Date(d);x.setDate(d.getDate()+14);return x}));
   const suivants=jours.map(d=>{const x=new Date(d);x.setDate(d.getDate()+7);return x});
