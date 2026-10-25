@@ -279,6 +279,7 @@ tr:hover td{background:rgba(255,255,255,.012)}
 .pg-log{min-height:60px;padding:10px 12px;gap:7px}.pg-msg{font-size:15px;padding:9px 12px}
 .pg-foot{padding:8px 12px 10px;gap:7px}.pg-state{font-size:13px;min-height:0}.pg-mic{padding:12px;font-size:16px}.pg-small{padding:10px 11px}.pg-text input{padding:10px}.pg-warn{font-size:13px;padding:7px 10px}}
 .edu-row{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.flotte-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:16px}.flotte-carte{text-align:left;padding:12px;cursor:pointer;color:inherit;font:inherit}.flotte-nom{font-weight:900;font-size:16px}.flotte-etat{font-size:14px;margin:4px 0}.flotte-carte small{color:#94a3bf;font-size:12px;line-height:1.4;display:block}
 .gar-row{flex-wrap:wrap}.gar-row .edu-txt{flex:1 1 100%}.gar-row .gar-btns{display:flex;gap:8px;margin-left:auto}
 .edu-txt{flex:1;min-width:0;font-size:16px;overflow-wrap:anywhere}.edu-txt small{color:#94a3bf;font-size:12px}
 .edu-sw{width:48px;height:28px;border-radius:99px;border:1px solid rgba(115,224,205,.3);background:rgba(255,255,255,.04);position:relative;flex:0 0 auto}
@@ -314,7 +315,7 @@ const MENU_PAGES=['menu','garage','clients','expertises','taches','aide','parame
 const configs={
   expertises:{sing:'expertise',title:'Expertises',cols:[['client','Client'],['immatriculation','Immatriculation'],['date','Date RDV'],['statut','Statut'],['notes','Observations']],fields:[['client','Client','text',1],['immatriculation','Immatriculation','text'],['date','Date de rendez-vous','date'],['statut','Statut','select','',['Sans RDV','RDV fixé','Réalisée','À relancer']],['notes','Observations','textarea']]},
   vehicules:{sing:'dossier',title:'Dossiers',cols:[['client','Client'],['modele','Véhicule'],['immatriculation','Immatriculation'],['statut','Étape'],['priorite','Priorité']],fields:[['client','Client','text',1],['modele','Modèle','text'],['immatriculation','Immatriculation','text'],['statut','Étape','select','',['À chiffrer','En attente','À planifier','En travaux','Peinture','Prêt à livrer','Livré']],['priorite','Priorité (1 à 10)','number'],['telephone','Téléphone client','tel'],['sinistre','Sinistre','text'],['assurance','Assurance','text'],['expertise','Expertise','select','',['À prévoir','RDV fixé','Faite','Non nécessaire']],['prochaine_action','Prochaine action','text'],['date_action','Pour quand','date'],['responsable','Responsable','select','',['Enzo','IB','Brahim','Aurel','Autre']],['montant','Montant estimé des travaux (€)','number'],['notes','Observations','textarea']]},
-  prets:{sing:'prêt',title:'Prêts',cols:[['nom','Véhicule de prêt'],['client','Client'],['date_depart','Départ',r=>dateHeure(r.date_depart,r.heure_depart)],['date_retour','Retour prévu',r=>dateHeure(r.date_retour,r.heure_retour)],['statut','Statut',r=>pretEnRetard(r)?'<span class="pill red">En retard</span>':status(r.statut)],['signature','Contrat',r=>r.signature?'<span class="pill green">✍️ Signé</span>':r.statut==='Prêté'?'<span class="pill red">Non signé</span>':'—']],fields:[['nom','Véhicule de prêt','text',1],['client','Client bénéficiaire','text'],['telephone','Téléphone du client','tel'],['date_depart','Date de départ','date'],['heure_depart','Heure de départ','time'],['date_retour','Retour prévu le','date'],['heure_retour','Heure de retour prévue','time'],['statut','Statut','select','',['Disponible','Réservé','Prêté','Retourné']],['km_retour','Kilométrage au retour','number'],['notes','Observations','textarea']]},
+  prets:{sing:'prêt',title:'Prêts',cols:[['nom','Véhicule de prêt'],['client','Client'],['date_depart','Départ',r=>dateHeure(r.date_depart,r.heure_depart)],['date_retour','Retour prévu',r=>dateHeure(r.date_retour,r.heure_retour)],['statut','Statut',r=>pretEnRetard(r)?'<span class="pill red">En retard</span>':status(r.statut)],['signature','Contrat',r=>r.signature?'<span class="pill green">✍️ Signé</span>':r.statut==='Prêté'?'<span class="pill red">Non signé</span>':'—']],fields:[['nom','Véhicule de prêt','text',1],['client','Client bénéficiaire','text'],['telephone','Téléphone du client','tel'],['date_depart','Date de départ','date'],['heure_depart','Heure de départ','time'],['date_retour','Retour prévu le','date'],['heure_retour','Heure de retour prévue','time'],['statut','Statut','select','',['Disponible','Réservé','Prêté','Retourné']],['dossier','Dossier atelier du client (sa voiture en réparation)','select','',[]],['km_retour','Kilométrage au retour','number'],['notes','Observations','textarea']]},
   planning:{sing:'rendez-vous',title:'Planning',cols:[['date','Date'],['heure','Heure'],['titre','Intervention / RDV'],['responsable','Responsable'],['statut','Statut']],fields:[['date','Date','date',1],['heure','Heure','time'],['titre','Intervention / RDV','text',1],['responsable','Responsable','select','',['Enzo','IB','Brahim','Aurel','Autre']],['statut','Statut','select','',['Prévu','En cours','Terminé']],['notes','Observations','textarea']]},
   clients:{sing:'client',title:'Clients',cols:[['nom','Nom'],['telephone','Téléphone'],['email','E-mail'],['vehicule','Véhicule'],['notes','Observations']],fields:[['nom','Nom du client','text',1],['telephone','Téléphone','tel'],['email','E-mail','email'],['vehicule','Véhicule','text'],['notes','Observations','textarea']]},
   taches:{sing:'signal',title:'Pilote',cols:[['titre','Tâche / signal'],['client','Client'],['echeance','Échéance'],['responsable','Responsable'],['statut','Statut']],fields:[['titre','Tâche / signal','text',1],['client','Client','text'],['echeance','Échéance','date'],['responsable','Responsable','select','',['Enzo','IB','Brahim','Aurel','Autre']],['statut','Statut','select','',['À faire','En cours','Terminée']],['notes','Observations','textarea']]}
@@ -343,7 +344,7 @@ function dateHeure(d,h){if(!d&&!h)return '—';const t=d?d.split('-').reverse().
 // Une voiture prêtée est en retard si l'heure (ou, sans heure, la journée) de retour prévue est passée.
 function pretEnRetard(x){if(x.statut!=='Prêté'||!x.date_retour)return false;const fin=new Date(x.date_retour+'T'+(x.heure_retour||'23:59'));return !isNaN(fin)&&fin<new Date()}
 function countActive(){return db.vehicules.filter(x=>String(x.statut||'')!=='Livré').length}
-function countRisk(){return db.prets.filter(pretEnRetard).length + db.expertises.filter(x=>x.statut==='Sans RDV'||!x.date).length + db.taches.filter(x=>x.statut!=='Terminée').length}
+function countRisk(){return db.prets.filter(pretEnRetard).length + (typeof pretAlertes==='function'?pretAlertes().length:0) + db.expertises.filter(x=>x.statut==='Sans RDV'||!x.date).length + db.taches.filter(x=>x.statut!=='Terminée').length}
 function countLoansActive(){return db.prets.filter(x=>x.statut==='Prêté').length}
 function countLoansAvailable(){return db.prets.filter(x=>x.statut==='Disponible').length}
 function portfolioAmount(){let total=0; db.vehicules.forEach(x=>{const m=parseFloat(String(x.montant||'').replace(',','.')); if(!isNaN(m) && String(x.statut||'')!=='Livré') total+=m}); return total}
@@ -394,7 +395,7 @@ function listing(section){
   const c=configs[section];
   const statuses=[...new Set(db[section].map(x=>x.statut).filter(Boolean))];
   const subtitle={vehicules:'Tes dossiers atelier, les étapes de réparation et les priorités.',planning:'Le planning de l’atelier et des rendez-vous.',prets:'La gestion des voitures de prêt.',taches:'Les signaux, relances et actions du pilote.',clients:'Tes clients et leurs coordonnées.',expertises:'Les expertises et les rendez-vous à organiser.'}[section] || '';
-  return header(c.title,subtitle,`<button class="btn btn-primary" onclick="edit('${section}')">+ Ajouter</button>`)+`<div class="toolbar"><div class="grow"><input class="search" value="${esc(query)}" oninput="query=this.value;render()" placeholder="Rechercher un client, une immatriculation, un dossier…"></div><div class="w240"><select class="select" onchange="filter=this.value;render()"><option value="">Tous les statuts</option>${statuses.map(s=>`<option ${s===filter?'selected':''}>${esc(s)}</option>`).join('')}</select></div></div>${table(section)}</section>`
+  return header(c.title,subtitle,`<button class="btn btn-primary" onclick="edit('${section}')">+ Ajouter</button>`)+(section==='prets'?flotteTableau():'')+`<div class="toolbar"><div class="grow"><input class="search" value="${esc(query)}" oninput="query=this.value;render()" placeholder="Rechercher un client, une immatriculation, un dossier…"></div><div class="w240"><select class="select" onchange="filter=this.value;render()"><option value="">Tous les statuts</option>${statuses.map(s=>`<option ${s===filter?'selected':''}>${esc(s)}</option>`).join('')}</select></div></div>${table(section)}</section>`
 }
 function menuPage(){
   const tuiles=[
@@ -417,7 +418,7 @@ function help(){return header('Guide de démarrage','Un parcours simple pour com
 function settings(){return header('Paramètres','Sauvegarder, importer ou exporter les données de l’atelier.')+`<div class="settings-grid">${syncCarte()}<div class="card settings-card"><h3>Sauvegardes</h3><p>Les données sont enregistrées localement sur cet appareil et dans ce navigateur. Tu peux exporter un fichier JSON pour conserver ton test.</p><div class="buttons" style="justify-content:flex-start"><button class="btn btn-primary" onclick="exportData()">↓ Exporter</button><button class="btn btn-dark" onclick="document.getElementById('importFile').click()">↑ Importer</button><input id="importFile" type="file" accept=".json,application/json" hidden onchange="importData(event)"></div></div><div class="card settings-card"><h3>Réinitialisation</h3><p>Si tu veux refaire un essai propre avec le nouveau design, tu peux effacer les données locales.</p><div class="buttons" style="justify-content:flex-start"><button class="btn btn-dark" style="border-color:rgba(221,115,130,.2);color:#ffc3ce;background:rgba(221,115,130,.12)" onclick="resetAll()">Effacer les données</button></div></div></div></section>`}
 function edit(section,id=''){
   const c=configs[section], obj=db[section].find(x=>x.id===id)||{};
-  const fields=c.fields.map(([key,label,type,required,opts])=>{if(key==='responsable')opts=equipeCourts();if(type==='select'&&obj[key]&&!opts.includes(obj[key]))opts=[...opts,obj[key]];return [key,label,type,required,opts]}).map(([key,label,type,required,opts])=>`<div class="field"><label for="f_${key}">${label}</label>${type==='textarea'?`<textarea id="f_${key}" name="${key}">${esc(obj[key])}</textarea>`:type==='select'?`<select id="f_${key}" name="${key}"><option value="">Choisir…</option>${opts.map(v=>`<option value="${esc(v)}" ${v===obj[key]?'selected':''}>${esc(v)}</option>`).join('')}</select>`:`<input id="f_${key}" name="${key}" type="${type}" value="${esc(obj[key])}" ${required?'required':''}>`}</div>`).join('');
+  const fields=c.fields.map(([key,label,type,required,opts])=>{if(key==='responsable')opts=equipeCourts();if(key==='dossier')opts=dossiersOuverts();if(type==='select'&&obj[key]&&!opts.includes(obj[key]))opts=[...opts,obj[key]];return [key,label,type,required,opts]}).map(([key,label,type,required,opts])=>`<div class="field"><label for="f_${key}">${label}</label>${type==='textarea'?`<textarea id="f_${key}" name="${key}">${esc(obj[key])}</textarea>`:type==='select'?`<select id="f_${key}" name="${key}"><option value="">Choisir…</option>${opts.map(v=>`<option value="${esc(v)}" ${v===obj[key]?'selected':''}>${esc(v)}</option>`).join('')}</select>`:`<input id="f_${key}" name="${key}" type="${type}" value="${esc(obj[key])}" ${required?'required':''}>`}</div>`).join('');
   document.getElementById('modalhost').innerHTML=`<div class="modalback" onclick="closeModal()"><div class="modal" onclick="event.stopPropagation()"><h2>${id?'Modifier':'Ajouter'} ${c.sing}</h2><div class="notice" style="margin-bottom:16px">Formulaire agrandi pour être plus évident à utiliser sur mobile comme sur PC.</div><form onsubmit="submitEntry(event,'${section}','${id}')"><div class="fields">${fields}</div>${section==='prets'?pretExtra(obj):''}<div class="buttons"><button type="button" class="btn btn-dark" onclick="closeModal()">Annuler</button><button type="submit" class="btn btn-primary">Enregistrer</button></div></form></div></div>`;
   if(section==='prets'){const i=document.getElementById('f_nom');if(i){i.setAttribute('list','flotteListe');i.insertAdjacentHTML('afterend',`<datalist id="flotteListe">${garage().flotte.map(v=>`<option value="${esc(v.nom)}">${esc(v.plaque||'')}</option>`).join('')}</datalist>`)}pretInit(obj)}
 }
@@ -1234,6 +1235,8 @@ function pretValider(values,id){
     document.getElementById('sigWrap')?.scrollIntoView({block:'center'});
     return false;
   }
+  const conflit=pretConflit(values,id);
+  if(conflit){alert('⛔ '+conflit.nom+' est déjà prise : '+conflit.client+' ('+conflit.statut.toLowerCase()+' '+pretPeriode(conflit)+').\n\nVoitures libres sur ces dates : '+(voituresLibres(values,id).join(', ')||'aucune'));return false}
   if(values.statut==='Prêté'&&!values.date_depart)values.date_depart=new Date().toLocaleDateString('en-CA');
   if(values.statut==='Prêté'&&!values.heure_depart)values.heure_depart=new Date().toTimeString().slice(0,5);
   pretTmp.sms=values.statut==='Prêté'&&(obj.statut!=='Prêté'||!!signe);
@@ -1308,7 +1311,7 @@ function fanfare(el){
 // V12 — MON GARAGE : identité (contrats), taux, voitures de prêt, équipe (partagé)
 // ─────────────────────────────────────────────────────────────────────────────
 var GARAGE_DEFAUT={
-  identite:{raison:'SARL Nouvelle Carrosserie de la Jomayere',adresse:'17 rue Édouard Martel, 42100 Saint-Étienne',tel:'04 77 57 15 98',fax:'04 77 80 67 58',siret:'449 369 958 00011',ape:'502 Z',horaires:''},
+  identite:{raison:'SARL Nouvelle Carrosserie de la Jomayere',adresse:'17 rue Édouard Martel, 42100 Saint-Étienne',tel:'04 77 57 15 98',fax:'04 77 80 67 58',siret:'449 369 958 00011',ape:'502 Z',horaires:'Du lundi au vendredi, 8h-12h et 14h-18h'},
   taux:{t1:'106',t2:'109',peinture:'109'},
   flotte:[
     {id:'f1',nom:'Alfa Romeo',plaque:'AX-566-JC',km:'250000',notes:'Modèle exact à vérifier sur la carte grise'},
@@ -1318,7 +1321,7 @@ var GARAGE_DEFAUT={
     {id:'f5',nom:'DS3',plaque:'',km:'',notes:''}
   ],
   equipe:[
-    {id:'e1',nom:'Aurélien',court:'Aurel',role:'Gérant',tel:''},
+    {id:'e1',nom:'Aurélien',court:'Aurel',role:'Gérant',tel:'06 08 61 09 76'},
     {id:'e2',nom:'Enzo',court:'Enzo',role:'Administrateur',tel:'06 65 32 04 05'},
     {id:'e3',nom:'Brahim',court:'Brahim',role:'Secrétaire',tel:'06 23 66 81 34'},
     {id:'e4',nom:'Ibrahim',court:'IB',role:'Peintre et carrossier',tel:'07 58 43 54 89'},
@@ -1328,6 +1331,7 @@ var GARAGE_DEFAUT={
 function garage(){
   if(!db.garage)db.garage=clone(GARAGE_DEFAUT);
   const g=db.garage;g.identite=g.identite||{};g.taux=g.taux||{};g.flotte=g.flotte||[];g.equipe=g.equipe||[];
+  if(!g.maj2){g.maj2=1;if(!g.identite.horaires)g.identite.horaires=GARAGE_DEFAUT.identite.horaires;const a=g.equipe.find(m=>m.court==='Aurel');if(a&&!a.tel)a.tel='06 08 61 09 76';db.garageMaj=new Date().toISOString()}
   return g;
 }
 function equipeCourts(){return [...garage().equipe.map(m=>m.court||m.nom).filter(Boolean),'Autre']}
@@ -1382,6 +1386,58 @@ function planningDesPrets(){
   }
   db.planning=P.filter(e=>!String(e.id||'').startsWith('pret-')||vus.has(e.id));
 }
+
+// V12 — VOITURES DE PRÊT : tableau des voitures, lien avec le dossier atelier, pas de double réservation
+const DOSSIER_FINI=['Prêt à livrer','Livré'];
+function dossierLabel(v){return [v.client,v.modele,v.immatriculation].filter(Boolean).join(' · ')}
+function dossiersOuverts(){return db.vehicules.filter(v=>v.statut!=='Livré').map(dossierLabel).filter(Boolean)}
+function dossierDe(p){return p.dossier?db.vehicules.find(v=>dossierLabel(v)===p.dossier):null}
+function pretDebut(p){return new Date((p.date_depart||new Date().toLocaleDateString('en-CA'))+'T'+(p.heure_depart||'00:00'))}
+function pretFin(p){
+  if(!p.date_retour)return new Date(8.64e15);
+  let f=new Date(p.date_retour+'T'+(p.heure_retour||'23:59'));
+  if(p.statut==='Prêté'&&f<new Date())f=new Date(8.64e15); // pas rentrée : bloquée jusqu'à son retour
+  return f;
+}
+function pretPeriode(p){return (p.date_depart?'du '+dh(p.date_depart,p.heure_depart):'')+(p.date_retour?' au '+dh(p.date_retour,p.heure_retour):' sans date de retour')}
+function pretActif(p){return p.statut==='Prêté'||p.statut==='Réservé'}
+function pretConflit(v,id){
+  if(!pretActif(v)||!v.nom)return null;
+  const a=pretDebut(v),b=pretFin({...v,statut:'Réservé'});
+  return db.prets.find(p=>p.id!==id&&pretActif(p)&&String(p.nom).trim().toLowerCase()===String(v.nom).trim().toLowerCase()&&pretDebut(p)<b&&a<pretFin(p))||null;
+}
+function voituresLibres(v,id){return garage().flotte.map(f=>f.nom).filter(nom=>!pretConflit({...v,nom,statut:'Réservé'},id))}
+// Alertes : la voiture du client n'est pas prête alors que le retour approche, et la voiture est réservée après
+function pretAlertes(){
+  const out=[],now=new Date(),j2=new Date(now.getTime()+2*864e5);
+  for(const p of db.prets.filter(x=>x.statut==='Prêté')){
+    const d=dossierDe(p),fin=p.date_retour?new Date(p.date_retour+'T'+(p.heure_retour||'18:00')):null;
+    const suivant=db.prets.filter(x=>x.id!==p.id&&x.statut==='Réservé'&&x.nom===p.nom&&(!fin||pretDebut(x)>=fin)).sort((a,b)=>pretDebut(a)-pretDebut(b))[0];
+    if(d&&!DOSSIER_FINI.includes(d.statut)&&fin&&fin<j2){
+      const libres=suivant?voituresLibres({...suivant,statut:'Réservé'},suivant.id).filter(n=>n!==p.nom):[];
+      out.push({p,texte:`${p.nom} chez ${p.client} : retour prévu ${dh(p.date_retour,p.heure_retour)}, mais sa voiture est encore « ${d.statut||'sans étape'} ».`+(suivant?` Elle est réservée pour ${suivant.client} le ${dh(suivant.date_depart,suivant.heure_depart)}${libres.length?' → libre à la place : '+libres.join(', '):' → aucune autre voiture libre'}.`:'')});
+    } else if(pretEnRetard(p)&&suivant){
+      out.push({p,texte:`${p.nom} pas rentrée (chez ${p.client}) alors qu’elle est réservée pour ${suivant.client} le ${dh(suivant.date_depart,suivant.heure_depart)}.`});
+    }
+  }
+  return out;
+}
+function flotteTableau(){
+  const now=new Date();
+  const cartes=garage().flotte.map(f=>{
+    const ps=db.prets.filter(p=>p.nom===f.nom&&pretActif(p));
+    const enCours=ps.find(p=>p.statut==='Prêté');
+    const proch=ps.filter(p=>p.statut==='Réservé'&&pretFin(p)>now).sort((a,b)=>pretDebut(a)-pretDebut(b))[0];
+    let ico='🟢',etat='Au garage',detail='';
+    if(enCours){ico=pretEnRetard(enCours)?'🔴':'🔵';etat=pretEnRetard(enCours)?'En retard · '+enCours.client:'Chez '+enCours.client;detail=enCours.date_retour?'Retour '+dh(enCours.date_retour,enCours.heure_retour):'Retour non fixé';const d=dossierDe(enCours);if(d)detail+=' · sa voiture : '+(d.statut||'—')}
+    if(proch)detail+=(detail?'<br>':'')+'🟠 Réservée '+esc(dh(proch.date_depart,proch.heure_depart))+' · '+esc(proch.client||'');
+    const id=(enCours||proch||{}).id;
+    return `<button class="card flotte-carte" onclick="${id?`edit('prets','${esc(id)}')`:`pretNouveau('${esc(f.nom)}')`}"><div class="flotte-nom">${ico} ${esc(f.nom)}</div><div class="flotte-etat">${esc(etat)}</div><small>${detail}</small></button>`;
+  }).join('');
+  const al=pretAlertes();
+  return (al.length?`<div class="notice" style="margin-bottom:12px;background:var(--red-soft);border-color:rgba(221,115,130,.3);color:#ffc0cb">${al.map(a=>'⚠️ '+esc(a.texte)).join('<br><br>')}</div>`:'')+`<div class="flotte-grille">${cartes}</div>`;
+}
+function pretNouveau(nom){edit('prets');const i=document.getElementById('f_nom');if(i){i.value=nom;i.dispatchEvent(new Event('input'))}}
 
 render();
 pgRender();
