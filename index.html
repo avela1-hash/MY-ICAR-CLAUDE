@@ -302,8 +302,9 @@ tr:hover td{background:rgba(255,255,255,.012)}
 .cal-mc.auj{border:2px solid #2F62C9}.cal-mc.sel{background:#14213D;color:#fff;border-color:#14213D}.cal-mc:active{transform:scale(.94)}
 .cal-jour.mois-suiv:not(.sel),.cal-mc.mois-suiv:not(.sel){background:#F3EEE4!important;border-color:#E3D9C6!important}.cal-jour.mois-suiv:not(.sel) b,.cal-jour.mois-suiv:not(.sel) small,.cal-mc.mois-suiv:not(.sel) b{color:#7A6A4F!important}
 .cal-jour.mois-prec:not(.sel),.cal-mc.mois-prec:not(.sel){background:#E9EEF5!important;border-color:#D3DCE8!important}.cal-jour.mois-prec:not(.sel) b,.cal-jour.mois-prec:not(.sel) small,.cal-mc.mois-prec:not(.sel) b{color:#4F6280!important}
+.cal-jour.mois-suiv2:not(.sel),.cal-mc.mois-suiv2:not(.sel){background:#E8F0EA!important;border-color:#CFE0D3!important}.cal-jour.mois-suiv2:not(.sel) b,.cal-jour.mois-suiv2:not(.sel) small,.cal-mc.mois-suiv2:not(.sel) b{color:#3F6B4C!important}
 .cal-jour.premier:not(.sel){box-shadow:inset 3px 0 0 #A86B12}.cal-jour.premier small{font-weight:800}
-.cal-legmois{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:-4px 0 16px}.cal-legmois span{text-align:center;font-size:12.5px;font-weight:800;padding:7px 0;border-radius:10px;text-transform:capitalize}.cal-legmois .lp{background:#E9EEF5;color:#4F6280}.cal-legmois .lc{background:#fff;border:1px solid #E6E8EC;color:#14213D}.cal-legmois .ls{background:#F3EEE4;color:#7A6A4F}
+.cal-legmois .ls2{background:#E8F0EA;color:#3F6B4C}.cal-legmois{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:-4px 0 16px}.cal-legmois span{text-align:center;font-size:12.5px;font-weight:800;padding:7px 0;border-radius:10px;text-transform:capitalize}.cal-legmois .lp{background:#E9EEF5;color:#4F6280}.cal-legmois .lc{background:#fff;border:1px solid #E6E8EC;color:#14213D}.cal-legmois .ls{background:#F3EEE4;color:#7A6A4F}
 .cal-astuce{font-size:12.5px;color:#5B6475;text-align:center;margin:18px 0 4px}
 .cal-jour{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 0 7px;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);color:inherit;font:inherit;cursor:pointer;min-height:66px}
 .cal-jour small{font-size:11px;color:#5B6475;text-transform:uppercase}.cal-jour b{font-size:19px}
@@ -1707,7 +1708,13 @@ function calNomSemaine(dec){
   const n=Math.round((l-la)/(7*864e5));
   return {'-1':'Semaine dernière','0':'Cette semaine','1':'Semaine prochaine','2':'Dans 2 semaines'}[n]||'Semaine du '+l.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
 }
-function calMoisClasse(d,sel){const n=(d.getFullYear()*12+d.getMonth())-(sel.getFullYear()*12+sel.getMonth());return n<0?' mois-prec':n>0?' mois-suiv':''}
+function calMoisClasse(d){
+  // Repère = aujourd'hui. La semaine en cours reste blanche. Mois passés en bleu, mois en cours blanc, mois suivant sable, celui d'après vert pâle.
+  const a=new Date(),la=new Date(a.getFullYear(),a.getMonth(),a.getDate());la.setDate(la.getDate()-((la.getDay()+6)%7));
+  const ld=new Date(d.getFullYear(),d.getMonth(),d.getDate());if(ld>=la&&ld<new Date(la.getTime()+7*864e5))return '';
+  const n=(d.getFullYear()*12+d.getMonth())-(a.getFullYear()*12+a.getMonth());
+  return n<0?' mois-prec':n===0?'':n%2===1?' mois-suiv':' mois-suiv2';
+}
 function calMode(m){cal.anim='';cal.mode=m;render()}
 function calMois(n){const d=calDate(cal.jour);d.setDate(1);d.setMonth(d.getMonth()+n);cal.anim=n>0?'cal-anim-g':'cal-anim-d';cal.jour=calISO(d);render();cal.anim=''}
 function calOnglets(){return `<div class="cal-modes" role="tablist">${[['jour','Jour'],['semaine','Semaine'],['mois','Mois']].map(([m,l])=>`<button role="tab" aria-selected="${cal.mode===m}" class="${cal.mode===m?'on':''}" onclick="calMode('${m}')">${l}</button>`).join('')}</div>`}
@@ -1764,7 +1771,7 @@ function planningPage(){
   <div id="calSemaine" class="${cal.anim||''}"><div class="cal-sp-titre cal-sa-titre">${calNomSemaine(-7)}</div><div class="cal-semaine cal-sa">${avant}</div><div class="cal-sp-titre cal-sc-titre">${calNomSemaine(0)}</div><div class="cal-semaine">${semaine}</div>
   <div class="cal-sp-titre">${calNomSemaine(7)}</div><div class="cal-semaine cal-sp">${prochaine}</div><div class="cal-sp-titre">${calNomSemaine(14)}</div><div class="cal-semaine cal-sp">${apres2}</div></div>
   <div class="cal-legende">${Object.values(CAL_TYPES).map(T=>`<span style="--c:${T.c};--t:${T.t}">● ${T.nom}</span>`).join('')}</div>
-  <div class="cal-legmois"><span class="lp">${esc(new Date(sel.getFullYear(),sel.getMonth()-1,1).toLocaleDateString('fr-FR',{month:'long'}))}</span><span class="lc">${esc(sel.toLocaleDateString('fr-FR',{month:'long'}))}</span><span class="ls">${esc(new Date(sel.getFullYear(),sel.getMonth()+1,1).toLocaleDateString('fr-FR',{month:'long'}))}</span></div>
+  <div class="cal-legmois">${(()=>{const a=new Date();return [[-1,'lp'],[0,'lc'],[1,'ls'],[2,'ls2']].map(([k,c])=>`<span class="${c}">${esc(new Date(a.getFullYear(),a.getMonth()+k,1).toLocaleDateString('fr-FR',{month:'long'}))}</span>`).join('')})()}</div>
   <div id="calZone" class="${cal.anim||''}"><div class="cal-titre">${cal.jour===auj?'Aujourd’hui · ':cal.jour===calISO(new Date(Date.now()+864e5))?'Demain · ':''}${esc(sel.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}))}</div>
   ${liste}<div class="cal-astuce">← Glisse le doigt pour changer de jour · sur la barre des jours pour changer de semaine →</div></div>
   <div class="buttons" style="justify-content:flex-start;margin-top:10px"><button class="btn btn-dark" onclick="calVue('liste')">Voir tout en liste</button></div></section>`;
