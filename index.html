@@ -408,7 +408,7 @@ function menuPage(){
     ['assistant','🎙','Nouveau dossier à la voix','Entretien guidé',''],
     ['education','🎓','Éduquer le pilote','Ses questions et tes consignes',''],
     ['garage','🏠','Mon garage','Identité, voitures de prêt, équipe',''],
-    ['parametres','⇩','Sauvegardes','Exporter, importer, effacer',''],
+    ['parametres','⇩','Accès et sauvegardes','Codes de l’équipe, exporter, importer',''],
     ['aide','?','Guide','Comment se servir de l’appli',''],
     ...(installEtat().installee?[]:[['installer','📲','Installer l’appli','Icône sur l’écran d’accueil','']])
   ];
@@ -1164,6 +1164,7 @@ async function syncNow(){
       if(g.status===401){sync.etat='code';syncBadge();syncDemanderCode('Ce code d’équipe n’est pas le bon.');return}
       if(g.status===503){sync.etat='nonconfig';return}
       if(g.status!==200)throw Error('serveur '+g.status);
+      sync.role=g.d.role||'';sync.nom=g.d.nom||'';
       const serveur=g.d.data||null;
       const fusion=syncFusion(db,serveur);
       if(JSON.stringify(fusion)!==JSON.stringify(serveur)){
@@ -1187,12 +1188,13 @@ function syncBadge(){
   const e=document.querySelector('.brand-sub');if(e)e.textContent=t;
 }
 function syncDemanderCode(msg=''){
-  document.getElementById('modalhost').innerHTML=`<div class="modalback"><div class="modal"><h2>🔒 Code d’équipe</h2><p class="t-muted" style="font-size:16px;line-height:1.5">Ce code protège les données de l’atelier. Il est le même pour Aurel, Enzo et Brahim.</p>${msg?`<div class="voice-warning">${esc(msg)}</div>`:''}<form onsubmit="syncValiderCode(event)"><div class="field"><input id="codeEq" type="password" autocomplete="current-password" placeholder="Code d’équipe" style="font-size:20px"></div><div class="buttons"><button type="button" class="btn btn-dark" onclick="closeModal();sync.etat=sync.code?sync.etat:'off';syncBadge()">Plus tard</button><button class="btn btn-primary">Valider</button></div></form></div></div>`;
+  document.getElementById('modalhost').innerHTML=`<div class="modalback"><div class="modal"><h2>🔒 Code d’équipe</h2><p class="t-muted" style="font-size:16px;line-height:1.5">Ce code protège les données de l’atelier. Chaque personne a son propre code, donné par Aurel.</p>${msg?`<div class="voice-warning">${esc(msg)}</div>`:''}<form onsubmit="syncValiderCode(event)"><div class="field"><input id="codeEq" type="password" autocomplete="current-password" placeholder="Code d’équipe" style="font-size:20px"></div><div class="buttons"><button type="button" class="btn btn-dark" onclick="closeModal();sync.etat=sync.code?sync.etat:'off';syncBadge()">Plus tard</button><button class="btn btn-primary">Valider</button></div></form></div></div>`;
   setTimeout(()=>document.getElementById('codeEq')?.focus(),50);
 }
 function syncValiderCode(e){e.preventDefault();const v=document.getElementById('codeEq').value.trim();if(!v)return;sync.code=v;try{localStorage.setItem('myicar_code',v)}catch(_){}closeModal();toast('Connexion à la base…');syncNow()}
 function syncOublier(){if(!confirm('Déconnecter ce téléphone de la base partagée ? Les données restent sur le téléphone.'))return;sync.code='';sync.etat='off';try{localStorage.removeItem('myicar_code')}catch(e){}syncBadge();render()}
-function syncCarte(){
+function syncCarte(){return syncCarteBase()+(sync.role==='admin'?accesCarte():'')}
+function syncCarteBase(){
   const etat={ok:'Les données sont partagées en direct avec toute l’équipe. Dernière synchro : '+sync.derniere+'.',horsligne:'Pas de réseau pour l’instant. Tout est gardé sur le téléphone et partira dès le retour du réseau.',code:'Saisis le code d’équipe pour rejoindre la base partagée.',nonconfig:'La base partagée n’est pas encore activée sur Netlify : il faut créer la variable CODE_EQUIPE.',off:'Ce téléphone n’est pas relié à la base partagée.'}[sync.etat];
   return `<div class="card settings-card"><h3>Base partagée</h3><p>${esc(etat)}</p><div class="buttons" style="justify-content:flex-start">${sync.code?`<button class="btn btn-primary" onclick="syncNow().then(render)">⟳ Synchroniser</button><button class="btn btn-dark" onclick="syncOublier()">Déconnecter</button>`:`<button class="btn btn-primary" onclick="syncDemanderCode()">🔒 Saisir le code d’équipe</button>`}</div></div>`;
 }
@@ -1465,6 +1467,22 @@ function ttImport(){
   if(n){save(true);render();toast(n+' rendez-vous TimeTree ajoutés au planning')}
 }
 ttImport();
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ACCÈS : un code par personne, que le patron peut couper à tout moment
+// ─────────────────────────────────────────────────────────────────────────────
+var acces={liste:null,err:''};
+async function accesApi(corps){
+  try{const r=await fetch('/api/acces',{method:corps?'POST':'GET',cache:'no-store',headers:{'Content-Type':'application/json','x-code-equipe':sync.code},body:corps?JSON.stringify(corps):undefined});
+    const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.erreur||('erreur '+r.status));acces.liste=d.liste||[];acces.err=''}
+  catch(e){acces.err=e.message}
+  if(page==='parametres')render();
+}
+function accesCarte(){
+  if(acces.liste===null&&!acces.err){accesApi();return `<div class="card settings-card"><h3>👤 Accès de l’équipe</h3><p>Chargement…</p></div>`}
+  const lignes=(acces.liste||[]).map(p=>`<div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 0;border-top:1px solid rgba(255,255,255,.08)"><div style="flex:1;min-width:140px"><b>${esc(p.nom)}</b> ${p.actif?'🟢':'⛔ <span class="t-muted">coupé</span>'}<br><span style="font-size:20px;letter-spacing:3px">${esc(p.code)}</span></div><button class="btn-mini btn-edit" onclick="accesApi({action:'basculer',id:'${esc(p.id)}'})">${p.actif?'Couper l’accès':'Rétablir'}</button><button class="btn-mini btn-edit" onclick="if(confirm('Donner un nouveau code à ${esc(p.nom)} ? L’ancien ne marchera plus.'))accesApi({action:'nouveau-code',id:'${esc(p.id)}'})">Nouveau code</button><button class="btn-mini btn-del" onclick="if(confirm('Supprimer ${esc(p.nom)} ?'))accesApi({action:'supprimer',id:'${esc(p.id)}'})">Supprimer</button></div>`).join('');
+  return `<div class="card settings-card"><h3>👤 Accès de l’équipe</h3><p>Ton code à toi garde l’accès total et toi seul vois cette carte. Chaque personne a son code : tu peux le couper quand tu veux, sans toucher aux autres.</p>${acces.err?`<div class="voice-warning">${esc(acces.err)}</div>`:''}${lignes||'<p class="t-muted">Personne pour l’instant.</p>'}<form style="display:flex;gap:8px;margin-top:12px" onsubmit="event.preventDefault();const n=document.getElementById('accNom').value.trim();if(n)accesApi({action:'ajouter',nom:n})"><input id="accNom" class="search" placeholder="Prénom (ex. Enzo)" style="flex:1"><button class="btn btn-primary">+ Donner un accès</button></form></div>`;
+}
 
 render();
 pgRender();

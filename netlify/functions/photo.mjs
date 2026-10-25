@@ -3,25 +3,14 @@
 // chaque synchro n'envoie que le numéro de la photo, pas la photo elle-même.
 // Protégées par le même code d'équipe que la base (variable CODE_EQUIPE).
 import { getStore } from '@netlify/blobs';
+import { verifier, json } from '../lib/acces.mjs';
 
-const env = (k) => (globalThis.Netlify?.env?.get(k)) ?? process.env[k];
-const json = (data, status = 200) => new Response(JSON.stringify(data), {
-  status, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }
-});
 const TAILLE_MAX = 1_500_000;
 
-function egal(a, b) {
-  if (a.length !== b.length) return false;
-  let d = 0;
-  for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  return d === 0;
-}
 
 export default async (req) => {
-  const code = String(env('CODE_EQUIPE') || '').trim();
-  if (!code) return json({ erreur: 'base non configurée : ajoute la variable CODE_EQUIPE sur Netlify', configuree: false }, 503);
-  const recu = String(req.headers.get('x-code-equipe') || '').trim();
-  if (!recu || !egal(recu, code)) return json({ erreur: 'code d’équipe incorrect' }, 401);
+  const qui = await verifier(req);
+  if (qui instanceof Response) return qui;
 
   const store = getStore({ name: 'myicar-photos', consistency: 'strong' });
 
