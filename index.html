@@ -735,7 +735,7 @@ const PG_EXEMPLES=['Quelles voitures de prêt sont disponibles ?','Qu’est-ce q
 function pgId(){return crypto.randomUUID?.()||String(Date.now()+Math.random())}
 function pgMaintenant(){const d=new Date();const j=['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'][d.getDay()];return `${localISO(d)} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}, ${j}`}
 function pgOpen(){pg.open=true;pg.error='';pgRender();pgListen()}
-function pgClose(){pgStopMic();ttsStop();pg.open=false;pgRender()}
+function pgClose(){pg.actif=false;pgStopMic();ttsStop();pg.open=false;pgRender()}
 function pgToggleMains(){pg.mainsLibres=!pg.mainsLibres;pgRender()}
 function pgStopMic(){if(pg.recognition){try{pg.recognition.abort()}catch(e){}}pg.recognition=null;pg.listening=false}
 function pgPush(qui,texte,done=''){pg.log.push({qui,texte,done});if(pg.log.length>40)pg.log.splice(0,pg.log.length-40)}
@@ -763,14 +763,25 @@ function pgListen(){
     ttsStop();
     const r=new SpeechRec();
     r.lang='fr-FR';r.interimResults=false;r.continuous=false;r.maxAlternatives=1;
-    pg.recognition=r;pg.listening=true;pg.error='';
-    r.onresult=e=>{const t=e.results?.[0]?.[0]?.transcript?.trim()||'';pgStopMic();if(t)pgSend(t);else pgRender()};
-    r.onerror=e=>{pgStopMic();if(e.error==='not-allowed')pg.error='Micro refusé. Autorise le micro pour ce site dans Chrome, puis réessaie.';else if(e.error!=='no-speech'&&e.error!=='aborted')pg.error='Micro : '+e.error+'. Tu peux écrire ta demande.';pgRender()};
-    r.onend=()=>{pg.listening=false;pg.recognition=null;pgRender()};
+    pg.recognition=r;pg.listening=true;pg.error='';if(pg.mainsLibres)pg.actif=true;
+    r.onresult=e=>{const t=e.results?.[0]?.[0]?.transcript?.trim()||'';pgStopMic();if(t){pg.echecs=0;pgSend(t)}else pgRender()};
+    r.onerror=e=>{pgStopMic();if(e.error==='not-allowed'||e.error==='service-not-allowed'){pg.actif=false;pg.error='Micro refusé. Autorise le micro pour ce site dans Chrome, puis réessaie.'}else if(e.error!=='no-speech'&&e.error!=='aborted'){pg.echecs=(pg.echecs||0)+1;pg.error='Micro : '+e.error+'. Tu peux écrire ta demande.'}pgRender()};
+    r.onend=()=>{pg.listening=false;pg.recognition=null;pgRender();pgRelance()};
     r.start();pgRender();
   }catch(e){pgStopMic();pg.error='Impossible de lancer le micro : '+e.message;pgRender()}
 }
-function pgMic(){if(pg.listening){pgStopMic();pgRender()}else pgListen()}
+function pgMic(){if(pg.listening||pg.actif){pg.actif=false;pgStopMic();pgRender()}else{pg.echecs=0;pgListen()}}
+// Mains libres : Chrome coupe le micro après quelques secondes de silence. Tant que la conversation
+// est ouverte, on le relance tout seul (sauf pendant que le pilote réfléchit ou parle).
+function pgRelance(){
+  clearTimeout(pg.relance);
+  if(!pg.actif||!pg.mainsLibres||!pg.open||pg.thinking||pg.listening||tts.bloque)return;
+  if((pg.echecs||0)>=3){pg.actif=false;pg.error='Le micro s’est coupé plusieurs fois. Appuie sur Parler pour reprendre.';pgRender();return}
+  if(document.visibilityState!=='visible')return; // reprendra au retour dans l'appli
+  if(window.speechSynthesis&&window.speechSynthesis.speaking){pg.relance=setTimeout(pgRelance,400);return}
+  pg.relance=setTimeout(()=>{if(pg.actif&&!pg.listening&&!pg.thinking)pgListen()},250);
+}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')pgRelance();else if(pg.listening)pgStopMic()});
 function pgTextSubmit(e){e.preventDefault();const i=document.getElementById('pgInput');const t=(i?.value||'').trim();if(!t||pg.thinking)return;i.value='';pgSend(t)}
 
 function pgRepond(t,done=''){pgPush('pilote',t,done);pg.thinking=false;pgRender();pgSpeak(t)}
@@ -821,7 +832,7 @@ async function pgSend(t){
     const local=pgLocal(s);
     const raison=e.name==='AbortError'?'le pilote a mis trop de temps':e.message;
     if(local){pgRepond(local+' (Pilote IA injoignable : '+raison+'.)')}
-    else{pg.error='Pilote IA injoignable : '+raison+'. En attendant, je sais seulement ouvrir les pages (« ouvre les prêts »).';pgPush('pilote','Je n’arrive pas à joindre l’IA pour le moment.');pgRender()}
+    else{pg.error='Pilote IA injoignable : '+raison+'. En attendant, je sais seulement ouvrir les pages (« ouvre les prêts »).';pgPush('pilote','Je n’arrive pas à joindre l’IA pour le moment.');pgRender();pgRelance()}
   }
 }
 
@@ -1028,7 +1039,7 @@ function pgLocal(s){
 
 function pgRender(){
   const host=document.getElementById('pilotehost');if(!host)return;
-  const etat=pg.thinking?'⏳ Je réfléchis…':pg.listening?'🔴 Je t’écoute, parle maintenant…':pg.pending?'❓ J’attends ta confirmation (oui / non)':'Appuie sur le micro et parle';
+  const etat=pg.thinking?'⏳ Je réfléchis…':pg.listening?'🔴 Je t’écoute, parle maintenant…':pg.actif?'🟢 Conversation ouverte, je reprends l’écoute…':pg.pending?'❓ J’attends ta confirmation (oui / non)':'Appuie sur le micro et parle';
   if(!pg.open){host.innerHTML=`<button class="pg-fab ${pg.listening?'on':''}" onclick="pgOpen()" aria-label="Parler au pilote">🎙</button>`;return}
   const log=pg.log.length?pg.log.slice(-12).map(m=>`<div class="pg-msg ${m.qui}">${esc(m.texte)}${m.done?`<span class="pg-done">✓ ${esc(m.done)}</span>`:''}</div>`).join('')
     :`<div class="pg-msg pilote">Je t’écoute. Demande-moi ce que tu veux faire dans l’appli, par exemple :</div><div class="pg-chips">${PG_EXEMPLES.map(x=>`<button class="pg-chip" onclick="pgSend(this.textContent)">${esc(x)}</button>`).join('')}</div>`;
@@ -1039,7 +1050,7 @@ function pgRender(){
       <div class="pg-state">${etat}</div>
       ${pg.error?`<div class="pg-warn">⚠ ${esc(pg.error)}</div>`:''}
       ${tts.bloque?`<div class="pg-warn">🔇 Chrome a bloqué la voix. <button class="pg-small ok" onclick="ttsRejouer()">🔊 Écouter la réponse</button></div>`:''}
-      <div class="pg-row"><button class="pg-mic ${pg.listening?'on':''}" onclick="pgMic()">${pg.listening?'■ Stop':pg.thinking?'⏳ Patiente…':'🎙 Parler'}</button>${pg.undo?`<button class="pg-small" onclick="pgUndo()" aria-label="Annuler le dernier changement">↩</button>`:''}<button class="pg-small ${pg.mainsLibres?'ok':''}" onclick="pgToggleMains()" title="Mains libres : il réécoute après chaque réponse">${pg.mainsLibres?'✓ Mains libres':'Mains libres'}</button><button class="pg-small" onclick="pgTestSon()" aria-label="Tester la voix">🔊</button></div>
+      <div class="pg-row"><button class="pg-mic ${pg.listening||pg.actif?'on':''}" onclick="pgMic()">${pg.listening||pg.actif?'■ Stop':pg.thinking?'⏳ Patiente…':'🎙 Parler'}</button>${pg.undo?`<button class="pg-small" onclick="pgUndo()" aria-label="Annuler le dernier changement">↩</button>`:''}<button class="pg-small ${pg.mainsLibres?'ok':''}" onclick="pgToggleMains()" title="Mains libres : il réécoute après chaque réponse">${pg.mainsLibres?'✓ Mains libres':'Mains libres'}</button><button class="pg-small" onclick="pgTestSon()" aria-label="Tester la voix">🔊</button></div>
       <form class="pg-text" onsubmit="pgTextSubmit(event)"><input id="pgInput" type="text" placeholder="Ou écris ta demande…" autocomplete="off"><button class="pg-small" type="submit">↗</button></form>
     </div></div>`;
   const l=document.getElementById('pgLog');if(l)l.scrollTop=l.scrollHeight;
