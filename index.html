@@ -1361,7 +1361,7 @@ function garDel(liste,id){const it=garage()[liste].find(x=>x.id===id);if(!it||!c
 function garInviter(id){
   const m=garage().equipe.find(x=>x.id===id);if(!m)return;
   const tel=String(m.tel||'').replace(/[^\d+]/g,'');if(!tel){toast('Ajoute d’abord son portable');garEdit('equipe',id);return}
-  const t=`Salut ${m.nom}, voici l’appli de l’atelier My I-Car : https://${location.host}/ . Ouvre-la dans Chrome, puis « Installer l’appli ». Code d’équipe : ${sync.code||'(demande-le à Aurélien)'}`;
+  const t=`Salut ${m.nom}, voici l’appli de l’atelier My I-Car : https://${location.host}/ . Ouvre-la dans Chrome, puis « Installer l’appli ». Ton code personnel te sera donné par Aurélien.`;
   location.href=`sms:${tel}?body=${encodeURIComponent(t)}`;
 }
 function garagePage(){
