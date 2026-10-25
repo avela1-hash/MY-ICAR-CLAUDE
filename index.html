@@ -1700,6 +1700,13 @@ function calFait(ev,id){ev.stopPropagation();const e=db.planning.find(x=>x.id===
 function calAjouter(){edit('planning');const i=document.getElementById('f_date');if(i)i.value=cal.jour;const hh=document.getElementById('f_heure');if(hh&&!hh.value)hh.value='08:00';const s=document.getElementById('f_statut');if(s&&!s.value)s.value='Prévu';document.getElementById('f_heure')?.focus()}
 function calVue(v){cal.vue=v;render()}
 // Mois précédent = bleu-gris, mois en cours = blanc, mois suivant = sable
+// Nom de la bande : « Cette semaine » seulement si elle contient aujourd'hui, sinon « Semaine du 23 nov. »
+function calNomSemaine(dec){
+  const sel=calDate(cal.jour),l=new Date(sel);l.setDate(sel.getDate()-((sel.getDay()+6)%7)+dec);
+  const a=new Date(),la=new Date(a.getFullYear(),a.getMonth(),a.getDate());la.setDate(la.getDate()-((la.getDay()+6)%7));
+  const n=Math.round((l-la)/(7*864e5));
+  return {'-1':'Semaine dernière','0':'Cette semaine','1':'Semaine prochaine','2':'Dans 2 semaines'}[n]||'Semaine du '+l.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+}
 function calMoisClasse(d,sel){const n=(d.getFullYear()*12+d.getMonth())-(sel.getFullYear()*12+sel.getMonth());return n<0?' mois-prec':n>0?' mois-suiv':''}
 function calMode(m){cal.anim='';cal.mode=m;render()}
 function calMois(n){const d=calDate(cal.jour);d.setDate(1);d.setMonth(d.getMonth()+n);cal.anim=n>0?'cal-anim-g':'cal-anim-d';cal.jour=calISO(d);render();cal.anim=''}
@@ -1754,8 +1761,8 @@ function planningPage(){
     :`<div class="empty" style="padding:28px 0">Rien de prévu ce jour-là.<div class="buttons" style="justify-content:center"><button class="btn btn-primary" onclick="calAjouter()">+ Ajouter un rendez-vous</button></div></div>`;
   return header('Planning','',`<button class="btn btn-primary" onclick="calAjouter()">+ Ajouter</button>`)+calOnglets()
   +`<div class="cal-nav"><button class="cal-btn" onclick="calDecaler(-7)" aria-label="Semaine précédente">‹</button><span class="cal-mois">${esc(mois)}</span>${cal.jour!==auj?`<button class="cal-btn" onclick="calAller('${auj}')">Aujourd’hui</button>`:''}<button class="cal-btn" onclick="calDecaler(7)" aria-label="Semaine suivante">›</button></div>
-  <div id="calSemaine" class="${cal.anim||''}"><div class="cal-sp-titre cal-sa-titre">Semaine d’avant</div><div class="cal-semaine cal-sa">${avant}</div><div class="cal-sp-titre cal-sc-titre">Cette semaine</div><div class="cal-semaine">${semaine}</div>
-  <div class="cal-sp-titre">Semaine d’après</div><div class="cal-semaine cal-sp">${prochaine}</div><div class="cal-sp-titre">Dans 2 semaines</div><div class="cal-semaine cal-sp">${apres2}</div></div>
+  <div id="calSemaine" class="${cal.anim||''}"><div class="cal-sp-titre cal-sa-titre">${calNomSemaine(-7)}</div><div class="cal-semaine cal-sa">${avant}</div><div class="cal-sp-titre cal-sc-titre">${calNomSemaine(0)}</div><div class="cal-semaine">${semaine}</div>
+  <div class="cal-sp-titre">${calNomSemaine(7)}</div><div class="cal-semaine cal-sp">${prochaine}</div><div class="cal-sp-titre">${calNomSemaine(14)}</div><div class="cal-semaine cal-sp">${apres2}</div></div>
   <div class="cal-legende">${Object.values(CAL_TYPES).map(T=>`<span style="--c:${T.c};--t:${T.t}">● ${T.nom}</span>`).join('')}</div>
   <div class="cal-legmois"><span class="lp">${esc(new Date(sel.getFullYear(),sel.getMonth()-1,1).toLocaleDateString('fr-FR',{month:'long'}))}</span><span class="lc">${esc(sel.toLocaleDateString('fr-FR',{month:'long'}))}</span><span class="ls">${esc(new Date(sel.getFullYear(),sel.getMonth()+1,1).toLocaleDateString('fr-FR',{month:'long'}))}</span></div>
   <div id="calZone" class="${cal.anim||''}"><div class="cal-titre">${cal.jour===auj?'Aujourd’hui · ':cal.jour===calISO(new Date(Date.now()+864e5))?'Demain · ':''}${esc(sel.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}))}</div>
