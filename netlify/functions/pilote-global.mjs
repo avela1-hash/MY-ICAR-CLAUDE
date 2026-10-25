@@ -15,7 +15,7 @@ const SECTIONS = {
       telephone: 'texte', sinistre: 'texte (ce qui est arrivé)', assurance: 'texte',
       expertise: ['À prévoir', 'RDV fixé', 'Faite', 'Non nécessaire'],
       prochaine_action: 'texte', date_action: 'AAAA-MM-JJ',
-      responsable: ['Enzo', 'IB', 'Brahim', 'Aurel', 'Autre'],
+      responsable: ['Enzo', 'IB', 'Brahim', 'Aurel', 'Adam', 'Autre'],
       priorite: 'entier 1 à 10', montant: 'nombre en euros', notes: 'texte',
       manque: 'LECTURE SEULE : infos encore manquantes dans ce dossier'
     }
@@ -24,7 +24,7 @@ const SECTIONS = {
     nom: 'Planning (rendez-vous et interventions)',
     champs: {
       date: 'AAAA-MM-JJ', heure: 'HH:MM', titre: 'texte',
-      responsable: ['Enzo', 'IB', 'Brahim', 'Aurel', 'Autre'],
+      responsable: ['Enzo', 'IB', 'Brahim', 'Aurel', 'Adam', 'Autre'],
       statut: ['Prévu', 'En cours', 'Terminé'], notes: 'texte'
     }
   },
@@ -40,7 +40,7 @@ const SECTIONS = {
     nom: 'Relances et tâches',
     champs: {
       titre: 'texte', client: 'texte', echeance: 'AAAA-MM-JJ',
-      responsable: ['Enzo', 'IB', 'Brahim', 'Aurel', 'Autre'],
+      responsable: ['Enzo', 'IB', 'Brahim', 'Aurel', 'Adam', 'Autre'],
       statut: ['À faire', 'En cours', 'Terminée'], notes: 'texte'
     }
   },
@@ -56,7 +56,7 @@ const SECTIONS = {
     }
   }
 };
-const PAGES = ['dashboard', 'vehicules', 'planning', 'prets', 'taches', 'clients', 'expertises', 'assistant', 'aide', 'parametres'];
+const PAGES = ['dashboard', 'vehicules', 'planning', 'prets', 'taches', 'clients', 'expertises', 'assistant', 'aide', 'parametres', 'garage'];
 
 const descriptionSchema = Object.entries(SECTIONS).map(([cle, s]) =>
   `- ${cle} (${s.nom}) : ` + Object.entries(s.champs)

@@ -279,6 +279,7 @@ tr:hover td{background:rgba(255,255,255,.012)}
 .pg-log{min-height:60px;padding:10px 12px;gap:7px}.pg-msg{font-size:15px;padding:9px 12px}
 .pg-foot{padding:8px 12px 10px;gap:7px}.pg-state{font-size:13px;min-height:0}.pg-mic{padding:12px;font-size:16px}.pg-small{padding:10px 11px}.pg-text input{padding:10px}.pg-warn{font-size:13px;padding:7px 10px}}
 .edu-row{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.gar-row{flex-wrap:wrap}.gar-row .edu-txt{flex:1 1 100%}.gar-row .gar-btns{display:flex;gap:8px;margin-left:auto}
 .edu-txt{flex:1;min-width:0;font-size:16px;overflow-wrap:anywhere}.edu-txt small{color:#94a3bf;font-size:12px}
 .edu-sw{width:48px;height:28px;border-radius:99px;border:1px solid rgba(115,224,205,.3);background:rgba(255,255,255,.04);position:relative;flex:0 0 auto}
 .edu-sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#64799a;transition:left .15s}
@@ -309,7 +310,7 @@ const sections=[
   ['menu','☰','Plus']
 ];
 // Pages rangées sous « Plus » : l'onglet reste allumé quand on y est.
-const MENU_PAGES=['menu','clients','expertises','taches','aide','parametres','education','installer'];
+const MENU_PAGES=['menu','garage','clients','expertises','taches','aide','parametres','education','installer'];
 const configs={
   expertises:{sing:'expertise',title:'Expertises',cols:[['client','Client'],['immatriculation','Immatriculation'],['date','Date RDV'],['statut','Statut'],['notes','Observations']],fields:[['client','Client','text',1],['immatriculation','Immatriculation','text'],['date','Date de rendez-vous','date'],['statut','Statut','select','',['Sans RDV','RDV fixé','Réalisée','À relancer']],['notes','Observations','textarea']]},
   vehicules:{sing:'dossier',title:'Dossiers',cols:[['client','Client'],['modele','Véhicule'],['immatriculation','Immatriculation'],['statut','Étape'],['priorite','Priorité']],fields:[['client','Client','text',1],['modele','Modèle','text'],['immatriculation','Immatriculation','text'],['statut','Étape','select','',['À chiffrer','En attente','À planifier','En travaux','Peinture','Prêt à livrer','Livré']],['priorite','Priorité (1 à 10)','number'],['telephone','Téléphone client','tel'],['sinistre','Sinistre','text'],['assurance','Assurance','text'],['expertise','Expertise','select','',['À prévoir','RDV fixé','Faite','Non nécessaire']],['prochaine_action','Prochaine action','text'],['date_action','Pour quand','date'],['responsable','Responsable','select','',['Enzo','IB','Brahim','Aurel','Autre']],['montant','Montant estimé des travaux (€)','number'],['notes','Observations','textarea']]},
@@ -405,6 +406,7 @@ function menuPage(){
     ['taches','✦','Relances','Ce qu’il reste à faire',db.taches.filter(x=>x.statut!=='Terminée').length],
     ['assistant','🎙','Nouveau dossier à la voix','Entretien guidé',''],
     ['education','🎓','Éduquer le pilote','Ses questions et tes consignes',''],
+    ['garage','🏠','Mon garage','Identité, voitures de prêt, équipe',''],
     ['parametres','⇩','Sauvegardes','Exporter, importer, effacer',''],
     ['aide','?','Guide','Comment se servir de l’appli',''],
     ...(installEtat().installee?[]:[['installer','📲','Installer l’appli','Icône sur l’écran d’accueil','']])
@@ -415,9 +417,9 @@ function help(){return header('Guide de démarrage','Un parcours simple pour com
 function settings(){return header('Paramètres','Sauvegarder, importer ou exporter les données de l’atelier.')+`<div class="settings-grid">${syncCarte()}<div class="card settings-card"><h3>Sauvegardes</h3><p>Les données sont enregistrées localement sur cet appareil et dans ce navigateur. Tu peux exporter un fichier JSON pour conserver ton test.</p><div class="buttons" style="justify-content:flex-start"><button class="btn btn-primary" onclick="exportData()">↓ Exporter</button><button class="btn btn-dark" onclick="document.getElementById('importFile').click()">↑ Importer</button><input id="importFile" type="file" accept=".json,application/json" hidden onchange="importData(event)"></div></div><div class="card settings-card"><h3>Réinitialisation</h3><p>Si tu veux refaire un essai propre avec le nouveau design, tu peux effacer les données locales.</p><div class="buttons" style="justify-content:flex-start"><button class="btn btn-dark" style="border-color:rgba(221,115,130,.2);color:#ffc3ce;background:rgba(221,115,130,.12)" onclick="resetAll()">Effacer les données</button></div></div></div></section>`}
 function edit(section,id=''){
   const c=configs[section], obj=db[section].find(x=>x.id===id)||{};
-  const fields=c.fields.map(([key,label,type,required,opts])=>`<div class="field"><label for="f_${key}">${label}</label>${type==='textarea'?`<textarea id="f_${key}" name="${key}">${esc(obj[key])}</textarea>`:type==='select'?`<select id="f_${key}" name="${key}"><option value="">Choisir…</option>${opts.map(v=>`<option value="${esc(v)}" ${v===obj[key]?'selected':''}>${esc(v)}</option>`).join('')}</select>`:`<input id="f_${key}" name="${key}" type="${type}" value="${esc(obj[key])}" ${required?'required':''}>`}</div>`).join('');
+  const fields=c.fields.map(([key,label,type,required,opts])=>{if(key==='responsable')opts=equipeCourts();if(type==='select'&&obj[key]&&!opts.includes(obj[key]))opts=[...opts,obj[key]];return [key,label,type,required,opts]}).map(([key,label,type,required,opts])=>`<div class="field"><label for="f_${key}">${label}</label>${type==='textarea'?`<textarea id="f_${key}" name="${key}">${esc(obj[key])}</textarea>`:type==='select'?`<select id="f_${key}" name="${key}"><option value="">Choisir…</option>${opts.map(v=>`<option value="${esc(v)}" ${v===obj[key]?'selected':''}>${esc(v)}</option>`).join('')}</select>`:`<input id="f_${key}" name="${key}" type="${type}" value="${esc(obj[key])}" ${required?'required':''}>`}</div>`).join('');
   document.getElementById('modalhost').innerHTML=`<div class="modalback" onclick="closeModal()"><div class="modal" onclick="event.stopPropagation()"><h2>${id?'Modifier':'Ajouter'} ${c.sing}</h2><div class="notice" style="margin-bottom:16px">Formulaire agrandi pour être plus évident à utiliser sur mobile comme sur PC.</div><form onsubmit="submitEntry(event,'${section}','${id}')"><div class="fields">${fields}</div>${section==='prets'?pretExtra(obj):''}<div class="buttons"><button type="button" class="btn btn-dark" onclick="closeModal()">Annuler</button><button type="submit" class="btn btn-primary">Enregistrer</button></div></form></div></div>`;
-  if(section==='prets')pretInit(obj);
+  if(section==='prets'){const i=document.getElementById('f_nom');if(i){i.setAttribute('list','flotteListe');i.insertAdjacentHTML('afterend',`<datalist id="flotteListe">${garage().flotte.map(v=>`<option value="${esc(v.nom)}">${esc(v.plaque||'')}</option>`).join('')}</datalist>`)}pretInit(obj)}
 }
 function closeModal(){document.getElementById('modalhost').innerHTML=''}
 function submitEntry(e,section,id){e.preventDefault(); const values=Object.fromEntries(new FormData(e.target));
@@ -460,7 +462,7 @@ function installPage(){
     +(s.principale?`<div class="notice" style="margin-bottom:16px;background:rgba(243,179,94,.10);border-color:rgba(243,179,94,.25);color:#ffd8a0">⚠ Tu es sur une adresse d’essai (<b>${esc(location.hostname)}</b>)&nbsp;: elle ne suit pas forcément les mises à jour. Installe plutôt l’appli depuis l’adresse principale <b>${esc(s.principale)}</b>. Les données ne passent pas d’une adresse à l’autre&nbsp;: exporte-les ici (Sauvegardes), puis importe-les là-bas.<div class="buttons" style="justify-content:flex-start"><button class="btn btn-dark" onclick="go('parametres')">⇩ Sauvegardes</button><a class="btn btn-secondary" href="https://${esc(s.principale)}/">Ouvrir l’adresse principale</a></div></div>`:'')
     +`<div class="help-grid">${etapes.map(([n,t,p])=>`<div class="card step-card"><div class="step-num">${n}</div><h3>${t}</h3><p>${p}</p></div>`).join('')}</div></section>`;
 }
-function render(){bottomNav(); const root=document.getElementById('root'); if(page==='dashboard') root.innerHTML=dashboard(); else if(['vehicules','planning','prets','taches','expertises','clients'].includes(page)) root.innerHTML=listing(page); else if(page==='assistant') root.innerHTML=assistantPage(); else if(page==='aide') root.innerHTML=help(); else if(page==='menu') root.innerHTML=menuPage(); else if(page==='education') root.innerHTML=eduPage(); else if(page==='installer') root.innerHTML=installPage(); else root.innerHTML=settings(); window.scrollTo(0,0);}
+function render(){bottomNav(); const root=document.getElementById('root'); if(page==='dashboard') root.innerHTML=dashboard(); else if(['vehicules','planning','prets','taches','expertises','clients'].includes(page)) root.innerHTML=listing(page); else if(page==='assistant') root.innerHTML=assistantPage(); else if(page==='aide') root.innerHTML=help(); else if(page==='menu') root.innerHTML=menuPage(); else if(page==='education') root.innerHTML=eduPage(); else if(page==='installer') root.innerHTML=installPage(); else if(page==='garage') root.innerHTML=garagePage(); else root.innerHTML=settings(); window.scrollTo(0,0);}
 
 // V8 - Pilote IA : la conversation passe par la fonction Netlify /api/pilote (Gemini, clé cachée côté serveur).
 // Si l'IA est injoignable (fichier ouvert en local, quota atteint…), le pilote repasse sur les règles locales de la V7.
@@ -732,7 +734,7 @@ function assistantPage(){
 // Les suppressions demandent une confirmation ; chaque changement peut être annulé.
 // ───────────────────────────────────────────────────────────────────────────
 const GLOBAL_URL='/api/pilote-global';
-const PG_PAGES=['dashboard','vehicules','planning','prets','taches','clients','expertises','assistant','aide','parametres','education'];
+const PG_PAGES=['dashboard','vehicules','planning','prets','taches','clients','expertises','assistant','aide','parametres','education','garage'];
 const pg={open:false,listening:false,thinking:false,mainsLibres:true,log:[],pending:null,undo:null,error:'',recognition:null};
 const PG_EXEMPLES=['Quelles voitures de prêt sont disponibles ?','Qu’est-ce que j’ai demain au planning ?','Prête la Clio à Monsieur Martin jusqu’à vendredi','Passe le dossier Dupont en peinture'];
 
@@ -967,10 +969,11 @@ function pgContexte(t){
   }
   // Résumé chiffré : de quoi répondre à « combien… » sans tout envoyer
   const parEtape={};db.vehicules.forEach(x=>{const k=x.statut||'Sans étape';parEtape[k]=(parEtape[k]||0)+1});
-  const parc=[...new Set(db.prets.map(x=>x.nom).filter(Boolean))].map(nom=>{const actif=db.prets.filter(x=>x.nom===nom&&x.statut!=='Retourné').pop();return nom+' : '+(actif?actif.statut+(actif.client?' ('+actif.client+')':''):'Disponible')});
+  const parc=[...new Set([...garage().flotte.map(v=>v.nom),...db.prets.map(x=>x.nom)].filter(Boolean))].map(nom=>{const actif=db.prets.filter(x=>x.nom===nom&&x.statut!=='Retourné').pop();return nom+' : '+(actif?actif.statut+(actif.client?' ('+actif.client+')':''):'Disponible')});
   const resume={
     dossiersParEtape:parEtape,
     voituresDePret:parc,
+    equipe:garage().equipe.map(m=>m.court+(m.role?' ('+m.role+')':'')).join(', '),
     rendezVous:{aujourdhui:db.planning.filter(x=>x.date===auj).length,demain:db.planning.filter(x=>x.date===pgDecale(1)).length},
     relancesOuvertes:enCours('taches').length,
     expertisesEnAttente:enCours('expertises').length,
@@ -998,7 +1001,7 @@ function pgNavDirecte(s){
   const reste=m[1];
   if(PG_MOTS_SECTION.planning.test(reste)&&/demain|aujourd|matin|soir|semaine|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|\d/.test(reste))return ''; // « le planning de demain » → l'IA le lit
 
-  const cible=[[/nouveau dossier|creer un dossier|entretien/,'assistant'],[/voitures? de pret|\bprets?\b/,'prets'],[/planning|agenda|rendez.vous/,'planning'],[/relances?|taches?/,'taches'],[/expertises?/,'expertises'],[/clients?/,'clients'],[/dossiers?|vehicules?|atelier/,'vehicules'],[/sauvegardes?|parametres?|export/,'parametres'],[/cockpit|accueil|tableau de bord/,'dashboard'],[/guide|aide/,'aide']].find(([re])=>re.test(reste));
+  const cible=[[/nouveau dossier|creer un dossier|entretien/,'assistant'],[/mon garage|equipe|siret|taux horaire|identite/,'garage'],[/voitures? de pret|\bprets?\b/,'prets'],[/planning|agenda|rendez.vous/,'planning'],[/relances?|taches?/,'taches'],[/expertises?/,'expertises'],[/clients?/,'clients'],[/dossiers?|vehicules?|atelier/,'vehicules'],[/sauvegardes?|parametres?|export/,'parametres'],[/cockpit|accueil|tableau de bord/,'dashboard'],[/guide|aide/,'aide']].find(([re])=>re.test(reste));
   if(!cible)return '';
   const sec=cible[1];
   const opts=configs[sec]?.fields.find(f=>f[0]==='statut')?.[4]||[];
@@ -1008,7 +1011,7 @@ function pgNavDirecte(s){
   if(autres.length>1)return ''; // demande plus riche → l'IA s'en occupe
   if(sec==='assistant'){go('assistant');return 'J’ouvre l’entretien de dossier.'}
   page=sec;query=autres[0]||'';filter=etape||'';render();
-  const noms={prets:'les prêts',planning:'le planning',taches:'les relances',expertises:'les expertises',clients:'les clients',vehicules:'les dossiers',parametres:'les sauvegardes',dashboard:'le cockpit',aide:'le guide'};
+  const noms={prets:'les prêts',planning:'le planning',taches:'les relances',expertises:'les expertises',clients:'les clients',vehicules:'les dossiers',parametres:'les sauvegardes',dashboard:'le cockpit',aide:'le guide',garage:'ton garage'};
   if(configs[sec]&&(etape||query)){const n=filteredRows(sec).length;return `Voici ${noms[sec]}${etape?' à l’étape '+etape:''}${query?' pour '+query:''} : ${n?n+' résultat'+(n>1?'s':''):'aucun résultat'}.`}
   return 'J’ouvre '+noms[sec]+'.';
 }
@@ -1037,10 +1040,10 @@ function pgUndo(){if(!pg.undo)return;db=pg.undo;pg.undo=null;save(true);render()
 
 // Secours sans IA : ouvrir une page par mot-clé.
 function pgLocal(s){
-  const map=[[/nouveau dossier|creer un dossier/,'assistant'],[/pret|voiture de pret/,'prets'],[/planning|agenda|rendez.vous|demain|aujourd/,'planning'],[/relance|tache/,'taches'],[/expertise/,'expertises'],[/client/,'clients'],[/dossier|vehicule|atelier/,'vehicules'],[/sauvegarde|parametre|export/,'parametres'],[/cockpit|accueil/,'dashboard']];
+  const map=[[/nouveau dossier|creer un dossier/,'assistant'],[/mon garage|equipe|siret|taux horaire/,'garage'],[/pret|voiture de pret/,'prets'],[/planning|agenda|rendez.vous|demain|aujourd/,'planning'],[/relance|tache/,'taches'],[/expertise/,'expertises'],[/client/,'clients'],[/dossier|vehicule|atelier/,'vehicules'],[/sauvegarde|parametre|export/,'parametres'],[/cockpit|accueil/,'dashboard']];
   const hit=map.find(([re])=>re.test(s));if(!hit)return '';
   go(hit[1]);
-  return 'J’ouvre '+({assistant:'l’entretien de dossier',prets:'les prêts',planning:'le planning',taches:'les relances',expertises:'les expertises',clients:'les clients',vehicules:'les dossiers',parametres:'les sauvegardes',dashboard:'le cockpit'}[hit[1]])+'.';
+  return 'J’ouvre '+({assistant:'l’entretien de dossier',prets:'les prêts',planning:'le planning',taches:'les relances',expertises:'les expertises',clients:'les clients',vehicules:'les dossiers',parametres:'les sauvegardes',dashboard:'le cockpit',garage:'ton garage'}[hit[1]])+'.';
 }
 
 function pgRender(){
@@ -1120,6 +1123,7 @@ function syncMarque(){
     for(const x of base[sec]||[])if(!ids.has(x.id))db.supprimes[x.id]=now;
   }
   if(JSON.stringify(db.education||null)!==JSON.stringify(base.education||null))db.educationMaj=now;
+  if(base.garage&&JSON.stringify(db.garage||null)!==JSON.stringify(base.garage))db.garageMaj=now;
 }
 function syncFusion(a,b){
   b=b||{};const out={...clone(initial)};
@@ -1136,6 +1140,9 @@ function syncFusion(a,b){
   const eduA=String(a.educationMaj||''),eduB=String(b.educationMaj||'');
   const prendA=a.education&&(!b.education||eduA>eduB);
   out.education=clone(prendA?a.education:(b.education||a.education||EDU_DEFAUT));out.educationMaj=prendA?eduA:(eduB||eduA);
+  const gA=String(a.garageMaj||''),gB=String(b.garageMaj||'');
+  const prendGA=a.garage&&(!b.garage||gA>gB);
+  out.garage=clone(prendGA?a.garage:(b.garage||a.garage||GARAGE_DEFAUT));out.garageMaj=prendGA?gA:(gB||gA);
   return out;
 }
 async function syncApi(methode,corps){
@@ -1199,7 +1206,7 @@ var pretTmp={permis:'',pad:null,sms:false};
 function dh(d,h){return [d?d.split('-').reverse().join('/'):'',h].filter(Boolean).join(' à ')}
 function pretExtra(obj){
   return `<div class="field"><label for="f_permis">Photo du permis de conduire</label><input id="f_permis" type="file" accept="image/*" capture="environment" onchange="pretPhoto(event)"><img id="permisApercu" class="photo-permis" hidden alt="Permis de conduire"></div>
-  <div class="contrat"><h3>Contrat de prêt de véhicule</h3><p style="margin:0">Je soussigné(e) <b id="cNom">${esc(obj.client||'……')}</b> reconnais recevoir le véhicule <b id="cVoit">${esc(obj.nom||'……')}</b> prêté par le garage à la date et l’heure indiquées. Je suis <b>seul(e) responsable de toutes les infractions</b> commises pendant le prêt (radar, stationnement, péage…) et j’accepte d’être <b>désigné(e) comme conducteur</b> auprès de l’administration. Je m’engage à rendre le véhicule à l’heure prévue, dans l’état où je l’ai reçu.</p></div>
+  <div class="contrat"><h3>Contrat de prêt de véhicule</h3><p style="margin:0">Je soussigné(e) <b id="cNom">${esc(obj.client||'……')}</b> reconnais recevoir le véhicule <b id="cVoit">${esc(obj.nom||'……')}</b> prêté par la ${esc(garage().identite.raison)} (${esc(garage().identite.adresse)}, SIRET ${esc(garage().identite.siret)}) à la date et l’heure indiquées. Je suis <b>seul(e) responsable de toutes les infractions</b> commises pendant le prêt (radar, stationnement, péage…) et j’accepte d’être <b>désigné(e) comme conducteur</b> auprès de l’administration. Je m’engage à rendre le véhicule à l’heure prévue, dans l’état où je l’ai reçu.</p></div>
   ${obj.signature?`<div class="sig-titre">Signé le ${esc(obj.signe_le?new Date(obj.signe_le).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'}):'')}</div><img class="sig-img" src="${esc(obj.signature)}" alt="Signature du client"><div class="sig-titre">Pour refaire signer, signe à nouveau ci-dessous</div>`:'<div class="sig-titre">Signature du client (obligatoire quand la voiture part)</div>'}
   <div class="sig-wrap" id="sigWrap"><canvas id="sig"></canvas><div class="sig-ph" id="sigPh">✍️ Signer ici avec le doigt</div></div>
   <div class="buttons" style="justify-content:flex-start;margin-top:8px"><button type="button" class="btn-mini btn-edit" onclick="pretTmp.pad&&pretTmp.pad.effacer()">Effacer la signature</button>${obj.id&&obj.statut==='Prêté'?`<button type="button" class="btn-mini btn-edit" onclick="smsSheet(db.prets.find(x=>x.id==='${esc(obj.id)}'))">📱 SMS de confirmation</button>`:''}</div>`;
@@ -1249,7 +1256,7 @@ function sigPad(){
   };
 }
 function reduirePhoto(file,max,qualite){return new Promise((ok,ko)=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,max/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',qualite))};im.onerror=ko;im.src=r.result};r.onerror=ko;r.readAsDataURL(file)})}
-function smsTexte(p){return `Bonjour ${p.client||''}, vous avez pris le ${dh(p.date_depart,p.heure_depart)||'—'} le véhicule ${p.nom||''} prêté par notre garage${p.date_retour?`, à rendre le ${dh(p.date_retour,p.heure_retour)}`:''}. Vous avez signé être seul responsable des infractions pendant le prêt et accepté d'être désigné conducteur. Merci de répondre OUI pour confirmer.`}
+function smsTexte(p){return `Bonjour ${p.client||''}, vous avez pris le ${dh(p.date_depart,p.heure_depart)||'—'} le véhicule ${p.nom||''} prêté par ${garage().identite.raison||'notre garage'}${p.date_retour?`, à rendre le ${dh(p.date_retour,p.heure_retour)}`:''}. Vous avez signé être seul responsable des infractions pendant le prêt et accepté d'être désigné conducteur. Merci de répondre OUI pour confirmer.`}
 function smsSheet(p){
   if(!p)return;
   const t=smsTexte(p),tel=String(p.telephone||'').replace(/[^\d+]/g,'');
@@ -1295,6 +1302,67 @@ function fanfare(el){
     setTimeout(()=>A.close(),(t-A.currentTime)*1000+400);
   }catch(e){}
   setTimeout(()=>toast('🇫🇷 Dossier complet'+(el&&el.client?' : '+el.client:'')+' !'),400);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// V12 — MON GARAGE : identité (contrats), taux, voitures de prêt, équipe (partagé)
+// ─────────────────────────────────────────────────────────────────────────────
+var GARAGE_DEFAUT={
+  identite:{raison:'SARL Nouvelle Carrosserie de la Jomayere',adresse:'17 rue Édouard Martel, 42100 Saint-Étienne',tel:'04 77 57 15 98',fax:'04 77 80 67 58',siret:'449 369 958 00011',ape:'502 Z',horaires:''},
+  taux:{t1:'106',t2:'109',peinture:'109'},
+  flotte:[
+    {id:'f1',nom:'Alfa Romeo',plaque:'AX-566-JC',km:'250000',notes:'Modèle exact à vérifier sur la carte grise'},
+    {id:'f2',nom:'Peugeot 208',plaque:'',km:'',notes:''},
+    {id:'f3',nom:'Renault Clio',plaque:'',km:'',notes:''},
+    {id:'f4',nom:'Ford Ka',plaque:'',km:'',notes:''},
+    {id:'f5',nom:'DS3',plaque:'',km:'',notes:''}
+  ],
+  equipe:[
+    {id:'e1',nom:'Aurélien',court:'Aurel',role:'Gérant',tel:''},
+    {id:'e2',nom:'Enzo',court:'Enzo',role:'Administrateur',tel:'06 65 32 04 05'},
+    {id:'e3',nom:'Brahim',court:'Brahim',role:'Secrétaire',tel:'06 23 66 81 34'},
+    {id:'e4',nom:'Ibrahim',court:'IB',role:'Peintre et carrossier',tel:'07 58 43 54 89'},
+    {id:'e5',nom:'Adam',court:'Adam',role:'Apprenti',tel:'07 87 06 47 83'}
+  ]
+};
+function garage(){
+  if(!db.garage)db.garage=clone(GARAGE_DEFAUT);
+  const g=db.garage;g.identite=g.identite||{};g.taux=g.taux||{};g.flotte=g.flotte||[];g.equipe=g.equipe||[];
+  return g;
+}
+function equipeCourts(){return [...garage().equipe.map(m=>m.court||m.nom).filter(Boolean),'Autre']}
+function garageSave(msg){db.garageMaj=new Date().toISOString();save(true);closeModal();render();toast(msg||'Enregistré')}
+const GAR_ID=[['raison','Raison sociale'],['adresse','Adresse'],['tel','Téléphone'],['fax','Fax'],['siret','SIRET'],['ape','Code APE'],['horaires','Horaires d’ouverture']];
+const GAR_TAUX=[['t1','Taux T1 (€ HT/h)'],['t2','Taux T2 (€ HT/h)'],['peinture','Taux peinture (€ HT/h)']];
+const GAR_FLOTTE=[['nom','Voiture'],['plaque','Immatriculation'],['km','Kilométrage'],['notes','Observations']];
+const GAR_EQUIPE=[['nom','Prénom'],['court','Nom court (planning)'],['role','Rôle'],['tel','Portable']];
+function garModal(titre,champs,obj,action){
+  document.getElementById('modalhost').innerHTML=`<div class="modalback" onclick="closeModal()"><div class="modal" onclick="event.stopPropagation()"><h2>${titre}</h2><form onsubmit="${action}"><div class="fields">${champs.map(([k,l])=>`<div class="field"><label for="g_${k}">${l}</label><input id="g_${k}" name="${k}" value="${esc(obj[k])}" ${k==='tel'?'type="tel"':''}></div>`).join('')}</div><div class="buttons"><button type="button" class="btn btn-dark" onclick="closeModal()">Annuler</button><button class="btn btn-primary">Enregistrer</button></div></form></div></div>`;
+}
+function garValeurs(e){e.preventDefault();return Object.fromEntries([...new FormData(e.target)].map(([k,v])=>[k,String(v).trim()]))}
+function garEditId(){garModal('Identité du garage',GAR_ID,garage().identite,'garSaveId(event)')}
+function garSaveId(e){garage().identite=garValeurs(e);garageSave('Identité enregistrée')}
+function garEditTaux(){garModal('Taux horaires',GAR_TAUX,garage().taux,'garSaveTaux(event)')}
+function garSaveTaux(e){garage().taux=garValeurs(e);garageSave('Taux enregistrés')}
+function garEdit(liste,id=''){const it=garage()[liste].find(x=>x.id===id)||{};garModal(liste==='flotte'?(id?'Voiture de prêt':'Nouvelle voiture de prêt'):(id?'Membre de l’équipe':'Nouveau membre'),liste==='flotte'?GAR_FLOTTE:GAR_EQUIPE,it,`garSave(event,'${liste}','${esc(id)}')`)}
+function garSave(e,liste,id){const v=garValeurs(e);if(!v.nom){toast('Le nom est obligatoire');return}const L=garage()[liste];const it=L.find(x=>x.id===id);if(it)Object.assign(it,v);else L.push({id:pgId(),...v});if(liste==='equipe'&&!v.court){const m=L.find(x=>x.nom===v.nom);m.court=v.nom}garageSave()}
+function garDel(liste,id){const it=garage()[liste].find(x=>x.id===id);if(!it||!confirm('Supprimer '+it.nom+' ?'))return;garage()[liste]=garage()[liste].filter(x=>x.id!==id);garageSave('Supprimé')}
+function garInviter(id){
+  const m=garage().equipe.find(x=>x.id===id);if(!m)return;
+  const tel=String(m.tel||'').replace(/[^\d+]/g,'');if(!tel){toast('Ajoute d’abord son portable');garEdit('equipe',id);return}
+  const t=`Salut ${m.nom}, voici l’appli de l’atelier My I-Car : https://${location.host}/ . Ouvre-la dans Chrome, puis « Installer l’appli ». Code d’équipe : ${sync.code||'(demande-le à Aurélien)'}`;
+  location.href=`sms:${tel}?body=${encodeURIComponent(t)}`;
+}
+function garagePage(){
+  const g=garage(),I=g.identite,T=g.taux;
+  const ligne=(l,v)=>`<div class="edu-row"><div class="edu-txt"><span class="t-muted">${l}</span> <b>${esc(v||'—')}</b></div></div>`;
+  const pret=nom=>{const a=db.prets.filter(x=>x.nom===nom&&x.statut!=='Retourné').pop();return a?a.statut+(a.client?' · '+a.client:''):'Disponible'};
+  return header('Mon garage','Les infos de base de l’atelier, partagées avec toute l’équipe.')+`<div class="settings-grid">
+  <div class="card settings-card"><h3>🏠 Identité (contrats)</h3>${GAR_ID.map(([k,l])=>ligne(l,I[k])).join('')}<div class="buttons" style="justify-content:flex-start"><button class="btn btn-primary" onclick="garEditId()">Modifier</button></div></div>
+  <div class="card settings-card"><h3>€ Taux horaires</h3>${GAR_TAUX.map(([k,l])=>ligne(l,T[k]?T[k]+' €':'')).join('')}<div class="buttons" style="justify-content:flex-start"><button class="btn btn-primary" onclick="garEditTaux()">Modifier</button></div></div>
+  <div class="card settings-card"><h3>🚗 Voitures de prêt (${g.flotte.length})</h3>${g.flotte.map(v=>`<div class="edu-row gar-row"><div class="edu-txt"><b>${esc(v.nom)}</b> ${v.plaque?'· '+esc(v.plaque):'· <span class="t-muted">plaque à compléter</span>'}${v.km?' · '+esc(Number(v.km).toLocaleString('fr-FR'))+' km':''}<br><small class="t-muted">${esc(pret(v.nom))}${v.notes?' · '+esc(v.notes):''}</small></div><div class="gar-btns"><button class="btn-mini btn-edit" onclick="garEdit('flotte','${esc(v.id)}')">Modifier</button><button class="btn-mini btn-del" onclick="garDel('flotte','${esc(v.id)}')" aria-label="Supprimer">✕</button></div></div>`).join('')||'<p class="t-muted">Aucune voiture.</p>'}<div class="buttons" style="justify-content:flex-start"><button class="btn btn-primary" onclick="garEdit('flotte')">+ Ajouter une voiture</button></div></div>
+  <div class="card settings-card"><h3>👥 Équipe (${g.equipe.length})</h3>${g.equipe.map(m=>`<div class="edu-row gar-row"><div class="edu-txt"><b>${esc(m.nom)}</b>${m.court&&m.court!==m.nom?' ('+esc(m.court)+')':''} · ${esc(m.role||'')}<br><small class="t-muted">${m.tel?`<a href="tel:${esc(String(m.tel).replace(/[^\d+]/g,''))}" style="color:inherit">${esc(m.tel)}</a>`:'portable à compléter'}</small></div><div class="gar-btns">${m.tel?`<button class="btn-mini btn-edit" onclick="garInviter('${esc(m.id)}')">📱 Inviter</button>`:''}<button class="btn-mini btn-edit" onclick="garEdit('equipe','${esc(m.id)}')">Modifier</button><button class="btn-mini btn-del" onclick="garDel('equipe','${esc(m.id)}')" aria-label="Supprimer">✕</button></div></div>`).join('')}<div class="buttons" style="justify-content:flex-start"><button class="btn btn-primary" onclick="garEdit('equipe')">+ Ajouter quelqu’un</button></div></div>
+  </div></section>`;
 }
 
 render();
