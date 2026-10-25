@@ -1609,6 +1609,15 @@ function ttHeures(){
   try{localStorage.setItem('myicar_tt_8h','1')}catch(e){}
   if(n)save(true);
 }
+// Semaine du 19 oct. reprise de TimeTree (capture d'Aurélien) : rendez-vous passés, donc marqués faits.
+const TT_1910=[['2026-10-19','08:30','Camion Mustapha'],['2026-10-19','09:30','M. Douet 06 63 46 49 10'],['2026-10-19','14:00','M. Passel — grêle'],['2026-10-19','15:30','Mme Montmartin']];
+function ttImport1910(){
+  try{if(localStorage.getItem('myicar_tt_1910'))return}catch(e){}
+  const ids=new Set((db.planning||[]).map(x=>x.id)),supp=db.supprimes||{};let n=0;
+  TT_1910.forEach(([date,heure,titre],i)=>{const id='tt-1910-'+i;if(ids.has(id)||supp[id])return;db.planning.push({id,date,heure,titre,responsable:'Aurel',statut:'Terminé',notes:'Repris de TimeTree'});n++});
+  try{localStorage.setItem('myicar_tt_1910','1')}catch(e){}
+  if(n)save(true);
+}
 function ttImport(){
   try{if(localStorage.getItem('myicar_tt_2026_10_25b'))return}catch(e){}
   const ids=new Set((db.planning||[]).map(x=>x.id)),supp=db.supprimes||{};let n=0;
@@ -1616,7 +1625,7 @@ function ttImport(){
   try{localStorage.setItem('myicar_tt_2026_10_25b','1')}catch(e){}
   if(n){save(true);setTimeout(()=>{render();toast(n+' rendez-vous TimeTree ajoutés au planning')},0)}
 }
-ttImport();ttHeures();
+ttImport();ttHeures();ttImport1910();
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ACCÈS : un code par personne, que le patron peut couper à tout moment
