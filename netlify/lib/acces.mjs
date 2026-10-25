@@ -32,7 +32,16 @@ export async function verifier(req) {
   const recu = String(req.headers.get('x-code-equipe') || '').trim();
   if (!recu) return json({ erreur: 'code d’équipe incorrect' }, 401);
   if (egal(recu, patron)) return { role: 'admin', nom: 'Aurel' };
-  const m = (await listeAcces()).find(p => p.actif && egal(p.code, recu));
-  if (m) return { role: 'membre', nom: m.nom };
+  const liste = await listeAcces();
+  const m = liste.find(p => p.actif && egal(p.code, recu));
+  if (m) {
+    // « Vu pour la dernière fois » : noté au plus toutes les 5 minutes pour ne pas écrire à chaque synchro.
+    const maint = Date.now();
+    if (!m.vu || maint - Date.parse(m.vu) > 5 * 60 * 1000) {
+      m.vu = new Date(maint).toISOString();
+      try { await ecrireAcces(liste); } catch {}
+    }
+    return { role: 'membre', nom: m.nom };
+  }
   return json({ erreur: 'code d’équipe incorrect' }, 401);
 }
