@@ -311,6 +311,9 @@ tr:hover td{background:rgba(255,255,255,.012)}
 .cal-ev,.ck-ligne{flex-wrap:wrap}.tel-bt.petit{order:5;width:100%;padding-left:62px;gap:8px}.tel-bt.petit a{width:auto;height:40px;padding:0 14px;font-size:15px;display:flex;align-items:center;gap:4px}.tel-bt.petit em{display:inline}
 .cal-ev.urgent .tel-bt em{color:#fff}.cal-ev.urgent .tel-bt a{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.35)}
 .table-card .table-actions .tel-bt{grid-column:1/-1;justify-content:flex-start}
+.cal-dedans{background:#F6F7F9;border:1px solid #E6E8EC;border-radius:18px;padding:14px 12px 4px;margin:-6px 0 18px;position:relative}
+.cal-dedans::before{content:"";position:absolute;top:-8px;left:var(--fl,50%);width:14px;height:14px;background:#F6F7F9;border-left:1px solid #E6E8EC;border-top:1px solid #E6E8EC;transform:translateX(-50%) rotate(45deg)}
+.cal-dedans .cal-titre{font-size:18px;margin:0 0 10px}.cal-dedans .cal-astuce{margin:8px 0 10px}
 .cal-astuce{font-size:12.5px;color:#5B6475;text-align:center;margin:18px 0 4px}
 .cal-jour{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 0 7px;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);color:inherit;font:inherit;cursor:pointer;min-height:66px}
 .cal-jour small{font-size:11px;color:#5B6475;text-transform:uppercase}.cal-jour b{font-size:19px}
@@ -1700,7 +1703,7 @@ function calAller(iso){cal.anim=iso>cal.jour?'cal-anim-g':iso<cal.jour?'cal-anim
 function calDecaler(n){const d=calDate(cal.jour);d.setDate(d.getDate()+n);calAller(calISO(d))}
 // Glisser le doigt : sur la barre des jours = semaine, ailleurs = jour
 (function(){let x0=null,y0=0,surSemaine=false;
-  document.addEventListener('touchstart',e=>{if(page!=='planning'||cal.vue==='liste'||document.getElementById('modalhost').innerHTML){x0=null;return}const t=e.touches[0];x0=t.clientX;y0=t.clientY;surSemaine=!!(e.target.closest&&e.target.closest('#calSemaine'));if(!surSemaine&&!(e.target.closest&&e.target.closest('#calZone')))x0=null},{passive:true});
+  document.addEventListener('touchstart',e=>{if(page!=='planning'||cal.vue==='liste'||document.getElementById('modalhost').innerHTML){x0=null;return}const t=e.touches[0];x0=t.clientX;y0=t.clientY;surSemaine=!!(e.target.closest&&e.target.closest('#calSemaine,#calSemaine2'));if(!surSemaine&&!(e.target.closest&&e.target.closest('#calZone')))x0=null},{passive:true});
   document.addEventListener('touchend',e=>{if(x0===null)return;const t=e.changedTouches[0],dx=t.clientX-x0,dy=t.clientY-y0;x0=null;if(Math.abs(dx)<60||Math.abs(dy)>Math.abs(dx)*0.7)return;{const sens=dx<0?1:-1;if(cal.mode==='mois')calMois(sens);else calDecaler(sens*(surSemaine||cal.mode==='semaine'?7:1))}},{passive:true});
 })();
 function calFait(ev,id){ev.stopPropagation();const e=db.planning.find(x=>x.id===id);if(!e)return;e.statut=e.statut==='Terminé'?'Prévu':'Terminé';save(true);render();toast(e.statut==='Terminé'?'Fait ✓':'Remis à faire')}
@@ -1722,7 +1725,7 @@ function calMoisClasse(d){
   return n<0?' mois-prec':n===0?'':n%2===1?' mois-suiv':' mois-suiv2';
 }
 // Toucher une date : on l'ouvre (vue Jour) et on descend directement sur ses rendez-vous
-function calOuvrir(iso){cal.mode='jour';calAller(iso);setTimeout(()=>{const z=document.getElementById('calZone');if(z){const y=z.getBoundingClientRect().top+window.scrollY-90;window.scrollTo({top:y,behavior:'smooth'});z.classList.remove('cal-flash');void z.offsetWidth;z.classList.add('cal-flash')}},60)}
+function calOuvrir(iso){cal.mode='jour';calAller(iso);setTimeout(()=>{const z=document.getElementById('calZone'),w=document.getElementById('calSel')||z;if(z){const y=w.getBoundingClientRect().top+window.scrollY-90;window.scrollTo({top:y,behavior:'smooth'});z.classList.remove('cal-flash');void z.offsetWidth;z.classList.add('cal-flash')}},60)}
 // Raccourcis client : retrouve un numéro (dans le texte, ou chez le client du même nom) → boutons Appeler / SMS
 function telTrouve(...txts){
   for(const t of txts){const m=String(t||'').match(/(?:\+33\s?|0)[1-9](?:[\s.-]?\d{2}){4}/);if(m)return m[0]}
@@ -1791,12 +1794,12 @@ function planningPage(){
     :`<div class="empty" style="padding:28px 0">Rien de prévu ce jour-là.<div class="buttons" style="justify-content:center"><button class="btn btn-primary" onclick="calAjouter()">+ Ajouter un rendez-vous</button></div></div>`;
   return header('Planning','',`<button class="btn btn-primary" onclick="calAjouter()">+ Ajouter</button>`)+calOnglets()
   +`<div class="cal-nav"><button class="cal-btn" onclick="calDecaler(-7)" aria-label="Semaine précédente">‹</button><span class="cal-mois">${esc(mois)}</span>${cal.jour!==auj?`<button class="cal-btn" onclick="calAller('${auj}')">Aujourd’hui</button>`:''}<button class="cal-btn" onclick="calDecaler(7)" aria-label="Semaine suivante">›</button></div>
-  <div id="calSemaine" class="${cal.anim||''}"><div class="cal-sp-titre cal-sa-titre">${calNomSemaine(-7)}</div><div class="cal-semaine cal-sa">${avant}</div><div class="cal-sp-titre cal-sc-titre">${calNomSemaine(0)}</div><div class="cal-semaine">${semaine}</div>
-  <div class="cal-sp-titre">${calNomSemaine(7)}</div><div class="cal-semaine cal-sp">${prochaine}</div><div class="cal-sp-titre">${calNomSemaine(14)}</div><div class="cal-semaine cal-sp">${apres2}</div></div>
+  <div id="calSemaine" class="${cal.anim||''}"><div class="cal-sp-titre cal-sa-titre">${calNomSemaine(-7)}</div><div class="cal-semaine cal-sa">${avant}</div><div class="cal-sp-titre cal-sc-titre" id="calSel">${calNomSemaine(0)}</div><div class="cal-semaine">${semaine}</div></div>
+  <div id="calZone" class="cal-dedans ${cal.anim||''}" style="--fl:${(((sel.getDay()+6)%7)+.5)/7*100}%"><div class="cal-titre">${cal.jour===auj?'Aujourd’hui · ':cal.jour===calISO(new Date(Date.now()+864e5))?'Demain · ':''}${esc(sel.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}))}</div>
+  ${liste}<div class="cal-astuce">← Glisse le doigt pour changer de jour · sur la barre des jours pour changer de semaine →</div></div>
+  <div id="calSemaine2"><div class="cal-sp-titre">${calNomSemaine(7)}</div><div class="cal-semaine cal-sp">${prochaine}</div><div class="cal-sp-titre">${calNomSemaine(14)}</div><div class="cal-semaine cal-sp">${apres2}</div></div>
   <div class="cal-legende">${Object.values(CAL_TYPES).map(T=>`<span style="--c:${T.c};--t:${T.t}">● ${T.nom}</span>`).join('')}</div>
   <div class="cal-legmois">${(()=>{const a=new Date();return '<span class="lp">Passé</span>'+[[0,'lc'],[1,'ls'],[2,'ls2']].map(([k,c])=>`<span class="${c}">${esc(new Date(a.getFullYear(),a.getMonth()+k,1).toLocaleDateString('fr-FR',{month:'long'}))}</span>`).join('')})()}</div>
-  <div id="calZone" class="${cal.anim||''}"><div class="cal-titre">${cal.jour===auj?'Aujourd’hui · ':cal.jour===calISO(new Date(Date.now()+864e5))?'Demain · ':''}${esc(sel.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}))}</div>
-  ${liste}<div class="cal-astuce">← Glisse le doigt pour changer de jour · sur la barre des jours pour changer de semaine →</div></div>
   <div class="buttons" style="justify-content:flex-start;margin-top:10px"><button class="btn btn-dark" onclick="calVue('liste')">Voir tout en liste</button></div></section>`;
 }
 
