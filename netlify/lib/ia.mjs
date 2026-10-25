@@ -130,13 +130,15 @@ async function demanderGemini({ systeme, prompt, maxSortie }) {
       break;
     }
     if (reponse.ok) break;
-    if (![400, 404, 429].includes(reponse.status)) break;
+    // modèle introuvable (400/404), quota épuisé (429) ou serveur Google surchargé (500/502/503/504) → modèle suivant
+    if (![400, 404, 429, 500, 502, 503, 504].includes(reponse.status)) break;
     dernierDetail = (await reponse.text()).slice(0, 300);
   }
   if (!reponse) throw new ErreurIA('l’IA a mis trop de temps à répondre');
   if (!reponse.ok) {
     const detail = dernierDetail || (await reponse.text().catch(() => '')).slice(0, 300);
     const message = dernierStatut === 429 ? 'quota gratuit Gemini atteint, réessaie dans une minute'
+      : dernierStatut >= 500 ? 'les serveurs Gemini sont surchargés, réessaie dans quelques minutes'
       : (dernierStatut === 403 || /API key/i.test(detail)) ? 'clé Gemini refusée, vérifie GEMINI_API_KEY sur Netlify'
       : `Gemini a répondu ${dernierStatut}`;
     throw new ErreurIA(message, detail);
