@@ -1458,14 +1458,13 @@ const TT_RDV=[
  ['2027-01-11','','Rachel — grêle — prêt véhicule']
 ];
 function ttImport(){
-  try{if(localStorage.getItem('myicar_tt_2026_10_25'))return}catch(e){}
+  try{if(localStorage.getItem('myicar_tt_2026_10_25b'))return}catch(e){}
   const ids=new Set((db.planning||[]).map(x=>x.id)),supp=db.supprimes||{};let n=0;
   TT_RDV.forEach(([date,heure,titre],i)=>{const id='tt-2610-'+i;if(ids.has(id)||supp[id])return;db.planning.push({id,date,heure,titre,responsable:'Aurel',statut:'Prévu',notes:'Repris de TimeTree'});n++});
-  try{localStorage.setItem('myicar_tt_2026_10_25','1')}catch(e){}
-  if(n){save(true);render()}
+  try{localStorage.setItem('myicar_tt_2026_10_25b','1')}catch(e){}
+  if(n){save(true);render();toast(n+' rendez-vous TimeTree ajoutés au planning')}
 }
-{const _sync=syncNow;syncNow=async function(){await _sync();if(sync.etat==='ok')ttImport()}}
-if(!sync.code)ttImport();
+ttImport();
 
 render();
 pgRender();
