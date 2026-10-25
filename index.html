@@ -428,7 +428,7 @@ function submitEntry(e,section,id){e.preventDefault(); const values=Object.fromE
   let el; if(id){el=db[section].find(x=>x.id===id);Object.assign(el,values)} else {el={id:crypto.randomUUID?.()||String(Date.now()),...values};db[section].push(el)}
   save(); closeModal(); render();
   if(section==='vehicules') dossierComplet(el,avant);
-  if(section==='prets'&&pretTmp.sms) smsSheet(el);
+  if(section==='prets'&&pretTmp.sms) smsSheet(el); else if(section==='prets'&&pretTmp.agenda) agendaSheet(el);
 }
 function removeItem(section,id){if(confirm('Supprimer définitivement cet élément ?')){db[section]=db[section].filter(x=>x.id!==id); save(); render();}}
 function exportData(){const a=document.createElement('a'); const blob=new Blob([JSON.stringify({app:'My I-Car',version:8,data:db,exportedAt:new Date().toISOString()},null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); a.href=url; a.download='my-icar-v8-sauvegarde-'+new Date().toISOString().slice(0,10)+'.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1200)}
@@ -1209,7 +1209,7 @@ function pretExtra(obj){
   <div class="contrat"><h3>Contrat de prêt de véhicule</h3><p style="margin:0">Je soussigné(e) <b id="cNom">${esc(obj.client||'……')}</b> reconnais recevoir le véhicule <b id="cVoit">${esc(obj.nom||'……')}</b> prêté par la ${esc(garage().identite.raison)} (${esc(garage().identite.adresse)}, SIRET ${esc(garage().identite.siret)}) à la date et l’heure indiquées. Je suis <b>seul(e) responsable de toutes les infractions</b> commises pendant le prêt (radar, stationnement, péage…) et j’accepte d’être <b>désigné(e) comme conducteur</b> auprès de l’administration. Je m’engage à rendre le véhicule à l’heure prévue, dans l’état où je l’ai reçu.</p></div>
   ${obj.signature?`<div class="sig-titre">Signé le ${esc(obj.signe_le?new Date(obj.signe_le).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'}):'')}</div><img class="sig-img" src="${esc(obj.signature)}" alt="Signature du client"><div class="sig-titre">Pour refaire signer, signe à nouveau ci-dessous</div>`:'<div class="sig-titre">Signature du client (obligatoire quand la voiture part)</div>'}
   <div class="sig-wrap" id="sigWrap"><canvas id="sig"></canvas><div class="sig-ph" id="sigPh">✍️ Signer ici avec le doigt</div></div>
-  <div class="buttons" style="justify-content:flex-start;margin-top:8px"><button type="button" class="btn-mini btn-edit" onclick="pretTmp.pad&&pretTmp.pad.effacer()">Effacer la signature</button>${obj.id&&obj.statut==='Prêté'?`<button type="button" class="btn-mini btn-edit" onclick="smsSheet(db.prets.find(x=>x.id==='${esc(obj.id)}'))">📱 SMS de confirmation</button>`:''}</div>`;
+  <div class="buttons" style="justify-content:flex-start;margin-top:8px"><button type="button" class="btn-mini btn-edit" onclick="pretTmp.pad&&pretTmp.pad.effacer()">Effacer la signature</button>${obj.id&&obj.date_depart?`<button type="button" class="btn-mini btn-edit" onclick="agendaSheet(db.prets.find(x=>x.id==='${esc(obj.id)}'))">📅 Agenda</button>`:''}${obj.id&&obj.statut==='Prêté'?`<button type="button" class="btn-mini btn-edit" onclick="smsSheet(db.prets.find(x=>x.id==='${esc(obj.id)}'))">📱 SMS de confirmation</button>`:''}</div>`;
 }
 function pretInit(obj){
   pretTmp={permis:'',pad:sigPad(),sms:false};
@@ -1237,6 +1237,7 @@ function pretValider(values,id){
   if(values.statut==='Prêté'&&!values.date_depart)values.date_depart=new Date().toLocaleDateString('en-CA');
   if(values.statut==='Prêté'&&!values.heure_depart)values.heure_depart=new Date().toTimeString().slice(0,5);
   pretTmp.sms=values.statut==='Prêté'&&(obj.statut!=='Prêté'||!!signe);
+  pretTmp.agenda=['Prêté','Réservé'].includes(values.statut)&&(values.statut!==obj.statut||values.date_depart!==obj.date_depart||values.heure_depart!==obj.heure_depart||values.date_retour!==obj.date_retour||values.heure_retour!==obj.heure_retour);
   return true;
 }
 function sigPad(){
@@ -1260,7 +1261,7 @@ function smsTexte(p){return `Bonjour ${p.client||''}, vous avez pris le ${dh(p.d
 function smsSheet(p){
   if(!p)return;
   const t=smsTexte(p),tel=String(p.telephone||'').replace(/[^\d+]/g,'');
-  document.getElementById('modalhost').innerHTML=`<div class="modalback" onclick="closeModal()"><div class="modal" onclick="event.stopPropagation()"><h2>✅ Prêt enregistré</h2><p class="t-muted" style="margin-top:-8px">Envoie ce SMS au client. Il doit répondre « OUI ».</p><div class="sms-texte" id="smsT">${esc(t)}</div><p>Numéro : <b>${esc(p.telephone||'non renseigné')}</b></p><div class="buttons"><button type="button" class="btn btn-dark" onclick="closeModal()">Plus tard</button><button type="button" class="btn btn-secondary" onclick="smsCopier()">Copier le texte</button>${tel?`<a class="btn btn-primary" style="text-decoration:none" href="sms:${esc(tel)}?body=${encodeURIComponent(t)}">📱 Ouvrir Messages</a>`:''}</div></div></div>`;
+  document.getElementById('modalhost').innerHTML=`<div class="modalback" onclick="closeModal()"><div class="modal" onclick="event.stopPropagation()"><h2>✅ Prêt enregistré</h2><p class="t-muted" style="margin-top:-8px">Envoie ce SMS au client. Il doit répondre « OUI ».</p><div class="sms-texte" id="smsT">${esc(t)}</div><p>Numéro : <b>${esc(p.telephone||'non renseigné')}</b></p>${agendaBoutons(p)}<div class="buttons"><button type="button" class="btn btn-dark" onclick="closeModal()">Plus tard</button><button type="button" class="btn btn-secondary" onclick="smsCopier()">Copier le texte</button>${tel?`<a class="btn btn-primary" style="text-decoration:none" href="sms:${esc(tel)}?body=${encodeURIComponent(t)}">📱 Ouvrir Messages</a>`:''}</div></div></div>`;
 }
 async function smsCopier(){const t=document.getElementById('smsT').textContent;try{await navigator.clipboard.writeText(t);toast('Texte copié')}catch(e){const r=document.createRange();r.selectNodeContents(document.getElementById('smsT'));getSelection().removeAllRanges();getSelection().addRange(r);toast('Texte sélectionné : copie-le')}}
 
@@ -1363,6 +1364,27 @@ function garagePage(){
   <div class="card settings-card"><h3>🚗 Voitures de prêt (${g.flotte.length})</h3>${g.flotte.map(v=>`<div class="edu-row gar-row"><div class="edu-txt"><b>${esc(v.nom)}</b> ${v.plaque?'· '+esc(v.plaque):'· <span class="t-muted">plaque à compléter</span>'}${v.km?' · '+esc(Number(v.km).toLocaleString('fr-FR'))+' km':''}<br><small class="t-muted">${esc(pret(v.nom))}${v.notes?' · '+esc(v.notes):''}</small></div><div class="gar-btns"><button class="btn-mini btn-edit" onclick="garEdit('flotte','${esc(v.id)}')">Modifier</button><button class="btn-mini btn-del" onclick="garDel('flotte','${esc(v.id)}')" aria-label="Supprimer">✕</button></div></div>`).join('')||'<p class="t-muted">Aucune voiture.</p>'}<div class="buttons" style="justify-content:flex-start"><button class="btn btn-primary" onclick="garEdit('flotte')">+ Ajouter une voiture</button></div></div>
   <div class="card settings-card"><h3>👥 Équipe (${g.equipe.length})</h3>${g.equipe.map(m=>`<div class="edu-row gar-row"><div class="edu-txt"><b>${esc(m.nom)}</b>${m.court&&m.court!==m.nom?' ('+esc(m.court)+')':''} · ${esc(m.role||'')}<br><small class="t-muted">${m.tel?`<a href="tel:${esc(String(m.tel).replace(/[^\d+]/g,''))}" style="color:inherit">${esc(m.tel)}</a>`:'portable à compléter'}</small></div><div class="gar-btns">${m.tel?`<button class="btn-mini btn-edit" onclick="garInviter('${esc(m.id)}')">📱 Inviter</button>`:''}<button class="btn-mini btn-edit" onclick="garEdit('equipe','${esc(m.id)}')">Modifier</button><button class="btn-mini btn-del" onclick="garDel('equipe','${esc(m.id)}')" aria-label="Supprimer">✕</button></div></div>`).join('')}<div class="buttons" style="justify-content:flex-start"><button class="btn btn-primary" onclick="garEdit('equipe')">+ Ajouter quelqu’un</button></div></div>
   </div></section>`;
+}
+
+// V12 — AGENDA : chaque prêt ajoute son départ et son retour dans l'agenda du téléphone (Google Agenda)
+function agendaLien(titre,d,h,details){
+  if(!d)return '';
+  const [H,M]=(h||'08:00').split(':').map(Number);
+  const debut=new Date(d+'T'+String(H).padStart(2,'0')+':'+String(M).padStart(2,'0')+':00');
+  const fin=new Date(debut.getTime()+30*60000);
+  const f=x=>x.getFullYear()+String(x.getMonth()+1).padStart(2,'0')+String(x.getDate()).padStart(2,'0')+'T'+String(x.getHours()).padStart(2,'0')+String(x.getMinutes()).padStart(2,'0')+'00';
+  return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(titre)+'&dates='+f(debut)+'/'+f(fin)+'&ctz=Europe/Paris&details='+encodeURIComponent(details)+'&location='+encodeURIComponent(garage().identite.adresse||'');
+}
+function agendaBoutons(p){
+  const det=`Voiture de prêt : ${p.nom||''}\nClient : ${p.client||''}${p.telephone?' ('+p.telephone+')':''}\nMy I-Car`;
+  const dep=agendaLien('🚗 Départ prêt '+(p.nom||'')+' – '+(p.client||''),p.date_depart,p.heure_depart,det);
+  const ret=agendaLien('🔙 Retour prêt '+(p.nom||'')+' – '+(p.client||''),p.date_retour,p.heure_retour,det);
+  if(!dep&&!ret)return '';
+  return `<div class="sig-titre" style="margin-top:12px">📅 Mettre dans l’agenda</div><div class="buttons" style="justify-content:flex-start;margin-top:6px">${dep?`<a class="btn btn-secondary" style="text-decoration:none" target="_blank" rel="noopener" href="${esc(dep)}">📅 Départ</a>`:''}${ret?`<a class="btn btn-secondary" style="text-decoration:none" target="_blank" rel="noopener" href="${esc(ret)}">📅 Retour</a>`:'<span class="t-muted">Mets une date de retour pour l’ajouter aussi.</span>'}</div>`;
+}
+function agendaSheet(p){
+  if(!p)return;const b=agendaBoutons(p);if(!b)return;
+  document.getElementById('modalhost').innerHTML=`<div class="modalback" onclick="closeModal()"><div class="modal" onclick="event.stopPropagation()"><h2>✅ ${esc(p.statut==='Réservé'?'Réservation enregistrée':'Prêt enregistré')}</h2><p class="t-muted" style="margin-top:-8px">${esc(p.nom||'')} · ${esc(p.client||'')}</p>${b}<div class="buttons"><button type="button" class="btn btn-dark" onclick="closeModal()">Fermer</button></div></div></div>`;
 }
 
 render();
