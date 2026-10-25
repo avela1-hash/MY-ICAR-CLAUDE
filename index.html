@@ -1161,7 +1161,7 @@ async function syncNow(){
     syncMarque();
     for(let essai=0;essai<4;essai++){
       const g=await syncApi('GET');
-      if(g.status===401){sync.etat='code';syncBadge();syncDemanderCode('Ce code d’équipe n’est pas le bon.');return}
+      if(g.status===401){syncEffacerLocal();sync.etat='code';syncBadge();render();syncDemanderCode('Ce code d’équipe n’est pas le bon (ou il a changé). Les données de ce téléphone ont été effacées.');return}
       if(g.status===503){sync.etat='nonconfig';return}
       if(g.status!==200)throw Error('serveur '+g.status);
       sync.role=g.d.role||'';sync.nom=g.d.nom||'';
@@ -1182,6 +1182,11 @@ async function syncNow(){
     throw Error('trop d’enregistrements simultanés');
   }catch(e){sync.etat='horsligne'}
   finally{sync.enCours=false;syncBadge();if(sync.encore){sync.encore=false;syncPlus()}}
+}
+// Code refusé (mauvais code ou code changé) : on efface tout ce que ce téléphone garde de l'atelier.
+function syncEffacerLocal(){
+  db=clone(initial);sync.base=null;sync.code='';photosCache={};
+  try{localStorage.removeItem(STORAGE_KEY);localStorage.removeItem('myicar_base');localStorage.removeItem('myicar_code');for(const k of LEGACY_KEYS)localStorage.removeItem(k)}catch(e){}
 }
 function syncBadge(){
   const t={ok:'🟢 Partagé avec l’équipe',horsligne:'🟠 Hors ligne · enregistré sur le téléphone',code:'🔒 Code d’équipe à saisir',nonconfig:'⚪ Base partagée pas encore activée',off:'⚪ Sur ce téléphone seulement'}[sync.etat]||'';
