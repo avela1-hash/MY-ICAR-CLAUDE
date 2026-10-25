@@ -1585,22 +1585,29 @@ function pretNouveau(nom){edit('prets');const i=document.getElementById('f_nom')
 
 // Reprise des rendez-vous TimeTree (25 oct. 2026) — ajoutés une seule fois, sans doublon
 const TT_RDV=[
- ['2026-10-26','10:30','M. Sessiecq — C3 grêle — prêt véhicule'],
- ['2026-10-26','17:00','M. Bouquet Yohan 06 76 21 07 55'],
- ['2026-10-26','17:00','Mme Faure 06 37 00 53 29 — pare-choc 200 €'],
- ['2026-11-02','','Retour Brahim'],
- ['2026-11-02','17:30','M. Actis 07 69 97 17 25 — grêle complète'],
- ['2026-11-04','','Cesmeli — pare-brise camion Ford'],
- ['2026-11-05','','Rachel — expertise'],
- ['2026-11-06','11:30','M. Virama 06 09 39 37 53 — prêt véhicule'],
- ['2026-11-09','09:30','Mme Gay — grêle complète — prêt véhicule'],
- ['2026-11-09','09:30','M. Carmelo 06 41 49 51 14 — prêt véhicule'],
- ['2026-11-16','10:30','Mme Meallier 06 62 57 36 49 — prêt véhicule'],
- ['2026-11-21','','Emmener la M4 rue des Alliés'],
- ['2026-11-23','','Gaby libre'],
- ['2026-11-23','09:00','Mme Gay 06 51 39 15 26 — grêle — prêt véhicule'],
- ['2027-01-11','','Rachel — grêle — prêt véhicule']
+ ['2026-10-26','08:00','M. Sessiecq — C3 grêle — prêt véhicule'],
+ ['2026-10-26','08:00','M. Bouquet Yohan 06 76 21 07 55'],
+ ['2026-10-26','08:00','Mme Faure 06 37 00 53 29 — pare-choc 200 €'],
+ ['2026-11-02','08:00','Retour Brahim'],
+ ['2026-11-02','08:00','M. Actis 07 69 97 17 25 — grêle complète'],
+ ['2026-11-04','08:00','Cesmeli — pare-brise camion Ford'],
+ ['2026-11-05','08:00','Rachel — expertise'],
+ ['2026-11-06','08:00','M. Virama 06 09 39 37 53 — prêt véhicule'],
+ ['2026-11-09','08:00','Mme Gay — grêle complète — prêt véhicule'],
+ ['2026-11-09','08:00','M. Carmelo 06 41 49 51 14 — prêt véhicule'],
+ ['2026-11-16','08:00','Mme Meallier 06 62 57 36 49 — prêt véhicule'],
+ ['2026-11-21','08:00','Emmener la M4 rue des Alliés'],
+ ['2026-11-23','08:00','Gaby libre'],
+ ['2026-11-23','08:00','Mme Gay 06 51 39 15 26 — grêle — prêt véhicule'],
+ ['2027-01-11','08:00','Rachel — grêle — prêt véhicule']
 ];
+// Les heures reprises de TimeTree étaient fausses : les rendez-vous clients sont à 8 h.
+function ttHeures(){
+  try{if(localStorage.getItem('myicar_tt_8h'))return}catch(e){}
+  let n=0;for(const e of db.planning||[])if(String(e.id||'').startsWith('tt-2610-')&&e.heure!=='08:00'){e.heure='08:00';n++}
+  try{localStorage.setItem('myicar_tt_8h','1')}catch(e){}
+  if(n)save(true);
+}
 function ttImport(){
   try{if(localStorage.getItem('myicar_tt_2026_10_25b'))return}catch(e){}
   const ids=new Set((db.planning||[]).map(x=>x.id)),supp=db.supprimes||{};let n=0;
@@ -1608,7 +1615,7 @@ function ttImport(){
   try{localStorage.setItem('myicar_tt_2026_10_25b','1')}catch(e){}
   if(n){save(true);setTimeout(()=>{render();toast(n+' rendez-vous TimeTree ajoutés au planning')},0)}
 }
-ttImport();
+ttImport();ttHeures();
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ACCÈS : un code par personne, que le patron peut couper à tout moment
@@ -1665,7 +1672,7 @@ function calDecaler(n){const d=calDate(cal.jour);d.setDate(d.getDate()+n);calAll
   document.addEventListener('touchend',e=>{if(x0===null)return;const t=e.changedTouches[0],dx=t.clientX-x0,dy=t.clientY-y0;x0=null;if(Math.abs(dx)<60||Math.abs(dy)>Math.abs(dx)*0.7)return;calDecaler((dx<0?1:-1)*(surSemaine?7:1))},{passive:true});
 })();
 function calFait(ev,id){ev.stopPropagation();const e=db.planning.find(x=>x.id===id);if(!e)return;e.statut=e.statut==='Terminé'?'Prévu':'Terminé';save(true);render();toast(e.statut==='Terminé'?'Fait ✓':'Remis à faire')}
-function calAjouter(){edit('planning');const i=document.getElementById('f_date');if(i)i.value=cal.jour;const s=document.getElementById('f_statut');if(s&&!s.value)s.value='Prévu';document.getElementById('f_heure')?.focus()}
+function calAjouter(){edit('planning');const i=document.getElementById('f_date');if(i)i.value=cal.jour;const hh=document.getElementById('f_heure');if(hh&&!hh.value)hh.value='08:00';const s=document.getElementById('f_statut');if(s&&!s.value)s.value='Prévu';document.getElementById('f_heure')?.focus()}
 function calVue(v){cal.vue=v;render()}
 function planningPage(){
   const sel=calDate(cal.jour),auj=calISO(new Date());
