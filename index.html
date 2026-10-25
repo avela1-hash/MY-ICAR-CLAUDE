@@ -274,7 +274,10 @@ tr:hover td{background:rgba(255,255,255,.012)}
 .pg-small.ok{border-color:rgba(115,224,205,.4);color:#9df9e7}
 .pg-text{display:flex;gap:8px}.pg-text input{flex:1;min-width:0;background:#08172b;border:1px solid rgba(157,181,214,.26);border-radius:14px;padding:12px;color:#f3f7ff;font-size:16px}
 .pg-warn{color:#ffd190;background:rgba(243,179,94,.10);border:1px solid rgba(243,179,94,.18);border-radius:13px;padding:9px 11px;font-size:13.5px;line-height:1.4}
-@media(max-width:600px){.pg-panel{right:8px;left:8px;width:auto;bottom:96px;max-height:calc(100vh - 120px)}.pg-fab{right:14px;bottom:98px}}
+@media(max-width:600px){.pg-panel{right:8px;left:8px;width:auto;bottom:96px;max-height:min(46vh,430px);border-radius:22px}.pg-fab{right:14px;bottom:98px}
+.pg-head{padding:10px 14px}.pg-head strong{font-size:16px}.pg-head small{font-size:12px}.pg-x{width:36px;height:36px}
+.pg-log{min-height:60px;padding:10px 12px;gap:7px}.pg-msg{font-size:15px;padding:9px 12px}
+.pg-foot{padding:8px 12px 10px;gap:7px}.pg-state{font-size:13px;min-height:0}.pg-mic{padding:12px;font-size:16px}.pg-small{padding:10px 11px}.pg-text input{padding:10px}.pg-warn{font-size:13px;padding:7px 10px}}
 .edu-row{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06)}
 .edu-txt{flex:1;min-width:0;font-size:16px;overflow-wrap:anywhere}.edu-txt small{color:#94a3bf;font-size:12px}
 .edu-sw{width:48px;height:28px;border-radius:99px;border:1px solid rgba(115,224,205,.3);background:rgba(255,255,255,.04);position:relative;flex:0 0 auto}
@@ -1036,8 +1039,7 @@ function pgRender(){
       <div class="pg-state">${etat}</div>
       ${pg.error?`<div class="pg-warn">⚠ ${esc(pg.error)}</div>`:''}
       ${tts.bloque?`<div class="pg-warn">🔇 Chrome a bloqué la voix. <button class="pg-small ok" onclick="ttsRejouer()">🔊 Écouter la réponse</button></div>`:''}
-      <div class="pg-row"><button class="pg-mic ${pg.listening?'on':''}" onclick="pgMic()">${pg.listening?'■ Arrêter l’écoute':pg.thinking?'⏳ Patiente…':'🎙 Parler'}</button>${pg.undo?`<button class="pg-small" onclick="pgUndo()">↩ Annuler</button>`:''}<button class="pg-small" onclick="pgTestSon()" title="Tester la voix">🔊 Test</button></div>
-      <div class="pg-row"><button class="pg-small ${pg.mainsLibres?'ok':''}" onclick="pgToggleMains()">${pg.mainsLibres?'✓ Mains libres : il réécoute après chaque réponse':'Mains libres désactivé'}</button></div>
+      <div class="pg-row"><button class="pg-mic ${pg.listening?'on':''}" onclick="pgMic()">${pg.listening?'■ Stop':pg.thinking?'⏳ Patiente…':'🎙 Parler'}</button>${pg.undo?`<button class="pg-small" onclick="pgUndo()" aria-label="Annuler le dernier changement">↩</button>`:''}<button class="pg-small ${pg.mainsLibres?'ok':''}" onclick="pgToggleMains()" title="Mains libres : il réécoute après chaque réponse">${pg.mainsLibres?'✓ Mains libres':'Mains libres'}</button><button class="pg-small" onclick="pgTestSon()" aria-label="Tester la voix">🔊</button></div>
       <form class="pg-text" onsubmit="pgTextSubmit(event)"><input id="pgInput" type="text" placeholder="Ou écris ta demande…" autocomplete="off"><button class="pg-small" type="submit">↗</button></form>
     </div></div>`;
   const l=document.getElementById('pgLog');if(l)l.scrollTop=l.scrollHeight;
