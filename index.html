@@ -497,10 +497,10 @@ function ttsSay(texte,fini){
   const done=typeof fini==='function'?fini:()=>{};
   const ss=window.speechSynthesis;
   if(!ss||!texte){done();return}
-  const id=++tts.seq;tts.bloque='';
+  const id=++tts.seq;tts.bloque='';tts.enCours=id;
   try{if(ss.speaking||ss.pending)ss.cancel()}catch(e){}
   let essais=0,termine=false;
-  const fin=()=>{if(termine||id!==tts.seq)return;termine=true;tts.current=null;done()};
+  const fin=()=>{if(termine||id!==tts.seq)return;termine=true;tts.current=null;if(tts.enCours===id)tts.enCours=0;done()};
   const lancer=()=>{
     if(id!==tts.seq)return;
     essais++;
@@ -509,7 +509,10 @@ function ttsSay(texte,fini){
     if(!tts.voice)ttsPickVoice();
     if(tts.voice)u.voice=tts.voice;
     let parti=false;
-    u.onstart=()=>{parti=true};
+    u.onstart=()=>{parti=true;
+      // Chrome Android oublie souvent de signaler la fin : on surveille nous-mêmes.
+      const surveille=setInterval(()=>{if(termine||id!==tts.seq){clearInterval(surveille);return}if(!ss.speaking&&!ss.pending){clearInterval(surveille);fin()}},400);
+    };
     u.onend=fin;
     u.onerror=e=>{if(e.error==='interrupted'||e.error==='canceled')return;if(!parti&&essais<2)setTimeout(lancer,300);else{tts.bloque=texte;fin()}};
     tts.current=u; // garde une référence : sinon Chrome peut l'effacer en cours de lecture
@@ -521,7 +524,8 @@ function ttsSay(texte,fini){
       else{tts.bloque=texte;try{ss.cancel()}catch(e){}fin()}
     },2500);
     // Filet de sécurité : Chrome Android oublie parfois de signaler la fin.
-    setTimeout(()=>{if(id===tts.seq&&parti&&!termine&&!ss.speaking)fin()},Math.min(30000,1500+texte.length*90));
+    // Dernier filet : passé la durée normale de la phrase, on considère qu'elle est finie, même si Chrome dit le contraire.
+    setTimeout(()=>{if(id===tts.seq&&!termine)fin()},Math.min(40000,3000+texte.length*110));
   };
   // Petite pause après un éventuel cancel() : c'est elle qui évite la phrase perdue.
   setTimeout(lancer,ss.speaking||ss.pending?250:80);
@@ -751,7 +755,7 @@ function pgTestSon(){
   });
 }
 function pgSpeak(t){
-  ttsSay(t,()=>{pgRender();if(pg.mainsLibres&&pg.open&&!pg.thinking&&!pg.listening&&!tts.bloque)setTimeout(pgListen,300)});
+  ttsSay(t,()=>{pgRender();if(pg.actif)pgRelance();else if(pg.mainsLibres&&pg.open&&!pg.thinking&&!pg.listening&&!tts.bloque)setTimeout(pgListen,300)});
 }
 
 function pgListen(){
@@ -775,10 +779,12 @@ function pgMic(){if(pg.listening||pg.actif){pg.actif=false;pgStopMic();pgRender(
 // est ouverte, on le relance tout seul (sauf pendant que le pilote réfléchit ou parle).
 function pgRelance(){
   clearTimeout(pg.relance);
-  if(!pg.actif||!pg.mainsLibres||!pg.open||pg.thinking||pg.listening||tts.bloque)return;
+  if(!pg.actif||!pg.mainsLibres||!pg.open||pg.thinking||pg.listening)return;
   if((pg.echecs||0)>=3){pg.actif=false;pg.error='Le micro s’est coupé plusieurs fois. Appuie sur Parler pour reprendre.';pgRender();return}
   if(document.visibilityState!=='visible')return; // reprendra au retour dans l'appli
-  if(window.speechSynthesis&&window.speechSynthesis.speaking){pg.relance=setTimeout(pgRelance,400);return}
+  // Attend que la voix du pilote ait fini (sinon il s'entendrait lui-même), mais jamais plus de 20 s.
+  if(tts.enCours&&tts.enCours===tts.seq){pg.attente=(pg.attente||0)+1;if(pg.attente<100){pg.relance=setTimeout(pgRelance,400);return}}
+  pg.attente=0;
   pg.relance=setTimeout(()=>{if(pg.actif&&!pg.listening&&!pg.thinking)pgListen()},250);
 }
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')pgRelance();else if(pg.listening)pgStopMic()});
