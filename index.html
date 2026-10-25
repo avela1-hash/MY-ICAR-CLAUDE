@@ -472,7 +472,7 @@ const MENU_PAGES=['menu','garage','clients','expertises','taches','aide','parame
 const configs={
   expertises:{sing:'expertise',title:'Expertises',cols:[['client','Client'],['immatriculation','Immatriculation'],['date','Date RDV'],['statut','Statut'],['notes','Observations']],fields:[['client','Client','text',1],['immatriculation','Immatriculation','text'],['date','Date de rendez-vous','date'],['statut','Statut','select','',['Sans RDV','RDV fixé','Réalisée','À relancer']],['notes','Observations','textarea']]},
   vehicules:{sing:'dossier',title:'Dossiers',cols:[['client','Client'],['modele','Véhicule'],['immatriculation','Immatriculation'],['statut','Étape'],['priorite','Priorité']],fields:[['client','Client','text',1],['modele','Modèle','text'],['immatriculation','Immatriculation','text'],['statut','Étape','select','',['À chiffrer','En attente','À planifier','En travaux','Peinture','Prêt à livrer','Livré']],['priorite','Priorité (1 à 10)','number'],['telephone','Téléphone client','tel'],['sinistre','Sinistre','text'],['assurance','Assurance','text'],['expertise','Expertise','select','',['À prévoir','RDV fixé','Faite','Non nécessaire']],['prochaine_action','Prochaine action','text'],['date_action','Pour quand','date'],['responsable','Responsable','select','',['Enzo','IB','Brahim','Aurel','Autre']],['montant','Montant estimé des travaux (€)','number'],['notes','Observations','textarea']]},
-  prets:{sing:'prêt',title:'Prêts',cols:[['nom','Véhicule de prêt'],['client','Client'],['date_depart','Départ',r=>dateHeure(r.date_depart,r.heure_depart)],['date_retour','Retour prévu',r=>dateHeure(r.date_retour,r.heure_retour)],['statut','Statut',r=>pretEnRetard(r)?'<span class="pill red">En retard</span>':status(r.statut)],['signature','Contrat',r=>r.signature?'<span class="pill green">✍️ Signé</span>':r.statut==='Prêté'?'<span class="pill red">Non signé</span>':'—']],fields:[['nom','Véhicule de prêt','text',1],['client','Client bénéficiaire','text'],['telephone','Téléphone du client','tel'],['date_depart','Date de départ','date'],['heure_depart','Heure de départ','time'],['date_retour','Retour prévu le','date'],['heure_retour','Heure de retour prévue','time'],['statut','Statut','select','',['Disponible','Réservé','Prêté','Retourné']],['dossier','Dossier atelier du client (sa voiture en réparation)','select','',[]],['km_retour','Kilométrage au retour','number'],['notes','Observations','textarea']]},
+  prets:{sing:'prêt',title:'Prêts',cols:[['nom','Véhicule de prêt'],['client','Client'],['date_depart','Départ',r=>dateHeure(r.date_depart,r.heure_depart)],['date_retour','Retour prévu',r=>dateHeure(r.date_retour,r.heure_retour)],['statut','Statut',r=>pretEnRetard(r)?'<span class="pill red">En retard</span>':status(r.statut)],['signature','Contrat',r=>r.signature?`<span class="pill green">✍️ Signé${r.signe_distance?' à distance':''}</span>`:r.sign_jeton?'<span class="pill orange">📩 Envoyé, en attente</span>':r.statut==='Prêté'?'<span class="pill red">Non signé</span>':'—']],fields:[['nom','Véhicule de prêt','text',1],['client','Client bénéficiaire','text'],['telephone','Téléphone du client','tel'],['email','E-mail du client (facultatif)','email'],['date_depart','Date de départ','date'],['heure_depart','Heure de départ','time'],['date_retour','Retour prévu le','date'],['heure_retour','Heure de retour prévue','time'],['statut','Statut','select','',['Disponible','Réservé','Prêté','Retourné']],['dossier','Dossier atelier du client (sa voiture en réparation)','select','',[]],['km_retour','Kilométrage au retour','number'],['notes','Observations','textarea']]},
   planning:{sing:'rendez-vous',title:'Planning',cols:[['date','Date'],['heure','Heure'],['titre','Intervention / RDV'],['responsable','Responsable'],['statut','Statut']],fields:[['date','Date','date',1],['heure','Heure','time'],['titre','Intervention / RDV','text',1],['responsable','Responsable','select','',['Enzo','IB','Brahim','Aurel','Autre']],['statut','Statut','select','',['Prévu','En cours','Terminé']],['notes','Observations','textarea']]},
   clients:{sing:'client',title:'Clients',cols:[['nom','Nom'],['telephone','Téléphone'],['email','E-mail'],['vehicule','Véhicule'],['notes','Observations']],fields:[['nom','Nom du client','text',1],['telephone','Téléphone','tel'],['email','E-mail','email'],['vehicule','Véhicule','text'],['notes','Observations','textarea']]},
   taches:{sing:'signal',title:'Pilote',cols:[['titre','Tâche / signal'],['client','Client'],['echeance','Échéance'],['responsable','Responsable'],['statut','Statut']],fields:[['titre','Tâche / signal','text',1],['client','Client','text'],['echeance','Échéance','date'],['responsable','Responsable','select','',['Enzo','IB','Brahim','Aurel','Autre']],['statut','Statut','select','',['À faire','En cours','Terminée']],['notes','Observations','textarea']]}
@@ -586,7 +586,7 @@ function submitEntry(e,section,id){e.preventDefault(); const values=Object.fromE
   let el; if(id){el=db[section].find(x=>x.id===id);Object.assign(el,values)} else {el={id:crypto.randomUUID?.()||String(Date.now()),...values};db[section].push(el)}
   save(); closeModal(); render();
   if(section==='vehicules') dossierComplet(el,avant);
-  if(section==='prets'&&pretTmp.sms) smsSheet(el);
+  if(section==='prets'&&pretTmp.sms) smsSheet(el); else if(section==='prets'&&!el.signature&&['Réservé','Prêté'].includes(el.statut)) distanceSheet(el);
 }
 function removeItem(section,id){if(confirm('Supprimer définitivement cet élément ?')){db[section]=db[section].filter(x=>x.id!==id); save(); render();}}
 function exportData(){const a=document.createElement('a'); const blob=new Blob([JSON.stringify({app:'My I-Car',version:8,data:db,exportedAt:new Date().toISOString()},null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); a.href=url; a.download='my-icar-v8-sauvegarde-'+new Date().toISOString().slice(0,10)+'.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1200)}
@@ -1380,7 +1380,7 @@ function pretExtra(obj){
   <div class="contrat"><h3>Contrat de prêt de véhicule</h3><p style="margin:0">Je soussigné(e) <b id="cNom">${esc(obj.client||'……')}</b> reconnais recevoir le véhicule <b id="cVoit">${esc(obj.nom||'……')}</b> prêté par la ${esc(garage().identite.raison)} (${esc(garage().identite.adresse)}, SIRET ${esc(garage().identite.siret)}) à la date et l’heure indiquées. Je suis <b>seul(e) responsable de toutes les infractions</b> commises pendant le prêt (radar, stationnement, péage…) et j’accepte d’être <b>désigné(e) comme conducteur</b> auprès de l’administration. Je m’engage à rendre le véhicule à l’heure prévue, dans l’état où je l’ai reçu.</p></div>
   ${obj.signature?`<div class="sig-titre">Signé le ${esc(obj.signe_le?new Date(obj.signe_le).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'}):'')}</div><img class="sig-img" src="${esc(obj.signature)}" alt="Signature du client"><div class="sig-titre">Pour refaire signer, signe à nouveau ci-dessous</div>`:'<div class="sig-titre">Signature du client (obligatoire quand la voiture part)</div>'}
   <div class="sig-wrap" id="sigWrap"><canvas id="sig"></canvas><div class="sig-ph" id="sigPh">✍️ Signer ici avec le doigt</div></div>
-  <div class="buttons" style="justify-content:flex-start;margin-top:8px"><button type="button" class="btn-mini btn-edit" onclick="pretTmp.pad&&pretTmp.pad.effacer()">Effacer la signature</button>${obj.id&&obj.statut==='Prêté'?`<button type="button" class="btn-mini btn-edit" onclick="smsSheet(db.prets.find(x=>x.id==='${esc(obj.id)}'))">📱 SMS de confirmation</button>`:''}</div>`;
+  <div class="buttons" style="justify-content:flex-start;margin-top:8px"><button type="button" class="btn-mini btn-edit" onclick="pretTmp.pad&&pretTmp.pad.effacer()">Effacer la signature</button>${obj.id?`<button type="button" class="btn-mini btn-edit" onclick="closeModal();distanceSheet(db.prets.find(x=>x.id==='${esc(obj.id)}'))">📩 Faire signer à distance</button>`:''}${obj.id&&obj.statut==='Prêté'?`<button type="button" class="btn-mini btn-edit" onclick="smsSheet(db.prets.find(x=>x.id==='${esc(obj.id)}'))">📱 SMS de confirmation</button>`:''}</div>`;
 }
 function pretInit(obj){
   pretTmp={permis:'',pad:sigPad(),sms:false};
@@ -1738,9 +1738,15 @@ function telDe(e){
   const c=db.clients.find(c=>c.nom&&c.telephone&&txt.includes(String(c.nom).toLowerCase().replace(/^(m\.|mr|mme|monsieur|madame)\s*/,'')));
   return c?c.telephone:'';
 }
-function telBoutons(tel,petit){
+function rappelRetour(e){
+  const m=String(e.id||'').match(/^pret-(.+)-ret$/);if(!m)return '';
+  const p=db.prets.find(x=>x.id===m[1]);if(!p||p.statut==='Retourné')return '';
+  const G=garage().identite,d=p.date_retour?p.date_retour.split('-').reverse().join('/'):'',h=p.heure_retour?p.heure_retour.replace(':','h'):'';
+  return `Bonjour ${p.client||''}, petit rappel de ${G.raison||'votre garage'} : le véhicule de prêt ${p.nom||''} est à rendre le ${d}${h?' à '+h:''}, comme convenu dans le contrat. En cas d’empêchement, appelez-nous au ${G.tel||''}. Merci !`;
+}
+function telBoutons(tel,petit,corps){
   if(!tel)return '';const n=String(tel).replace(/[^\d+]/g,'');
-  return `<span class="tel-bt${petit?' petit':''}" onclick="event.stopPropagation()"><a href="tel:${esc(n)}" aria-label="Appeler ${esc(tel)}">📞<em> Appeler</em></a><a href="sms:${esc(n)}" aria-label="Envoyer un SMS au ${esc(tel)}">💬<em> SMS</em></a></span>`;
+  return `<span class="tel-bt${petit?' petit':''}" onclick="event.stopPropagation()"><a href="tel:${esc(n)}" aria-label="Appeler ${esc(tel)}">📞<em> Appeler</em></a><a href="sms:${esc(n)}${corps?'?body='+encodeURIComponent(corps):''}" aria-label="${corps?'Envoyer le rappel de retour':'Envoyer un SMS au '+esc(tel)}">💬<em>${corps?' Rappel retour':' SMS'}</em></a></span>`;
 }
 function calMode(m){cal.anim='';cal.mode=m;render()}
 function calMois(n){const d=calDate(cal.jour);d.setDate(1);d.setMonth(d.getMonth()+n);cal.anim=n>0?'cal-anim-g':'cal-anim-d';cal.jour=calISO(d);render();cal.anim=''}
@@ -1852,6 +1858,36 @@ function cockpit(){
   </div>
   <button class="btn btn-primary" style="justify-content:center" onclick="pgOpen()">🎙 Parler au pilote</button>
   </div>`;
+}
+
+// V14 — SIGNATURE À DISTANCE : le client reçoit un message clair + un lien, signe au doigt, la signature revient ici
+function distanceTexte(p,lien){
+  const G=garage().identite,dhx=(d,h)=>d?d.split('-').reverse().join('/')+(h?' à '+h.replace(':','h'):''):'à convenir';
+  return `Bonjour ${p.client||''},
+Voici votre contrat de prêt de véhicule – ${G.raison||'le garage'}.
+
+🚗 Véhicule : ${p.nom||''}
+📅 Départ : ${dhx(p.date_depart,p.heure_depart)}
+🔙 Retour prévu : ${dhx(p.date_retour,p.heure_retour)}
+
+Points importants :
+• Vous êtes seul(e) responsable des infractions pendant le prêt (radar, stationnement, péage) et vous acceptez d’être désigné(e) comme conducteur.
+• Retour à la date et à l’heure prévues, dans le même état et avec le même niveau de carburant.
+• Vous seul(e) conduisez le véhicule, avec un permis valide.
+• En cas d’accident ou de problème, appelez le garage au ${G.tel||''}.
+
+👉 Ouvrez ce lien pour accepter l’heure de retour, prendre la photo de votre permis et signer avec le doigt :
+${lien}
+
+Merci !`;
+}
+function distanceSheet(p){
+  if(!p)return;
+  if(!p.sign_jeton||(p.sign_expire&&Date.parse(p.sign_expire)<Date.now())){p.sign_jeton=(crypto.randomUUID?crypto.randomUUID():String(Math.random()).slice(2)+Date.now()).replace(/-/g,'');p.sign_expire=new Date(Date.now()+7*864e5).toISOString();save(true);if(typeof syncNow==='function')syncNow()}
+  const lien=`${location.origin}/signer.html?p=${encodeURIComponent(p.id)}&j=${p.sign_jeton}`;
+  const t=distanceTexte(p,lien),tel=String(p.telephone||'').replace(/[^\d+]/g,'');
+  const sujet=`Contrat de prêt – ${p.nom||'véhicule'} – ${garage().identite.raison||''}`;
+  document.getElementById('modalhost').innerHTML=`<div class="modalback" onclick="closeModal()"><div class="modal" onclick="event.stopPropagation()"><h2>📩 Faire signer à distance</h2><p class="t-muted" style="margin-top:-8px">Le client reçoit ce message, ouvre le lien, signe avec le doigt (et peut joindre son permis). La signature arrive toute seule dans le prêt.</p>${sync.code?'':'<div class="voice-warning">Ce téléphone n’est pas relié à la base partagée : le lien ne marchera pas tant que tu n’as pas saisi le code d’équipe.</div>'}<div class="sms-texte" id="smsT">${esc(t)}</div><div class="buttons">${tel?`<a class="btn btn-primary" style="text-decoration:none" href="sms:${esc(tel)}?body=${encodeURIComponent(t)}">📱 SMS</a>`:''}<a class="btn btn-secondary" style="text-decoration:none" href="mailto:${esc(p.email||'')}?subject=${encodeURIComponent(sujet)}&body=${encodeURIComponent(t)}">✉️ E-mail</a><button type="button" class="btn btn-dark" onclick="smsCopier()">Copier</button><button type="button" class="btn btn-dark" onclick="closeModal()">Fermer</button></div><p class="t-muted" style="font-size:13px">Lien valable 7 jours, une seule signature.${tel?'':' Ajoute le téléphone du client pour l’envoi par SMS.'}</p></div></div>`;
 }
 
 render();

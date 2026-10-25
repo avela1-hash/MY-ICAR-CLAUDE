@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Contrat de prêt de véhicule</title>
+<meta name="theme-color" content="#F5F6F8">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#F5F6F8;color:#14213D;font-family:'Manrope',system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+.page{max-width:560px;margin:0 auto;padding:22px 16px 40px}
+h1{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:28px;line-height:1.15;margin:4px 0 6px}
+.garage{font-size:14px;color:#5B6475;line-height:1.5}
+.carte{background:#fff;border:1px solid #E6E8EC;border-radius:18px;padding:18px;margin-top:16px;box-shadow:0 8px 24px rgba(20,33,61,.05);animation:monte .4s cubic-bezier(.2,.8,.2,1) both}
+.carte:nth-of-type(2){animation-delay:.06s}.carte:nth-of-type(3){animation-delay:.12s}.carte:nth-of-type(4){animation-delay:.18s}
+@keyframes monte{from{opacity:0;transform:translateY(14px)}}
+.infos{display:grid;grid-template-columns:auto 1fr;gap:8px 14px;font-size:16px}.infos span{color:#5B6475}.infos b{font-weight:700}
+.points{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+.points li{display:flex;gap:10px;font-size:15.5px;line-height:1.45}.points li i{flex:none;width:26px;height:26px;border-radius:8px;background:#FBEBDD;color:#8F4A0C;display:grid;place-items:center;font-style:normal;font-weight:800;font-size:14px}
+.points li.fort i{background:#6B2E0A;color:#fff}
+h2{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:20px;margin:0 0 12px}
+label.case{display:flex;gap:12px;align-items:flex-start;font-size:15.5px;line-height:1.4;margin-top:14px;cursor:pointer}
+label.case input{width:24px;height:24px;flex:none;margin:0;accent-color:#C2610F}
+.sig{border:2px dashed #C2610F;border-radius:16px;background:#fff;position:relative;touch-action:none;margin-top:10px}
+.sig.ok{border-style:solid;border-color:#0E7C74}
+.sig canvas{display:block;width:100%;height:190px;touch-action:none}
+.sig span{position:absolute;inset:0;display:grid;place-items:center;color:#9a8f7a;font-weight:700;pointer-events:none}
+.ligne{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+.btn{border:0;border-radius:14px;padding:16px 20px;font:inherit;font-weight:800;font-size:16px;cursor:pointer;transition:transform .15s,opacity .2s}
+.btn:active{transform:scale(.97)}.btn:disabled{opacity:.45}
+.btn-p{background:#C2610F;color:#fff;width:100%;margin-top:18px;box-shadow:0 8px 20px rgba(194,97,15,.25)}
+.btn-l{background:#F1F3F6;color:#14213D;padding:11px 14px;font-size:14px}
+input[type=file]{font:inherit;font-size:14px;margin-top:8px;width:100%}
+.photo{max-width:100%;max-height:200px;border-radius:12px;margin-top:10px;display:block}
+.msg{padding:16px;border-radius:14px;font-size:15.5px;line-height:1.5;margin-top:16px}
+.err{background:#FDF1EF;color:#8A2A23}.fin{background:#E3F2F0;color:#084843;text-align:center;font-size:18px;font-weight:700;padding:28px 16px}
+.petit{font-size:13px;color:#5B6475;margin-top:8px}
+</style>
+</head>
+<body>
+<main class="page" id="page"><p class="garage">Chargement du contrat…</p></main>
+<script>
+const q=new URLSearchParams(location.search),P=q.get('p')||'',J=q.get('j')||'';
+const el=document.getElementById('page');
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const dh=([d,h])=>[d?d.split('-').reverse().join('/'):'',h?'à '+h.replace(':','h'):''].filter(Boolean).join(' ')||'—';
+let permis='',pad=null;
+function erreur(t){el.innerHTML=`<div class="msg err">${esc(t)}</div>`}
+async function charger(){
+  let r,d;
+  try{r=await fetch('/api/signer?p='+encodeURIComponent(P)+'&j='+encodeURIComponent(J),{cache:'no-store'});d=await r.json()}catch(e){return erreur('Pas de connexion. Réessayez dans un instant.')}
+  if(!r.ok)return erreur(d.erreur||'Lien invalide.');
+  const G=d.garage;
+  el.innerHTML=`
+  <p class="garage">${esc(G.raison)}<br>${esc(G.adresse)}${G.tel?' · '+esc(G.tel):''}</p>
+  <h1>Contrat de prêt de véhicule</h1>
+  <section class="carte"><div class="infos">
+    <span>Client</span><b>${esc(d.client||'—')}</b>
+    <span>Véhicule</span><b>${esc(d.voiture||'—')}</b>
+    <span>Départ</span><b>${esc(dh(d.depart))}</b>
+    <span>Retour</span><b>${esc(dh(d.retour))}</b>
+  </div></section>
+  <section class="carte"><h2>Les points importants</h2><ul class="points">
+    <li class="fort"><i>!</i><span><b>Vous êtes seul(e) responsable des infractions</b> commises pendant le prêt : radar, stationnement, péage…</span></li>
+    <li class="fort"><i>!</i><span>Vous acceptez d’être <b>désigné(e) comme conducteur</b> auprès de l’administration pour toute amende reçue sur cette période.</span></li>
+    <li><i>1</i><span>Vous rendez le véhicule <b>à la date et à l’heure prévues</b>. Prévenez le garage en cas de retard.</span></li>
+    <li><i>2</i><span>Vous rendez le véhicule <b>dans l’état où vous l’avez reçu</b>, propre, avec le même niveau de carburant.</span></li>
+    <li><i>3</i><span>Le véhicule est conduit <b>uniquement par vous</b>, titulaire d’un permis valide.</span></li>
+    <li><i>4</i><span>En cas d’accident, de panne ou de choc, <b>prévenez immédiatement le garage</b>.</span></li>
+  </ul></section>
+  <section class="carte"><h2>1. L’heure de retour</h2><label class="case" style="margin-top:0"><input type="checkbox" id="hr"><span>Je m’engage à rendre le véhicule <b>${esc(dh(d.retour))}</b>.</span></label><p class="petit">Si l’heure ne vous convient pas, appelez le garage${G.tel?' au <a href="tel:'+esc(G.tel.replace(/[^\d+]/g,''))+'">'+esc(G.tel)+'</a>':''} avant de signer.</p></section>
+  <section class="carte"><h2>2. Photo de votre permis</h2><p class="petit" style="margin-top:0">Prenez en photo le recto de votre permis de conduire.</p>
+    <input id="fp" type="file" accept="image/*" capture="environment"><img id="ap" class="photo" hidden alt="Votre permis"></section>
+  <section class="carte"><h2>3. Votre signature</h2>
+    <label class="case"><input type="checkbox" id="lu"><span>J’ai lu le contrat et j’accepte ces conditions.</span></label>
+    <div class="sig" id="sw"><canvas id="sc"></canvas><span id="sp">✍️ Signez ici avec le doigt</span></div>
+    <div class="ligne"><button class="btn btn-l" type="button" id="ef">Effacer</button></div>
+    <button class="btn btn-p" id="go" disabled>Signer et envoyer au garage</button>
+    <p class="petit">Le bouton s’active quand l’heure de retour est acceptée, la photo du permis prise, la case cochée et la signature faite. Tout part directement au garage, avec la date et l’heure.</p></section>`;
+  pad=sigPad();
+  document.getElementById('fp').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{permis=await reduire(f,1000,.6);const a=document.getElementById('ap');a.src=permis;a.hidden=false;window.__maj&&window.__maj()}catch(_){alert('Photo illisible, réessayez')}};
+  const maj=()=>{document.getElementById('go').disabled=!(permis&&document.getElementById('hr').checked&&document.getElementById('lu').checked&&!pad.vide())};window.__maj=maj;
+  document.getElementById('lu').onchange=maj;document.getElementById('hr').onchange=maj;pad.onchange=maj;
+  document.getElementById('ef').onclick=()=>{pad.effacer();maj()};
+  document.getElementById('go').onclick=envoyer;
+}
+async function envoyer(){
+  const b=document.getElementById('go');b.disabled=true;b.textContent='Envoi…';
+  try{
+    const r=await fetch('/api/signer',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p:P,j:J,signature:pad.image(),permis,heure_ok:true})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok)throw Error(d.erreur||'Envoi impossible');
+    el.innerHTML=`<div class="msg fin">✅ Merci, votre contrat est signé.<br><span style="font-weight:600;font-size:15px">Le garage l’a bien reçu. Vous pouvez fermer cette page.</span></div>`;
+  }catch(e){b.disabled=false;b.textContent='Signer et envoyer au garage';alert(e.message)}
+}
+function sigPad(){
+  const c=document.getElementById('sc'),w=document.getElementById('sw'),ph=document.getElementById('sp');
+  const k=window.devicePixelRatio||1;c.width=(c.offsetWidth||500)*k;c.height=190*k;
+  const g=c.getContext('2d');g.scale(k,k);g.lineWidth=2.6;g.lineCap='round';g.lineJoin='round';g.strokeStyle='#14213D';
+  let t=false,u=false,der=null;const self={onchange:null};
+  const pos=e=>{const r=c.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]};
+  c.onpointerdown=e=>{e.preventDefault();try{c.setPointerCapture(e.pointerId)}catch(_){}t=true;der=pos(e)};
+  c.onpointermove=e=>{if(!t)return;const p=pos(e);g.beginPath();g.moveTo(...der);g.lineTo(...p);g.stroke();der=p;if(!u){u=true;ph.hidden=true;w.classList.add('ok');self.onchange&&self.onchange()}};
+  c.onpointerup=c.onpointercancel=()=>t=false;
+  self.vide=()=>!u;
+  self.effacer=()=>{g.clearRect(0,0,c.width,c.height);u=false;ph.hidden=false;w.classList.remove('ok')};
+  self.image=()=>{const x=document.createElement('canvas');x.width=Math.min(c.width,400);x.height=Math.round(c.height*x.width/c.width);const xg=x.getContext('2d');xg.fillStyle='#fff';xg.fillRect(0,0,x.width,x.height);xg.drawImage(c,0,0,x.width,x.height);return x.toDataURL('image/png')};
+  return self;
+}
+function reduire(file,max,qual){return new Promise((ok,ko)=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const s=Math.min(1,max/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',qual))};im.onerror=ko;im.src=r.result};r.onerror=ko;r.readAsDataURL(file)})}
+if(!P||!J)erreur('Lien incomplet. Demandez au garage de vous le renvoyer.');else charger();
+</script>
+</body>
+</html>
