@@ -1711,7 +1711,7 @@ function calNomSemaine(dec){
 function calMoisClasse(d){
   // Repère = aujourd'hui. La semaine en cours reste blanche. Mois passés en bleu, mois en cours blanc, mois suivant sable, celui d'après vert pâle.
   const a=new Date(),la=new Date(a.getFullYear(),a.getMonth(),a.getDate());la.setDate(la.getDate()-((la.getDay()+6)%7));
-  const ld=new Date(d.getFullYear(),d.getMonth(),d.getDate());if(ld>=la&&ld<new Date(la.getTime()+7*864e5))return '';
+  const ld=new Date(d.getFullYear(),d.getMonth(),d.getDate());if(ld<la)return ' mois-prec';if(ld<new Date(la.getTime()+7*864e5))return '';
   const n=(d.getFullYear()*12+d.getMonth())-(a.getFullYear()*12+a.getMonth());
   return n<0?' mois-prec':n===0?'':n%2===1?' mois-suiv':' mois-suiv2';
 }
@@ -1771,7 +1771,7 @@ function planningPage(){
   <div id="calSemaine" class="${cal.anim||''}"><div class="cal-sp-titre cal-sa-titre">${calNomSemaine(-7)}</div><div class="cal-semaine cal-sa">${avant}</div><div class="cal-sp-titre cal-sc-titre">${calNomSemaine(0)}</div><div class="cal-semaine">${semaine}</div>
   <div class="cal-sp-titre">${calNomSemaine(7)}</div><div class="cal-semaine cal-sp">${prochaine}</div><div class="cal-sp-titre">${calNomSemaine(14)}</div><div class="cal-semaine cal-sp">${apres2}</div></div>
   <div class="cal-legende">${Object.values(CAL_TYPES).map(T=>`<span style="--c:${T.c};--t:${T.t}">● ${T.nom}</span>`).join('')}</div>
-  <div class="cal-legmois">${(()=>{const a=new Date();return [[-1,'lp'],[0,'lc'],[1,'ls'],[2,'ls2']].map(([k,c])=>`<span class="${c}">${esc(new Date(a.getFullYear(),a.getMonth()+k,1).toLocaleDateString('fr-FR',{month:'long'}))}</span>`).join('')})()}</div>
+  <div class="cal-legmois">${(()=>{const a=new Date();return '<span class="lp">Passé</span>'+[[0,'lc'],[1,'ls'],[2,'ls2']].map(([k,c])=>`<span class="${c}">${esc(new Date(a.getFullYear(),a.getMonth()+k,1).toLocaleDateString('fr-FR',{month:'long'}))}</span>`).join('')})()}</div>
   <div id="calZone" class="${cal.anim||''}"><div class="cal-titre">${cal.jour===auj?'Aujourd’hui · ':cal.jour===calISO(new Date(Date.now()+864e5))?'Demain · ':''}${esc(sel.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}))}</div>
   ${liste}<div class="cal-astuce">← Glisse le doigt pour changer de jour · sur la barre des jours pour changer de semaine →</div></div>
   <div class="buttons" style="justify-content:flex-start;margin-top:10px"><button class="btn btn-dark" onclick="calVue('liste')">Voir tout en liste</button></div></section>`;
