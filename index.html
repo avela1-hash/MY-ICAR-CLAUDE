@@ -960,8 +960,9 @@ function pgTextSubmit(e){e.preventDefault();const i=document.getElementById('pgI
 
 function pgRepond(t,done=''){pgPush('pilote',t,done);pg.thinking=false;pgRender();pgSpeak(t)}
 
-async function pgSend(t){
-  if(pg.thinking)return;
+async function pgSend(t,reessai){
+  if(pg.thinking&&!reessai)return;
+  pg.thinking=false;
   pgPush('aurel',t);pg.error='';
   const s=voiceClean(t).replace(/[.!?,]/g,'').trim();
 
@@ -1007,6 +1008,8 @@ async function pgSend(t){
     pg.thinking=false;
     const local=pgLocal(s);
     const raison=e.name==='AbortError'?'le pilote a mis trop de temps':e.message;
+    // Gemini rame ou un serveur est saturé : on relance tout seul une fois, il passera sur un autre modèle.
+    if(!reessai&&/trop de temps|trop lent|surcharg|quota|10 secondes|50[234]|429|vide/i.test(raison)){pgPush('pilote','Gemini rame, je passe sur un autre serveur…');pgRender();{const i=pg.log.map(m=>m.qui).lastIndexOf('aurel');if(i>=0)pg.log.splice(i,1)}return pgSend(t,true)}
     if(local){pgRepond(local+' (Pilote IA injoignable : '+raison+'.)')}
     else{pg.error='Pilote IA injoignable : '+raison+'. En attendant, je sais seulement ouvrir les pages (« ouvre les prêts »).';pgPush('pilote','Je n’arrive pas à joindre l’IA pour le moment ('+raison+').');pgRender();pgRelance()}
   }

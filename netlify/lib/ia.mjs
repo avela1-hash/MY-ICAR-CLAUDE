@@ -104,12 +104,18 @@ async function decouvrirModeles(key) {
 
 // Le modèle qui vient de répondre est réessayé en premier la fois suivante.
 let dernierBonModele = '';
+// Modèle qui rame ou qui refuse : mis de côté quelques minutes, on commence par les autres.
+const enPanne = new Map();
+const mettreDeCote = (m, minutes) => enPanne.set(m, Date.now() + minutes * 60_000);
+const estDeCote = (m) => (enPanne.get(m) || 0) > Date.now();
 
 async function demanderGemini({ systeme, prompt, maxSortie }) {
   const key = env('GEMINI_API_KEY');
   const decouverts = await decouvrirModeles(key);
   // Si le quota gratuit d'un modèle est épuisé (429) ou s'il n'existe plus (404), on passe au suivant.
-  const modeles = [...new Set([env('GEMINI_MODEL'), dernierBonModele, ...decouverts, 'gemini-flash-lite-latest', 'gemini-2.5-flash-lite', 'gemini-flash-latest', 'gemini-2.5-flash'].filter(Boolean))];
+  const tous = [...new Set([env('GEMINI_MODEL'), dernierBonModele, ...decouverts, 'gemini-flash-lite-latest', 'gemini-2.5-flash-lite', 'gemini-flash-latest', 'gemini-2.5-flash'].filter(Boolean))];
+  const modeles = [...tous.filter(m => !estDeCote(m)), ...tous.filter(estDeCote)];
+  let essai = 0;
   let reponse, dernierStatut = 0, modeleUtilise = '', dernierDetail = '';
   for (const modele of modeles) {
     if (finAppel - Date.now() < 1000) break;
@@ -120,8 +126,8 @@ async function demanderGemini({ systeme, prompt, maxSortie }) {
       if (avecReflexion) generationConfig.thinkingConfig = reflexion;
       try {
         reponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modele}:generateContent`, {
-          // Chaque modèle a au plus 4,5 s, sauf s'il ne reste plus d'autre chance.
-          method: 'POST', signal: AbortSignal.timeout(Math.min(restant(), 4500)),
+          // Chaque modèle a au plus 3,5 s (4,5 s pour le dernier essai) : s'il rame, on passe vite au suivant.
+          method: 'POST', signal: AbortSignal.timeout(Math.min(restant(), essai < 2 ? 3500 : 4500)),
           headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
           body: JSON.stringify({
             systemInstruction: { parts: [{ text: systeme }] },
@@ -131,16 +137,18 @@ async function demanderGemini({ systeme, prompt, maxSortie }) {
         });
       } catch (e) {
         if (!tropLong(e)) throw e;
-        reponse = null; dernierStatut = 504; modeleUtilise = modele; break; // trop lent : modèle suivant
+        reponse = null; dernierStatut = 504; modeleUtilise = modele; mettreDeCote(modele, 3); break; // trop lent : modèle suivant
       }
       dernierStatut = reponse.status; modeleUtilise = modele;
       if (reponse.status === 400 && avecReflexion) { dernierDetail = (await reponse.text()).slice(0, 300); continue; } // réglage refusé : on réessaie sans
       break;
     }
+    essai++;
     if (!reponse) continue;
     if (reponse.ok) break;
     // modèle introuvable (400/404), quota épuisé (429) ou serveur Google surchargé (500/502/503/504) → modèle suivant
     if (![400, 404, 429, 500, 502, 503, 504].includes(reponse.status)) break;
+    mettreDeCote(modele, reponse.status === 429 ? 15 : reponse.status === 404 ? 60 : 3);
     dernierDetail = (await reponse.text()).slice(0, 300);
   }
   if (!reponse) throw new ErreurIA('Gemini trop lent à répondre, réessaie');
