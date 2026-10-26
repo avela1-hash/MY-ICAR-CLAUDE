@@ -649,11 +649,13 @@ if(window.speechSynthesis){ttsPickVoice();try{window.speechSynthesis.addEventLis
 function ttsUnlock(){
   if(!window.speechSynthesis||tts.unlocked)return;
   try{
+    try{window.speechSynthesis.cancel()}catch(_){}
     const u=new SpeechSynthesisUtterance(' ');u.volume=0;u.lang='fr-FR';
     window.speechSynthesis.resume();window.speechSynthesis.speak(u);tts.unlocked=true;
   }catch(e){}
 }
 ['pointerdown','touchstart','click','keydown'].forEach(ev=>document.addEventListener(ev,ttsUnlock,{capture:true,passive:true}));
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){tts.unlocked=false;ttsPickVoice()}});
 function ttsStop(){
   tts.seq++;tts.current=null;
   try{if(window.speechSynthesis&&(window.speechSynthesis.speaking||window.speechSynthesis.pending))window.speechSynthesis.cancel()}catch(e){}
@@ -673,9 +675,9 @@ function ttsSay(texte,fini){
     const u=new SpeechSynthesisUtterance(texte);
     u.lang='fr-FR';u.rate=1;u.pitch=1;u.volume=1;
     if(!tts.voice)ttsPickVoice();
-    if(tts.voice)u.voice=tts.voice;
+    if(tts.voice&&!tts.sansVoix&&essais<2)u.voice=tts.voice;
     let parti=false;
-    u.onstart=()=>{parti=true;
+    u.onstart=()=>{parti=true;if(essais>=2&&tts.voice)tts.sansVoix=true; // la voix choisie ne marche plus : on garde la voix par défaut
       // Chrome Android oublie souvent de signaler la fin : on surveille nous-mêmes.
       const surveille=setInterval(()=>{if(termine||id!==tts.seq){clearInterval(surveille);return}if(!ss.speaking&&!ss.pending){clearInterval(surveille);fin()}},400);
     };
@@ -699,7 +701,7 @@ function ttsSay(texte,fini){
 // Rejoue la dernière phrase restée muette, directement dans l'appui (débloque toujours Chrome).
 function ttsRejouer(){
   const t=tts.bloque;if(!t||!window.speechSynthesis)return;tts.bloque='';
-  try{ttsStop();const u=new SpeechSynthesisUtterance(t);u.lang='fr-FR';if(tts.voice)u.voice=tts.voice;tts.current=u;window.speechSynthesis.resume();window.speechSynthesis.speak(u);tts.unlocked=true}catch(e){}
+  try{ttsStop();const u=new SpeechSynthesisUtterance(t);u.lang='fr-FR';if(tts.voice&&!tts.sansVoix)u.voice=tts.voice;tts.current=u;window.speechSynthesis.resume();window.speechSynthesis.speak(u);tts.unlocked=true}catch(e){}
   pgRender();
 }
 const intakeFields=[
