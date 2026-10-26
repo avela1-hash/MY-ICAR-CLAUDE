@@ -31,7 +31,7 @@ const SECTIONS = {
   prets: {
     nom: 'Voitures de prêt',
     champs: {
-      nom: 'texte (la voiture de prêt)', client: 'texte', telephone: 'texte (téléphone du client)',
+      nom: 'texte (la voiture de prêt)', client: 'texte', telephone: 'texte (téléphone du client)', email: 'texte (e-mail du client)',
       date_depart: 'AAAA-MM-JJ', heure_depart: 'HH:MM', date_retour: 'AAAA-MM-JJ', heure_retour: 'HH:MM',
       statut: ['Disponible', 'Réservé', 'Prêté', 'Retourné'], km_retour: 'nombre (kilométrage relevé au retour)', notes: 'texte'
     }
@@ -84,6 +84,7 @@ Actions possibles :
 - {"type":"supprimer","section":"taches","id":"t2"}
 - {"type":"retenir","texte":"consigne"} → mémorise une consigne durable quand Aurel dit « retiens que », « à partir de maintenant », « tu dois toujours »
 - {"type":"question","champ":"un champ de vehicules ou autre","question":"la question"} → ajoute une question récurrente à poser pour chaque dossier
+- {"type":"contrat","id":"p1"} → prépare l'envoi au client (SMS ou e-mail) du contrat de prêt à signer au doigt sur son téléphone, avec la photo de son permis. À utiliser quand Aurel dit « envoie le contrat », « fais-lui signer », « renvoie le contrat à … ». Utilise la référence du prêt de ce client (s'il n'existe pas encore, crée d'abord le prêt avec « ajouter », sans action contrat, et dis-le).
 - {"type":"entretien"} → lance l'entretien guidé de création de dossier (seulement si Aurel le demande ou dit qu'il veut « raconter » un nouveau dossier sans donner d'infos)
 
 Règles :
@@ -162,6 +163,8 @@ function nettoieActions(actions) {
       out.push({ type, texte: court(a.texte, 300) });
     } else if (type === 'question' && a.question) {
       out.push({ type, champ: court(a.champ || 'autre', 30), question: court(a.question, 200) });
+    } else if (type === 'contrat' && a.id) {
+      out.push({ type, id: court(a.id, 60) });
     } else if (type === 'entretien') {
       out.push({ type });
     }

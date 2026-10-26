@@ -1001,12 +1001,14 @@ async function pgSend(t){
     if(actions.some(a=>a.type==='entretien')){pg.thinking=false;pgPush('pilote',d.reponse||'Je lance l’entretien de dossier.');pgClose();go('assistant');voiceNew();return}
     const n=pgApply(actions);
     pgRepond(d.reponse,n?n+' changement(s) · tu peux annuler':'');
+    const ct=actions.find(a=>a.type==='contrat');
+    if(ct){const pr=db.prets.find(x=>x.id===ct.id);if(pr)setTimeout(()=>{pgClose();distanceSheet(pr)},900)}
   }catch(e){
     pg.thinking=false;
     const local=pgLocal(s);
     const raison=e.name==='AbortError'?'le pilote a mis trop de temps':e.message;
     if(local){pgRepond(local+' (Pilote IA injoignable : '+raison+'.)')}
-    else{pg.error='Pilote IA injoignable : '+raison+'. En attendant, je sais seulement ouvrir les pages (« ouvre les prêts »).';pgPush('pilote','Je n’arrive pas à joindre l’IA pour le moment.');pgRender();pgRelance()}
+    else{pg.error='Pilote IA injoignable : '+raison+'. En attendant, je sais seulement ouvrir les pages (« ouvre les prêts »).';pgPush('pilote','Je n’arrive pas à joindre l’IA pour le moment ('+raison+').');pgRender();pgRelance()}
   }
 }
 
@@ -1027,7 +1029,7 @@ const PG_MOTS_SECTION={
 };
 const PG_STOP=new Set(('ai as es eu vu nos vos ici voir liste besoin faudrait avez avons sait sais the les des une est pour dans avec que qui quoi quel quelle quelles quels mon mes ton tes son ses sur pas plus moi toi lui leur elle ils elles fait faire fais mets met mettre passe passer ajoute ajouter supprime supprimer enleve montre affiche ouvre donne dis dit peux veux voudrais faut combien comment quand est cest ce cet cette ces tout tous toute toutes rien aussi alors bien deja encore apres avant jusqu jusqua demain aujourd hui matin soir semaine prochain prochaine dernier derniere lundi mardi mercredi jeudi vendredi samedi dimanche heure heures dossier dossiers vehicule vehicules voiture voitures pret prets prete preter client clients cliente monsieur madame mme planning rendez vous rdv relance relances tache taches expertise expertises statut priorite numero telephone disponible disponibles dispo libre etat point chez par deux trois oui non merci stp sil plait nouveau nouvelle change changer modifie modifier annule rentre rentree rendu revenu ramene qu il elle on je tu nous en et le la de du un au aux ou si ne se me te ma ta sa ca y a ya avoir etre sont ont va vont doit dois peut').split(' '));
 const PG_REF={vehicules:'v',planning:'r',prets:'p',taches:'t',clients:'c',expertises:'e'};
-const PG_CHAMPS={vehicules:['client','modele','immatriculation','statut','telephone','sinistre','assurance','expertise','prochaine_action','date_action','responsable','priorite','montant','notes','manque'],planning:['date','heure','titre','responsable','statut'],prets:['nom','client','date_depart','date_retour','statut','notes'],taches:['titre','client','echeance','responsable','statut'],clients:['nom','telephone','email','vehicule'],expertises:['client','immatriculation','date','statut']};
+const PG_CHAMPS={vehicules:['client','modele','immatriculation','statut','telephone','sinistre','assurance','expertise','prochaine_action','date_action','responsable','priorite','montant','notes','manque'],planning:['date','heure','titre','responsable','statut'],prets:['nom','client','telephone','date_depart','heure_depart','date_retour','heure_retour','statut','signature','notes'],taches:['titre','client','echeance','responsable','statut'],clients:['nom','telephone','email','vehicule'],expertises:['client','immatriculation','date','statut']};
 const PG_FINI={vehicules:'Livré',planning:'Terminé',prets:'Retourné',taches:'Terminée',expertises:'Réalisée'};
 
 function pgDecale(n){const d=new Date();d.setDate(d.getDate()+n);return localISO(d)}
@@ -1129,7 +1131,7 @@ function pgContexte(t){
       const ref=PG_REF[sec]+(++i);refs[ref]=el.id;
       const r={id:ref};
       const el2=sec==='vehicules'?{...el,manque:eduManque(el).map(q=>q.champ).join(', ')}:el;
-      for(const c of PG_CHAMPS[sec]){const v=el2[c];if(v!==undefined&&v!==null&&String(v).trim())r[c]=c==='notes'?String(v).replace(/\s+/g,' ').slice(0,90):String(v)}
+      for(const c of PG_CHAMPS[sec]){const v=c==='signature'?(el2.signature?'oui':(el2.sign_jeton?'envoyé, en attente':'')):el2[c];if(v!==undefined&&v!==null&&String(v).trim())r[c]=c==='notes'?String(v).replace(/\s+/g,' ').slice(0,90):String(v)}
       return r;
     });
   }
