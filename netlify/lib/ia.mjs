@@ -113,7 +113,8 @@ async function demanderGemini({ systeme, prompt, maxSortie }) {
   const key = env('GEMINI_API_KEY');
   const decouverts = await decouvrirModeles(key);
   // Si le quota gratuit d'un modèle est épuisé (429) ou s'il n'existe plus (404), on passe au suivant.
-  const tous = [...new Set([env('GEMINI_MODEL'), dernierBonModele, ...decouverts, 'gemini-flash-lite-latest', 'gemini-2.5-flash-lite', 'gemini-flash-latest', 'gemini-2.5-flash'].filter(Boolean))];
+  // Le plus rapide d'abord : gemini-2.5-flash-lite répond sans « réfléchir » (1 à 3 s en général).
+  const tous = [...new Set([env('GEMINI_MODEL'), dernierBonModele, 'gemini-2.5-flash-lite', ...decouverts, 'gemini-flash-lite-latest', 'gemini-flash-latest', 'gemini-2.5-flash'].filter(Boolean))];
   const modeles = [...tous.filter(m => !estDeCote(m)), ...tous.filter(estDeCote)];
   let essai = 0;
   let reponse, dernierStatut = 0, modeleUtilise = '', dernierDetail = '';
@@ -126,8 +127,8 @@ async function demanderGemini({ systeme, prompt, maxSortie }) {
       if (avecReflexion) generationConfig.thinkingConfig = reflexion;
       try {
         reponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modele}:generateContent`, {
-          // Chaque modèle a au plus 3,5 s (4,5 s pour le dernier essai) : s'il rame, on passe vite au suivant.
-          method: 'POST', signal: AbortSignal.timeout(Math.min(restant(), essai < 2 ? 3500 : 4500)),
+          // Premier modèle : 5 s ; ensuite ce qui reste (Netlify coupe à 10 s). Un modèle qui rame est mis de côté.
+          method: 'POST', signal: AbortSignal.timeout(Math.min(restant(), essai === 0 ? 5000 : 4500)),
           headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
           body: JSON.stringify({
             systemInstruction: { parts: [{ text: systeme }] },
