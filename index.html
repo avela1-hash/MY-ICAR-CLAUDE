@@ -1279,6 +1279,15 @@ function eduPage(){
 var sync={etat:'off',code:'',base:null,timer:null,enCours:false,encore:false,derniere:''};
 const SYNC_SECS=['expertises','vehicules','prets','clients','taches','planning'];
 try{sync.code=localStorage.getItem('myicar_code')||'';sync.base=JSON.parse(localStorage.getItem('myicar_base')||'null')}catch(e){}
+// Lien d'invitation : …/#equipe=123456 → ce téléphone rejoint l'équipe tout seul, sans rien taper.
+(function(){
+  const m=location.hash.match(/equipe=([A-Za-z0-9]{4,40})/);if(!m)return;
+  sync.code=m[1];sync.invite=true;try{localStorage.setItem('myicar_code',m[1])}catch(e){}
+  // Sur iPhone (Safari), on garde le lien tant que l'appli n'est pas sur l'écran d'accueil :
+  // l'icône reprend l'adresse, et l'appli installée a sa propre mémoire.
+  const iOS=/iPhone|iPad|iPod/.test(navigator.userAgent),installee=navigator.standalone||matchMedia('(display-mode: standalone)').matches;
+  if(!iOS||installee)try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}
+})();
 function syncPlus(){if(!sync.code)return;clearTimeout(sync.timer);sync.timer=setTimeout(syncNow,700)}
 function syncMarque(){
   const base=sync.base||{},now=new Date().toISOString();db.supprimes=db.supprimes||{};
@@ -1340,6 +1349,7 @@ async function syncNow(){
       const change=JSON.stringify(fusion)!==JSON.stringify(db);
       db=fusion;sync.base=clone(fusion);
       try{localStorage.setItem(STORAGE_KEY,JSON.stringify(db));localStorage.setItem('myicar_base',JSON.stringify(sync.base))}catch(e){}
+      if(sync.invite){sync.invite=false;setTimeout(()=>toast('✅ Bienvenue dans l’équipe'+(g.d.nom?' '+g.d.nom:'')+' !'),300)}
       sync.etat='ok';sync.derniere=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
       if(change&&syncTranquille())render();
       return;
@@ -1526,7 +1536,11 @@ function garDel(liste,id){const it=garage()[liste].find(x=>x.id===id);if(!it||!c
 function garInviter(id){
   const m=garage().equipe.find(x=>x.id===id);if(!m)return;
   const tel=String(m.tel||'').replace(/[^\d+]/g,'');if(!tel){toast('Ajoute d’abord son portable');garEdit('equipe',id);return}
-  const t=`Salut ${m.nom}, voici l’appli de l’atelier My I-Car : https://${location.host}/ . Ouvre-la dans Chrome, puis « Installer l’appli ». Ton code personnel te sera donné par Aurélien.`;
+  if(acces.liste===null&&sync.role==='admin'){accesApi().then(()=>garInviter(id));return}
+  const a=(acces.liste||[]).find(x=>x.actif&&[m.nom,m.court].map(v=>String(v||'').toLowerCase()).includes(String(x.nom).toLowerCase()));
+  if(a){accesInviter(a.id);return}
+  if(sync.role==='admin'){if(confirm('Créer un accès pour '+m.nom+' et lui envoyer l’invitation ?')){accesApi({action:'ajouter',nom:m.nom}).then(()=>{const n=(acces.liste||[]).find(x=>x.nom===m.nom);if(n)accesInviter(n.id)})}return}
+  const t=`Salut ${m.nom}, voici l’appli de l’atelier My I-Car : ${location.origin}/ . Ton code personnel te sera donné par Aurélien.`;
   location.href=`sms:${tel}?body=${encodeURIComponent(t)}`;
 }
 function garagePage(){
@@ -1665,9 +1679,25 @@ async function accesApi(corps){
   if(page==='parametres')render();
 }
 function accesVu(iso){const d=new Date(iso),auj=new Date(),h=d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});const j=Math.round((new Date(auj.toDateString())-new Date(d.toDateString()))/864e5);return j===0?'aujourd’hui à '+h:j===1?'hier à '+h:'le '+d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})+' à '+h}
+function lienInvitation(code){return `${location.origin}/#equipe=${code}`}
+function texteInvitation(nom,code){return `Salut ${nom}, je t’invite dans l’équipe de l’atelier sur My I-Car.
+
+👉 Touche ce lien, tu es connecté directement :
+${lienInvitation(code)}
+
+📱 Android : ouvre-le dans Chrome, puis menu ⋮ → « Installer l’appli ».
+🍏 iPhone : ouvre-le dans Safari, touche Partager (carré avec flèche) → « Sur l’écran d’accueil ».
+
+Ton code perso, au cas où : ${code}`}
+function accesInviter(id){
+  const p=(acces.liste||[]).find(x=>x.id===id);if(!p)return;
+  const m=garage().equipe.find(x=>String(x.nom||'').toLowerCase()===String(p.nom).toLowerCase()||String(x.court||'').toLowerCase()===String(p.nom).toLowerCase());
+  const tel=String(m?.tel||'').replace(/[^\d+]/g,''),t=texteInvitation(p.nom,p.code);
+  document.getElementById('modalhost').innerHTML=`<div class="modalback" onclick="closeModal()"><div class="modal" onclick="event.stopPropagation()"><h2>📲 Inviter ${esc(p.nom)}</h2><p class="t-muted" style="margin-top:-8px">En touchant le lien, ${esc(p.nom)} rejoint l’équipe directement, sans taper de code. Tu verras ensuite « Vu aujourd’hui à… » sous son nom.</p><div class="sms-texte" id="smsT">${esc(t)}</div><div class="buttons">${tel?`<a class="btn btn-primary" style="text-decoration:none" href="sms:${esc(tel)}?body=${encodeURIComponent(t)}">📱 SMS</a>`:''}<a class="btn btn-secondary" style="text-decoration:none" href="https://wa.me/${esc(tel.replace(/^0/,'33').replace(/^\+/,''))}?text=${encodeURIComponent(t)}" target="_blank" rel="noopener">WhatsApp</a><button type="button" class="btn btn-dark" onclick="smsCopier()">Copier</button><button type="button" class="btn btn-dark" onclick="closeModal()">Fermer</button></div></div></div>`;
+}
 function accesCarte(){
   if(acces.liste===null&&!acces.err){accesApi();return `<div class="card settings-card"><h3>👤 Accès de l’équipe</h3><p>Chargement…</p></div>`}
-  const lignes=(acces.liste||[]).map(p=>`<div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 0;border-top:1px solid rgba(255,255,255,.08)"><div style="flex:1;min-width:140px"><b>${esc(p.nom)}</b> ${p.actif?'🟢':'⛔ <span class="t-muted">coupé</span>'}<br><span style="font-size:20px;letter-spacing:3px">${esc(p.code)}</span><br><small class="t-muted">${p.vu?'Vu '+accesVu(p.vu):'Jamais connecté'}</small></div><button class="btn-mini btn-edit" onclick="accesApi({action:'basculer',id:'${esc(p.id)}'})">${p.actif?'Couper l’accès':'Rétablir'}</button><button class="btn-mini btn-edit" onclick="if(confirm('Donner un nouveau code à ${esc(p.nom)} ? L’ancien ne marchera plus.'))accesApi({action:'nouveau-code',id:'${esc(p.id)}'})">Nouveau code</button><button class="btn-mini btn-del" onclick="if(confirm('Supprimer ${esc(p.nom)} ?'))accesApi({action:'supprimer',id:'${esc(p.id)}'})">Supprimer</button></div>`).join('');
+  const lignes=(acces.liste||[]).map(p=>`<div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 0;border-top:1px solid rgba(255,255,255,.08)"><div style="flex:1;min-width:140px"><b>${esc(p.nom)}</b> ${p.actif?'🟢':'⛔ <span class="t-muted">coupé</span>'}<br><span style="font-size:20px;letter-spacing:3px">${esc(p.code)}</span><br><small class="t-muted">${p.vu?'Vu '+accesVu(p.vu):'Jamais connecté'}</small></div>${p.actif?`<button class="btn-mini btn-edit" onclick="accesInviter('${esc(p.id)}')">📲 Envoyer l’invitation</button>`:''}<button class="btn-mini btn-edit" onclick="accesApi({action:'basculer',id:'${esc(p.id)}'})">${p.actif?'Couper l’accès':'Rétablir'}</button><button class="btn-mini btn-edit" onclick="if(confirm('Donner un nouveau code à ${esc(p.nom)} ? L’ancien ne marchera plus.'))accesApi({action:'nouveau-code',id:'${esc(p.id)}'})">Nouveau code</button><button class="btn-mini btn-del" onclick="if(confirm('Supprimer ${esc(p.nom)} ?'))accesApi({action:'supprimer',id:'${esc(p.id)}'})">Supprimer</button></div>`).join('');
   return `<div class="card settings-card"><h3>👤 Accès de l’équipe</h3><p>Ton code à toi garde l’accès total et toi seul vois cette carte. Chaque personne a son code : tu peux le couper quand tu veux, sans toucher aux autres.</p>${acces.err?`<div class="voice-warning">${esc(acces.err)}</div>`:''}${lignes||'<p class="t-muted">Personne pour l’instant.</p>'}<form style="display:flex;gap:8px;margin-top:12px" onsubmit="event.preventDefault();const n=document.getElementById('accNom').value.trim();if(n)accesApi({action:'ajouter',nom:n})"><input id="accNom" class="search" placeholder="Prénom (ex. Enzo)" style="flex:1"><button class="btn btn-primary">+ Donner un accès</button></form></div>`;
 }
 
