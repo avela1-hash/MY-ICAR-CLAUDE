@@ -200,7 +200,13 @@ export default async (req) => {
   const consignes = (Array.isArray(edu.consignes) ? edu.consignes : []).slice(0, 30)
     .map(c => `- ${court(c, 300)}`).join('\n');
 
-  const prompt = `QUESTIONS RÉCURRENTES (dans l'ordre, champ : question) :
+  const savoirs = (Array.isArray(edu.savoirs) ? edu.savoirs : []).slice(0, 20)
+    .map(x => `- ${court(x?.nom, 60)} — quand : ${court(x?.quand, 200)} → ${court(x?.etapes, 800)}`).join('\n');
+
+  const prompt = `SAVOIR-FAIRE (procédures du garage : quand la situation correspond, suis ces étapes avec les actions possibles, sans en inventer d'autres) :
+${savoirs || '(aucun)'}
+
+QUESTIONS RÉCURRENTES (dans l'ordre, champ : question) :
 ${questions || '(aucune)'}
 
 CONSIGNES APPRISES :

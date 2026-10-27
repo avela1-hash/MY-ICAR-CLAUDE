@@ -600,7 +600,7 @@ function menuPage(){
     ['expertises','⌕','Expertises','Rendez-vous d’expert',db.expertises.length],
     ['taches','✦','Relances','Ce qu’il reste à faire',db.taches.filter(x=>x.statut!=='Terminée').length],
     ['assistant','🎙','Nouveau dossier à la voix','Entretien guidé',''],
-    ['education','🎓','Éduquer le pilote','Ses questions et tes consignes',''],
+    ['education','🎓','Éduquer le pilote','Ses savoir-faire, questions et consignes',''],
     ['garage','🏠','Mon garage','Identité, voitures de prêt, équipe',''],
     ['parametres','⇩','Accès et sauvegardes','Codes de l’équipe, exporter, importer',''],
     ['aide','?','Guide','Comment se servir de l’appli',''],
@@ -1027,7 +1027,7 @@ async function pgSend(t,reessai){
   try{
     const ctrl=new AbortController();const timer=setTimeout(()=>ctrl.abort(),30000);
     const r=await fetch(GLOBAL_URL,{method:'POST',headers:{'Content-Type':'application/json'},signal:ctrl.signal,
-      body:JSON.stringify({phrase:t,historique,page,maintenant:pgMaintenant(),resume:ctx.resume,donnees:ctx.donnees,education:{questions:eduActives(),consignes:edu().consignes}})});
+      body:JSON.stringify({phrase:t,historique,page,maintenant:pgMaintenant(),resume:ctx.resume,donnees:ctx.donnees,education:{questions:eduActives(),consignes:edu().consignes,savoirs:savoirsActifs()}})});
     clearTimeout(timer);
     const brut=await r.text();let d;
     try{d=JSON.parse(brut)}catch{d={erreur:r.status===404?'fonction serveur introuvable (404) : le site n’a pas été redéployé':(r.status===502||r.status===504||/timed out|timeout/i.test(brut))?'le serveur a dépassé 10 secondes ('+r.status+')':'réponse illisible du serveur ('+r.status+' : '+brut.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim().slice(0,80)+')'}}
@@ -1291,7 +1291,20 @@ const EDU_DEFAUT={questions:[
   {champ:'priorite',question:'Priorité de 1 à 10 ?',actif:false},
   {champ:'montant',question:'Tu as une idée du montant ?',actif:false}
 ],consignes:['Réponses courtes, on se tutoie.','Une seule question à la fois.']};
-function edu(){if(!db.education||!Array.isArray(db.education.questions)||!Array.isArray(db.education.consignes))db.education=clone(EDU_DEFAUT);return db.education}
+function edu(){if(!db.education||!Array.isArray(db.education.questions)||!Array.isArray(db.education.consignes))db.education=clone(EDU_DEFAUT);if(!Array.isArray(db.education.savoirs))db.education.savoirs=clone(SAVOIRS_DEFAUT);return db.education}
+// V14 — SAVOIR-FAIRE DU PILOTE (ses « skills ») : quand telle situation arrive, il suit ces étapes
+const SAVOIRS_DEFAUT=[
+ {id:'s1',nom:'Prêt de voiture',quand:'Un client part avec une voiture de prêt',etapes:'Crée le prêt avec le nom du client, son téléphone, la voiture, la date et l’heure de départ et de retour. Mets le statut « Prêté ». Si le client a un dossier atelier, relie le prêt à ce dossier. Propose ensuite d’envoyer le contrat à signer.',actif:true},
+ {id:'s2',nom:'Retour de voiture',quand:'Une voiture de prêt revient au garage',etapes:'Passe le prêt en « Retourné ». Demande le kilométrage si on ne l’a pas dit et note-le. Dis si cette voiture est déjà réservée pour quelqu’un d’autre.',actif:true},
+ {id:'s3',nom:'Amende reçue',quand:'On parle d’une amende, d’un PV ou d’un radar avec une date',etapes:'Cherche quelle voiture de prêt et quel client correspondent à la date et l’heure de l’infraction. Donne le nom, le téléphone et dis si le contrat a été signé. Si tu ne trouves personne, dis-le clairement.',actif:true},
+ {id:'s4',nom:'Nouveau sinistre ou grêle',quand:'Un client arrive pour un sinistre ou de la grêle',etapes:'Crée le dossier : client, véhicule, plaque, téléphone, assurance, ce qui est arrivé. Étape « À chiffrer », expertise « À prévoir ». Demande s’il a besoin d’une voiture de prêt.',actif:true},
+ {id:'s5',nom:'Voiture prête',quand:'Un dossier passe « Prêt à livrer »',etapes:'Rappelle de prévenir le client pour la livraison et, s’il a une voiture de prêt, de la récupérer en même temps.',actif:true}
+];
+function savoirsActifs(){return edu().savoirs.filter(x=>x.actif).map(x=>({nom:x.nom,quand:x.quand,etapes:x.etapes}))}
+function savToggle(id){const x=edu().savoirs.find(v=>v.id===id);if(x){x.actif=!x.actif;eduSave()}}
+function savDel(id){const x=edu().savoirs.find(v=>v.id===id);if(x&&confirm('Supprimer le savoir-faire « '+x.nom+' » ?')){edu().savoirs=edu().savoirs.filter(v=>v.id!==id);eduSave()}}
+function savEdit(id){const x=edu().savoirs.find(v=>v.id===id)||{};document.getElementById('modalhost').innerHTML=`<div class="modalback" onclick="closeModal()"><div class="modal" onclick="event.stopPropagation()"><h2>${id?'Savoir-faire':'Nouveau savoir-faire'}</h2><form onsubmit="savSave(event,'${esc(id||'')}')"><div class="field"><label for="sv_n">Nom</label><input id="sv_n" name="nom" value="${esc(x.nom)}" placeholder="Ex : Client mécontent" required></div><div class="field"><label for="sv_q">Quand ?</label><input id="sv_q" name="quand" value="${esc(x.quand)}" placeholder="Ex : Un client se plaint d’un retard"></div><div class="field"><label for="sv_e">Ce que le pilote doit faire</label><textarea id="sv_e" name="etapes" style="min-height:140px" placeholder="Écris les étapes comme tu les dirais à un collègue">${esc(x.etapes)}</textarea></div><div class="buttons"><button type="button" class="btn btn-dark" onclick="closeModal()">Annuler</button><button class="btn btn-primary">Enregistrer</button></div></form></div></div>`}
+function savSave(e,id){e.preventDefault();const f=e.target,v={nom:f.nom.value.trim().slice(0,60),quand:f.quand.value.trim().slice(0,200),etapes:f.etapes.value.trim().slice(0,800)};if(!v.nom||!v.etapes){toast('Il faut un nom et les étapes');return}const L=edu().savoirs,x=L.find(y=>y.id===id);if(x)Object.assign(x,v);else L.push({id:pgId(),...v,actif:true});closeModal();eduSave();toast('Savoir-faire enregistré')}
 function eduActives(){return edu().questions.filter(q=>q.actif).map(q=>({champ:q.champ,question:q.question}))}
 function eduManque(el){return edu().questions.filter(q=>q.actif&&(q.champ==='autre'?!String(el.notes||'').toLowerCase().includes(String(q.question).toLowerCase().slice(0,18)):!String(el[q.champ]??'').trim()))}
 function eduSave(){save(true);render()}
@@ -1307,6 +1320,9 @@ function eduPage(){
   const incomplets=db.vehicules.filter(v=>v.statut!=='Livré'&&eduManque(v).length).length;
   return header('🎓 Éduquer le pilote','Le pilote pose ces questions, une par une, dès qu’un dossier n’a pas la réponse. Tu peux aussi lui dire « retiens que… » en parlant.')+
   `<div class="notice" style="margin-bottom:16px">${incomplets} dossier(s) en cours ont encore des réponses manquantes. Dis au pilote « complète les dossiers ».</div>
+  <div class="card" style="padding:18px;margin-bottom:16px"><h3 style="margin:0 0 4px">🧠 Savoir-faire du pilote</h3><p class="t-muted" style="margin:0 0 10px;font-size:14px">Comme des fiches : quand la situation arrive, le pilote suit les étapes tout seul.</p>
+  ${E.savoirs.map(x=>`<div class="edu-row"><button class="edu-sw ${x.actif?'on':''}" onclick="savToggle('${esc(x.id)}')" aria-label="${x.actif?'Désactiver':'Activer'}"></button><div class="edu-txt" onclick="savEdit('${esc(x.id)}')" style="cursor:pointer"><div><b>${esc(x.nom)}</b></div><small>${esc(x.quand||'')} · <u>modifier</u></small></div><button class="btn-mini btn-del" onclick="savDel('${esc(x.id)}')" aria-label="Supprimer">✕</button></div>`).join('')}
+  <div class="buttons" style="justify-content:flex-start"><button class="btn btn-primary" onclick="savEdit('')">+ Nouveau savoir-faire</button></div></div>
   <div class="card" style="padding:18px;margin-bottom:16px"><h3 style="margin:0 0 10px">Questions récurrentes</h3>
   ${E.questions.map((q,i)=>`<div class="edu-row"><button class="edu-sw ${q.actif?'on':''}" onclick="eduToggle(${i})" aria-label="${q.actif?'Désactiver':'Activer'}"></button><div class="edu-txt"><div>${esc(q.question)}</div><small>${esc(EDU_CHAMPS[q.champ]||q.champ)}</small></div><button class="btn-mini btn-edit" onclick="eduUp(${i})" aria-label="Monter">↑</button><button class="btn-mini btn-del" onclick="eduDel(${i})" aria-label="Supprimer">✕</button></div>`).join('')}
   <form class="edu-form" onsubmit="eduAddQ(event)"><input name="q" class="search" placeholder="Nouvelle question (ex : Le client a besoin d’une voiture de prêt ?)"><select name="c" class="select">${Object.entries(EDU_CHAMPS).map(([k,l])=>`<option value="${k}" ${k==='autre'?'selected':''}>${esc(l)}</option>`).join('')}</select><button class="btn btn-primary">+ Ajouter</button></form></div>
