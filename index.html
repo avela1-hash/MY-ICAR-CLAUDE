@@ -407,6 +407,10 @@ th{background:#F8F9FB!important;color:var(--mut)!important}td{color:var(--ink)!i
 .cal-ok{border:1px solid #D5D9E0!important;background:#fff!important;color:var(--ink)}.cal-ev.urgent .cal-ok{background:transparent!important}
 /* ════ Cockpit ════ */
 .ck{display:flex;flex-direction:column;gap:18px;margin-top:18px}
+.ck-chevre{width:92px;height:76px;flex:none;cursor:pointer;animation:broute 3.2s ease-in-out infinite;transform-origin:50% 90%}
+.ck-chevre.saute{animation:sautChevre .6s cubic-bezier(.3,1.6,.5,1)}
+@keyframes broute{0%,100%{transform:rotate(0)}50%{transform:rotate(-3deg) translateY(1px)}}
+@keyframes sautChevre{0%{transform:translateY(0)}40%{transform:translateY(-22px) rotate(-8deg)}100%{transform:translateY(0)}}
 .ck-hello small{font-size:13px;font-weight:700;color:var(--mut);letter-spacing:.07em;text-transform:uppercase}
 .ck-hello h1{margin:4px 0 0;font-size:32px;font-weight:600;line-height:1.1}
 .ck-tuiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
@@ -1877,7 +1881,7 @@ function cockpit(){
   const etapes=[['À chiffrer','#FFFFFF','#0B5F59'],['En travaux','#E3F2F0','#0B5F59'],['Peinture','#B5DDD7','#084843'],['Prêt à livrer','#0B5F59','#FFFFFF']];
   const coulPre={1:['#FFFFFF','#8F4A0C','#F1D5BC'],2:['#FBEBDD','#8F4A0C','#FBEBDD'],3:['#F3C9A3','#6B2E0A','#F3C9A3'],4:['#6B2E0A','#FFD2AE','#6B2E0A']};
   return `<div class="ck">
-  <div class="ck-hello"><small>${esc(now.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}))}</small><h1>${bonjour} ${esc(nom)}</h1></div>
+  <div class="ck-hello" style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px"><div><small>${esc(now.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}))}</small><h1>${bonjour} ${esc(nom)}</h1></div><svg class="ck-chevre" viewBox="0 0 120 100" role="img" aria-label="Une chèvre" onclick="this.classList.remove('saute');void this.offsetWidth;this.classList.add('saute');toast('Bêêê ! 🐐')"><g fill="none" stroke="#14213D" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M28 52c0-10 10-16 26-16h22c10 0 16 6 16 14v6c0 6-4 10-10 10H40c-8 0-12-6-12-14z" fill="#FFFFFF"/><path d="M40 66v20M50 66v20M74 66v20M84 66v20"/><path d="M92 46l8-14c2-4 6-6 10-4l3 2c2 2 2 5 0 7l-6 6c-2 3-6 4-9 3" fill="#FFFFFF"/><path d="M101 30c-3-8-1-14 4-18M106 30c1-8 5-13 11-14"/><path d="M98 52c0 6-1 10-4 12"/><path d="M28 54c-4-1-8 1-10 5"/></g><circle cx="106" cy="34" r="1.8" fill="#14213D"/><path d="M95 54q-2 9 3 13" stroke="#C2610F" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg></div>
   <div class="ck-tuiles">
     <button class="ck-tuile" style="background:#E3F2F0;color:#0B5F59" onclick="go('vehicules')"><b>${dossiers.length}</b><span>Dossiers</span></button>
     <button class="ck-tuile" style="background:#E6EDFA;color:#1F4699" onclick="calAller('${auj}');go('planning')"><b>${rdv.filter(e=>e.statut!=='Terminé').length}</b><span>RDV du jour</span></button>
