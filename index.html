@@ -407,7 +407,13 @@ th{background:#F8F9FB!important;color:var(--mut)!important}td{color:var(--ink)!i
 .cal-ok{border:1px solid #D5D9E0!important;background:#fff!important;color:var(--ink)}.cal-ev.urgent .cal-ok{background:transparent!important}
 /* ════ Cockpit ════ */
 .ck{display:flex;flex-direction:column;gap:18px;margin-top:18px}
-.ck-chevre{width:92px;height:76px;flex:none;cursor:pointer;animation:broute 3.2s ease-in-out infinite;transform-origin:50% 90%}
+.ck-chevre{width:110px;height:86px;flex:none;cursor:pointer;overflow:visible;margin-bottom:-6px}
+.ck-chevre .ch-tete{transform-box:fill-box;transform-origin:10% 90%;animation:chTete 4s ease-in-out infinite}
+.ck-chevre .ch-queue{transform-box:fill-box;transform-origin:90% 90%;animation:chQueue 1.2s ease-in-out infinite}
+.ck-chevre .ch-oeil{transform-box:fill-box;transform-origin:50% 50%;animation:chOeil 5s infinite}
+@keyframes chTete{0%,55%,100%{transform:rotate(0)}65%{transform:rotate(14deg) translateY(2px)}75%{transform:rotate(10deg) translateY(3px)}85%{transform:rotate(14deg) translateY(2px)}}
+@keyframes chQueue{0%,100%{transform:rotate(0)}50%{transform:rotate(-14deg)}}
+@keyframes chOeil{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
 .ck-chevre.saute{animation:sautChevre .6s cubic-bezier(.3,1.6,.5,1)}
 @keyframes broute{0%,100%{transform:rotate(0)}50%{transform:rotate(-3deg) translateY(1px)}}
 @keyframes sautChevre{0%{transform:translateY(0)}40%{transform:translateY(-22px) rotate(-8deg)}100%{transform:translateY(0)}}
@@ -1881,7 +1887,26 @@ function cockpit(){
   const etapes=[['À chiffrer','#FFFFFF','#0B5F59'],['En travaux','#E3F2F0','#0B5F59'],['Peinture','#B5DDD7','#084843'],['Prêt à livrer','#0B5F59','#FFFFFF']];
   const coulPre={1:['#FFFFFF','#8F4A0C','#F1D5BC'],2:['#FBEBDD','#8F4A0C','#FBEBDD'],3:['#F3C9A3','#6B2E0A','#F3C9A3'],4:['#6B2E0A','#FFD2AE','#6B2E0A']};
   return `<div class="ck">
-  <div class="ck-hello" style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px"><div><small>${esc(now.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}))}</small><h1>${bonjour} ${esc(nom)}</h1></div><svg class="ck-chevre" viewBox="0 0 120 100" role="img" aria-label="Une chèvre" onclick="this.classList.remove('saute');void this.offsetWidth;this.classList.add('saute');toast('Bêêê ! 🐐')"><g fill="none" stroke="#14213D" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M28 52c0-10 10-16 26-16h22c10 0 16 6 16 14v6c0 6-4 10-10 10H40c-8 0-12-6-12-14z" fill="#FFFFFF"/><path d="M40 66v20M50 66v20M74 66v20M84 66v20"/><path d="M92 46l8-14c2-4 6-6 10-4l3 2c2 2 2 5 0 7l-6 6c-2 3-6 4-9 3" fill="#FFFFFF"/><path d="M101 30c-3-8-1-14 4-18M106 30c1-8 5-13 11-14"/><path d="M98 52c0 6-1 10-4 12"/><path d="M28 54c-4-1-8 1-10 5"/></g><circle cx="106" cy="34" r="1.8" fill="#14213D"/><path d="M95 54q-2 9 3 13" stroke="#C2610F" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg></div>
+  <div class="ck-hello" style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px"><div><small>${esc(now.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}))}</small><h1>${bonjour} ${esc(nom)}</h1></div><svg class="ck-chevre" viewBox="0 0 140 110" role="img" aria-label="Une chèvre" onclick="this.classList.remove('saute');void this.offsetWidth;this.classList.add('saute');toast('Bêêê ! 🐐')">
+<ellipse cx="70" cy="101" rx="42" ry="4.5" fill="#14213D" opacity=".08"/>
+<g stroke="#6BAF7A" stroke-width="2" stroke-linecap="round" fill="none"><path d="M18 100q2-8 0-12M22 100q3-7 6-10M14 100q-2-6-5-8"/><path d="M122 100q1-7-1-11M126 100q3-6 6-8"/></g>
+<g stroke="#3B3F4A" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round">
+<g class="ch-queue"><path d="M32 46c-7-5-8-12-3-15 1 6 4 10 7 12z" fill="#F4EDE1"/></g>
+<g fill="#F4EDE1"><rect x="39" y="66" width="8" height="30" rx="3.5"/><rect x="52" y="66" width="8" height="30" rx="3.5"/><rect x="82" y="66" width="8" height="30" rx="3.5"/><rect x="95" y="66" width="8" height="30" rx="3.5"/></g>
+<g fill="#5B4636" stroke="none"><rect x="39" y="91" width="8" height="5" rx="2"/><rect x="52" y="91" width="8" height="5" rx="2"/><rect x="82" y="91" width="8" height="5" rx="2"/><rect x="95" y="91" width="8" height="5" rx="2"/></g>
+<path d="M30 54c0-12 13-19 31-19h27c12 0 19 8 19 18v6c0 10-8 16-18 16H47c-10 0-17-7-17-15z" fill="#F4EDE1"/>
+<ellipse cx="70" cy="47" rx="11" ry="7" fill="#E6D5BD" stroke="none"/><ellipse cx="88" cy="58" rx="6" ry="4" fill="#E6D5BD" stroke="none"/>
+<g class="ch-tete">
+<path d="M93 46c3-11 7-18 13-22l9 6c-4 7-7 15-8 23z" fill="#F4EDE1"/>
+<path d="M108 15c-3-9-11-12-16-8" stroke="#8A6A48" stroke-width="3.4" fill="none"/><path d="M112 14c-1-9-7-13-13-11" stroke="#A9865F" stroke-width="3.4" fill="none"/>
+<path d="M102 22c2-8 12-10 18-6 6 4 12 10 10 16-2 5-10 6-16 4-6-2-12-6-12-14z" fill="#F4EDE1"/>
+<path d="M106 21c-8 2-12 6-10 9 4-1 8-3 12-5z" fill="#E6D5BD"/>
+<path d="M118 36c0 6 2 10 5 11 1-5 0-9-1-11z" fill="#E6D5BD"/>
+<g class="ch-oeil"><circle cx="117" cy="22.5" r="2.4" fill="#2A2D36" stroke="none"/><circle cx="117.9" cy="21.6" r=".8" fill="#fff" stroke="none"/></g>
+<circle cx="121.5" cy="29" r="2.6" fill="#F2B8A6" stroke="none" opacity=".7"/>
+<ellipse cx="129" cy="30" rx="1.7" ry="1.2" fill="#C98A7A" stroke="none"/>
+<path d="M123.5 34q2.5 1.6 5-.4" fill="none" stroke-width="1.3"/>
+</g></g></svg></div>
   <div class="ck-tuiles">
     <button class="ck-tuile" style="background:#E3F2F0;color:#0B5F59" onclick="go('vehicules')"><b>${dossiers.length}</b><span>Dossiers</span></button>
     <button class="ck-tuile" style="background:#E6EDFA;color:#1F4699" onclick="calAller('${auj}');go('planning')"><b>${rdv.filter(e=>e.statut!=='Terminé').length}</b><span>RDV du jour</span></button>
