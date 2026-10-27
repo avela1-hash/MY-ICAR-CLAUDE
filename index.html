@@ -409,6 +409,10 @@ th{background:#F8F9FB!important;color:var(--mut)!important}td{color:var(--ink)!i
 .ck{display:flex;flex-direction:column;gap:18px;margin-top:18px}
 .dedicace{margin:30px auto 4px;display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;opacity:.75}
 .dedicace span{font-family:'Fraunces',Georgia,serif;font-style:italic;font-size:16px;color:#5B6475}.dedicace small{font-size:12px;color:#8A93A3}
+.asst-modal{text-align:center;max-width:380px}.asst-tete{font-size:54px;line-height:1;margin:4px 0 6px;animation:monte .5s cubic-bezier(.3,1.5,.5,1)}.asst-txt{font-size:17px;line-height:1.5;color:#14213D;margin:8px 0}
+.asst-carte{display:flex;align-items:center;gap:10px;justify-content:space-between;background:#14213D;color:#fff;border-radius:18px;padding:14px 14px 14px 16px;box-shadow:0 10px 24px rgba(20,33,61,.2)}
+.asst-carte>div:first-child{display:flex;flex-direction:column;gap:3px;min-width:0}.asst-carte b{font-size:16px}.asst-carte span{font-size:14px;color:#C9D2E3}
+.asst-bt{display:flex;gap:6px;flex:none}.asst-bt button{min-width:44px;height:44px;border-radius:12px;border:0;background:rgba(255,255,255,.12);color:#fff;font:inherit;font-weight:800;font-size:14px;padding:0 12px;cursor:pointer}
 .chv-box{position:relative;flex:none;display:inline-block;margin:2px -6px -8px 0}
 .ck-chevre{width:124px;height:102px;display:block;cursor:pointer;overflow:visible;touch-action:manipulation;-webkit-user-select:none;user-select:none}
 .ck-chevre .chv-corps{transform-box:view-box;transform-origin:74px 110px}
@@ -600,9 +604,10 @@ function menuPage(){
     ['garage','🏠','Mon garage','Identité, voitures de prêt, équipe',''],
     ['parametres','⇩','Accès et sauvegardes','Codes de l’équipe, exporter, importer',''],
     ['aide','?','Guide','Comment se servir de l’appli',''],
+    ['matin','☀️','Ma journée le matin',asstLire('matin')==='1'?'Activé · touche pour arrêter':'Un petit résumé chaque matin, si tu veux',''],
     ...(installEtat().installee?[]:[['installer','📲','Installer l’appli','Icône sur l’écran d’accueil','']])
   ];
-  return header('Toute l’appli','Touche une rubrique pour l’ouvrir.')+`<div class="menu-grid">${tuiles.map(([p,i,t,d,n])=>`<button class="card menu-tile" data-sec="${SEC_OF[p]||'gen'}" onclick="go('${p}')"><span class="menu-ico">${i}</span><span class="menu-txt"><strong>${t}</strong><small>${d}</small></span>${n!==''?`<span class="menu-count">${n}</span>`:''}</button>`).join('')}</div>${(typeof sync!=='undefined'&&sync.nom==='Enzo')?'<div class="dedicace"><span>Pour toi, Enzo.</span><small>— Papa</small></div>':''}</section>`;
+  return header('Toute l’appli','Touche une rubrique pour l’ouvrir.')+`<div class="menu-grid">${tuiles.map(([p,i,t,d,n])=>`<button class="card menu-tile" data-sec="${SEC_OF[p]||'gen'}" onclick="${p==='matin'?'asstBascule()':`go('${p}')`}"><span class="menu-ico">${i}</span><span class="menu-txt"><strong>${t}</strong><small>${d}</small></span>${n!==''?`<span class="menu-count">${n}</span>`:''}</button>`).join('')}</div>${(typeof sync!=='undefined'&&sync.nom==='Enzo')?'<div class="dedicace"><span>Pour toi, Enzo.</span><small>— Papa</small></div>':''}</section>`;
 }
 function help(){return header('Guide de démarrage','Un parcours simple pour comprendre l’application sans jargon.')+`<div class="notice" style="margin-bottom:16px"><b>But de cette version :</b> t’offrir une interface sombre, premium, très lisible, qui met en avant ce qui compte vraiment dans le garage.</div><div class="help-grid"><div class="card step-card"><div class="step-num">1</div><h3>Commence par les dossiers</h3><p>Ajoute les véhicules dans “Dossiers” pour suivre où ils en sont : attente, planification, travaux, peinture, livraison.</p></div><div class="card step-card"><div class="step-num">2</div><h3>Utilise le cockpit</h3><p>Le cockpit fait ressortir les points à risque et les alertes du flux atelier. Il t’aide à voir tout de suite ce qui bloque.</p></div><div class="card step-card"><div class="step-num">3</div><h3>Prépare la journée</h3><p>Le planning et les signaux du pilote permettent d’anticiper demain et de limiter les oublis.</p></div><div class="card step-card"><div class="step-num">4</div><h3>Sauvegarde localement</h3><p>Pour l’instant, tes données restent sur cet appareil. Pense à exporter régulièrement dans les paramètres.</p></div></div></section>`}
 function settings(){return header('Paramètres','Sauvegarder, importer ou exporter les données de l’atelier.')+`<div class="settings-grid">${syncCarte()}<div class="card settings-card"><h3>Sauvegardes</h3><p>Les données sont enregistrées localement sur cet appareil et dans ce navigateur. Tu peux exporter un fichier JSON pour conserver ton test.</p><div class="buttons" style="justify-content:flex-start"><button class="btn btn-primary" onclick="exportData()">↓ Exporter</button><button class="btn btn-dark" onclick="document.getElementById('importFile').click()">↑ Importer</button><input id="importFile" type="file" accept=".json,application/json" hidden onchange="importData(event)"></div></div><div class="card settings-card"><h3>Réinitialisation</h3><p>Si tu veux refaire un essai propre avec le nouveau design, tu peux effacer les données locales.</p><div class="buttons" style="justify-content:flex-start"><button class="btn btn-dark" style="border-color:rgba(221,115,130,.2);color:#8A2A23;background:rgba(221,115,130,.12)" onclick="resetAll()">Effacer les données</button></div></div></div></section>`}
@@ -1886,7 +1891,7 @@ var SEC_OF={vehicules:'dos',assistant:'dos',planning:'pla',prets:'pre',garage:'p
 function cockpit(){
   const auj=localISO(),now=new Date();
   const h=now.getHours(),bonjour=h<6||h>=18?'Bonsoir':'Bonjour';
-  const nom=(garage().equipe.find(m=>m.court==='Aurel')||{}).nom||'Aurélien';
+  const nom=(sync.nom&&sync.nom!=='Aurel')?sync.nom:((garage().equipe.find(m=>m.court==='Aurel')||{}).nom||'Aurélien');
   const dossiers=db.vehicules.filter(x=>x.statut!=='Livré');
   const rdv=db.planning.filter(x=>x.date===auj).sort((a,b)=>(a.heure||'99').localeCompare(b.heure||'99'));
   const flotte=garage().flotte;
@@ -1909,7 +1914,7 @@ function cockpit(){
   else if(exp[0])prio={sec:'#3E2A80',lib:'EXPERTISE · SANS RENDEZ-VOUS',txt:`${exp[0].client||'Un dossier'} attend une date d’expertise.`,bt:'Voir les expertises',on:`go('expertises')`};
   const etapes=[['À chiffrer','#FFFFFF','#0B5F59'],['En travaux','#E3F2F0','#0B5F59'],['Peinture','#B5DDD7','#084843'],['Prêt à livrer','#0B5F59','#FFFFFF']];
   const coulPre={1:['#FFFFFF','#8F4A0C','#F1D5BC'],2:['#FBEBDD','#8F4A0C','#FBEBDD'],3:['#F3C9A3','#6B2E0A','#F3C9A3'],4:['#6B2E0A','#FFD2AE','#6B2E0A']};
-  return `<div class="ck">
+  return `<div class="ck">${asstCarte()}
   <div class="ck-hello" style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px"><div><small>${esc(now.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}))}</small><h1>${bonjour} ${esc(nom)}</h1></div><span class="chv-box" id="chvBox"><span class="chv-bulle" id="chvBulle" aria-live="polite"></span><svg class="ck-chevre" id="chv" viewBox="0 0 150 124" role="img" aria-label="Biquette, la chèvre de l’atelier : touche-la">
 <ellipse class="chv-ombre" cx="74" cy="114" rx="40" ry="5" fill="#14213D" opacity=".09"/>
 <g stroke="#6BAF7A" stroke-width="2.2" stroke-linecap="round" fill="none"><path d="M22 114q2-8 0-12M26 114q3-7 6-10M18 114q-2-6-5-8"/><path d="M128 114q1-7-1-11M132 114q3-6 6-8"/></g>
@@ -2021,6 +2026,34 @@ document.addEventListener('pointerup',e=>{
 },{passive:true});
 // Quand personne ne touche : elle regarde autour d'elle de temps en temps
 setInterval(()=>{if(page!=='dashboard'||document.hidden)return;const g=document.getElementById('chv');if(!g)return;const r=g.getBoundingClientRect();chvRegarde(r.left+(Math.random()-.5)*400,r.top+(Math.random()-.2)*300)},3200);
+
+// V14 — ASSISTANT PERSO (léger) : un seul écran d'accueil, puis une petite carte le matin si la personne a dit oui
+function asstCle(k){return 'myicar_asst_'+k+'_'+String(sync.nom||'moi').toLowerCase()}
+function asstLire(k){try{return localStorage.getItem(asstCle(k))}catch(e){return null}}
+function asstEcrire(k,v){try{localStorage.setItem(asstCle(k),v)}catch(e){}}
+function asstAccueil(){
+  if(!sync.nom||sync.role==='admin'||asstLire('vu'))return;
+  if(document.getElementById('modalhost').innerHTML)return;
+  asstEcrire('vu','1');
+  document.getElementById('modalhost').innerHTML=`<div class="modalback" onclick="asstReponse(false)"><div class="modal asst-modal" onclick="event.stopPropagation()"><div class="asst-tete">🐐</div><h2>Salut ${esc(sync.nom)} 👋</h2><p class="asst-txt">Moi c’est Biquette, ton assistante.<br>Tu me dis, je fais.</p><p class="asst-txt"><b>Tu veux que je te prépare ta journée le matin ?</b></p><div class="buttons" style="justify-content:center"><button class="btn btn-dark" onclick="asstReponse(false)">Non merci</button><button class="btn btn-primary" onclick="asstReponse(true)">Oui</button></div></div></div>`;
+}
+function asstBascule(){const on=asstLire('matin')==='1';asstEcrire('matin',on?'0':'1');toast(on?'Résumé du matin arrêté':'C’est noté, je te prépare ta journée le matin ☀️');render()}
+function asstReponse(oui){asstEcrire('matin',oui?'1':'0');closeModal();toast(oui?'Ça marche, à demain matin ☀️':'Ok, je reste dans mon coin 🐐');if(page==='dashboard')render()}
+function asstResume(){
+  const auj=localISO(),rdv=db.planning.filter(e=>e.date===auj&&e.statut!=='Terminé'&&!String(e.id||'').startsWith('pret-'));
+  const recup=db.prets.filter(p=>p.statut==='Prêté'&&p.date_retour&&p.date_retour<=auj);
+  const livrer=db.vehicules.filter(v=>v.statut==='Prêt à livrer');
+  const bouts=[rdv.length+' RDV',recup.length?recup.length+' prêt'+(recup.length>1?'s':'')+' à récupérer':'',livrer.length?livrer.length+' à livrer':''].filter(Boolean);
+  const premier=rdv.sort((a,b)=>(a.heure||'99').localeCompare(b.heure||'99'))[0];
+  return {court:bouts.join(' · '),oral:`Salut ${sync.nom||''}. Aujourd'hui, ${rdv.length?rdv.length+' rendez-vous'+(premier&&premier.heure?', le premier à '+premier.heure.replace(':',' heures '):''):'pas de rendez-vous'}${recup.length?', '+recup.length+' voiture de prêt à récupérer':''}${livrer.length?', '+livrer.length+' à livrer':''}. Bonne journée !`};
+}
+function asstCarte(){
+  if(asstLire('matin')!=='1')return '';
+  const auj=localISO();if(asstLire('ferme')===auj)return '';
+  const h=new Date().getHours();if(h>=14)return '';
+  const r=asstResume();
+  return `<div class="asst-carte"><div><b>Salut ${esc(sync.nom||'')} ☀️</b><span>${esc(r.court)}</span></div><div class="asst-bt"><button aria-label="Écouter ma journée" onclick="ttsSay(asstResume().oral)">🔊</button><button onclick="calAller('${auj}');cal.mode='jour';go('planning')">Voir</button><button aria-label="Masquer pour aujourd’hui" onclick="asstEcrire('ferme','${auj}');render()">✕</button></div></div>`;
+}
 
 render();
 pgRender();
