@@ -375,7 +375,7 @@ th{background:#F8F9FB!important;color:var(--mut)!important}td{color:var(--ink)!i
 .btn-mini{border-radius:11px!important}.btn-edit{background:var(--st)!important;color:var(--sd)!important}.btn-del{background:#FDF1EF!important;color:#8A2A23!important}
 .modalback{background:rgba(20,33,61,.35)!important;backdrop-filter:blur(6px);animation:fondu .2s ease-out}
 .modal{background:#fff!important;border:0!important;box-shadow:0 30px 80px rgba(20,33,61,.25)!important;color:var(--ink);animation:monte .28s cubic-bezier(.2,.9,.3,1.2)}
-.notice{background:var(--st)!important;border:0!important;color:var(--sd)!important}
+.notice,.step-num{background:var(--st)!important;border:0!important;color:var(--sd)!important}
 .alert-item{background:#fff!important;border:1px solid var(--bord)!important}.alert-body p{color:var(--mut)!important}
 .info-text{background:var(--st)!important;border:0!important;color:var(--sd)!important}
 .badge-amber{background:#FBEBDD!important;color:#8F4A0C!important;border:0!important}.badge-violet{background:#EEEAF8!important;color:#3E2A80!important;border:0!important}.badge-mint{background:#E3F2F0!important;color:#0B5F59!important;border:0!important}
@@ -655,7 +655,7 @@ function installPage(){
   ];
   return header('Installer l’appli','Pour ouvrir My I-Car depuis l’écran d’accueil du téléphone, comme une vraie appli.')
     +`<div class="notice" style="margin-bottom:16px">${etat}${installEvt&&!s.installee?`<div class="buttons" style="justify-content:flex-start"><button class="btn btn-primary" onclick="installer()">📲 Installer My I-Car</button></div>`:''}</div>`
-    +(s.principale?`<div class="notice" style="margin-bottom:16px;background:rgba(243,179,94,.10);border-color:rgba(243,179,94,.25);color:#8F4A0C">⚠ Tu es sur une adresse d’essai (<b>${esc(location.hostname)}</b>)&nbsp;: elle ne suit pas forcément les mises à jour. Installe plutôt l’appli depuis l’adresse principale <b>${esc(s.principale)}</b>. Les données ne passent pas d’une adresse à l’autre&nbsp;: exporte-les ici (Sauvegardes), puis importe-les là-bas.<div class="buttons" style="justify-content:flex-start"><button class="btn btn-dark" onclick="go('parametres')">⇩ Sauvegardes</button><a class="btn btn-secondary" href="https://${esc(s.principale)}/">Ouvrir l’adresse principale</a></div></div>`:'')
+    +(s.principale?`<div class="notice" style="margin-bottom:16px">⚠ Tu es sur une adresse d’essai (<b>${esc(location.hostname)}</b>)&nbsp;: elle ne suit pas forcément les mises à jour. Installe plutôt l’appli depuis l’adresse principale <b>${esc(s.principale)}</b>. Les données ne passent pas d’une adresse à l’autre&nbsp;: exporte-les ici (Sauvegardes), puis importe-les là-bas.<div class="buttons" style="justify-content:flex-start"><button class="btn btn-dark" onclick="go('parametres')">⇩ Sauvegardes</button><a class="btn btn-secondary" href="https://${esc(s.principale)}/">Ouvrir l’adresse principale</a></div></div>`:'')
     +`<div class="help-grid">${etapes.map(([n,t,p])=>`<div class="card step-card"><div class="step-num">${n}</div><h3>${t}</h3><p>${p}</p></div>`).join('')}</div></section>`;
 }
 var pagePrec=null;
