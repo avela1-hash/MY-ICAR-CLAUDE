@@ -444,6 +444,9 @@ th{background:#F8F9FB!important;color:var(--mut)!important}td{color:var(--ink)!i
 .ck-chevre.saute{animation:sautChevre .6s cubic-bezier(.3,1.6,.5,1)}
 @keyframes broute{0%,100%{transform:rotate(0)}50%{transform:rotate(-3deg) translateY(1px)}}
 @keyframes sautChevre{0%{transform:translateY(0)}40%{transform:translateY(-22px) rotate(-8deg)}100%{transform:translateY(0)}}
+#meteoL{text-transform:none;letter-spacing:0;font-weight:600}
+.ck-meteo{display:inline-block;margin-top:7px;font-size:13px;font-weight:700;color:#1F4699;background:#E6EDFA;border-radius:999px;padding:5px 11px}
+.ck-meteo.grave{color:#fff;background:#C2413A}
 .ck-hello small{font-size:13px;font-weight:700;color:var(--mut);letter-spacing:.07em;text-transform:uppercase}
 .ck-hello h1{margin:4px 0 0;font-size:32px;font-weight:600;line-height:1.1}
 .ck-tuiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
@@ -2300,6 +2303,61 @@ function planningPage(){
 
 // V14 — CODE COULEUR PAR RUBRIQUE : vert = atelier, bleu = planning, orange = prêts, violet = expertises, rouge = relances
 var SEC_OF={vehicules:'dos',assistant:'dos',planning:'pla',prets:'pre',flotte:'pre',amende:'pre',garage:'pre',expertises:'exp',taches:'tac',clients:'cli'};
+// V15 — MÉTÉO DE L'ATELIER (Open-Meteo, sans compte ni clé).
+// Pour un carrossier ce n'est pas décoratif : la grêle fait le carnet de commandes,
+// la pluie décide des livraisons et des sorties de cabine.
+const METEO_POS={lat:45.4397,lon:4.3872,ville:'Saint-Étienne'}; // le garage
+const METEO_CODE={0:['Ciel clair','☀'],1:['Peu nuageux','⛅'],2:['Nuageux','⛅'],3:['Couvert','☁'],
+  45:['Brouillard','▒'],48:['Brouillard givrant','▒'],
+  51:['Bruine','☔'],53:['Bruine','☔'],55:['Bruine forte','☔'],56:['Bruine verglaçante','❄'],57:['Bruine verglaçante','❄'],
+  61:['Pluie faible','☔'],63:['Pluie','☔'],65:['Forte pluie','☔'],66:['Pluie verglaçante','❄'],67:['Pluie verglaçante','❄'],
+  71:['Neige','❄'],73:['Neige','❄'],75:['Forte neige','❄'],77:['Grains de neige','❄'],
+  80:['Averses','☔'],81:['Averses','☔'],82:['Fortes averses','☔'],85:['Averses de neige','❄'],86:['Averses de neige','❄'],
+  95:['Orage','⚡'],96:['Orage et grêle','⚡'],99:['Orage et grêle','⚡']};
+var meteo={etat:'attente',data:null};
+function meteoLis(){try{const b=JSON.parse(localStorage.getItem('myicar_meteo')||'null');
+  if(b&&Date.now()-b.t<30*60*1000)return b.d}catch(e){}return null}
+async function meteoCharge(){
+  const cache=meteoLis(); if(cache){meteo={etat:'ok',data:cache};return meteoAffiche()}
+  try{
+    const u=`https://api.open-meteo.com/v1/forecast?latitude=${METEO_POS.lat}&longitude=${METEO_POS.lon}`
+      +`&current=temperature_2m,weather_code&hourly=weather_code,precipitation_probability`
+      +`&forecast_days=2&timezone=auto`;
+    const r=await fetch(u); if(!r.ok)throw 0;
+    const j=await r.json();
+    const d={t:Math.round(j.current?.temperature_2m),c:j.current?.weather_code,
+             h:(j.hourly?.time||[]).map((x,i)=>({q:x,c:j.hourly.weather_code[i],p:j.hourly.precipitation_probability?.[i]}))};
+    try{localStorage.setItem('myicar_meteo',JSON.stringify({t:Date.now(),d}))}catch(e){}
+    meteo={etat:'ok',data:d};
+  }catch(e){meteo={etat:'rate',data:null}}
+  meteoAffiche();
+}
+// Ce qui mérite un mot : la grêle d'abord, puis la pluie qui arrive.
+function meteoAlerte(d){
+  if(!d||!d.h)return null;
+  const maint=new Date();
+  const prochaines=d.h.filter(x=>{const q=new Date(x.q);return q>=maint&&q<=new Date(maint.getTime()+36*36e5)});
+  const grele=prochaines.find(x=>x.c===96||x.c===99);
+  if(grele)return{txt:'Grêle annoncée '+meteoQuand(grele.q),grave:true};
+  const pluie=prochaines.slice(0,12).find(x=>[61,63,65,80,81,82,95].includes(x.c)||(x.p||0)>=70);
+  if(pluie)return{txt:'Pluie '+meteoQuand(pluie.q),grave:false};
+  return null;
+}
+function meteoQuand(iso){
+  const q=new Date(iso),auj=new Date();
+  const h=String(q.getHours()).padStart(2,'0')+'h';
+  return q.toDateString()===auj.toDateString()?'à '+h:'demain '+h;
+}
+function meteoAffiche(){
+  const e=document.getElementById('meteoL'); if(!e)return;
+  const d=meteo.data;
+  if(!d||d.c===undefined||d.c===null){e.innerHTML='';return}
+  const [nom,ico]=METEO_CODE[d.c]||['',''];
+  e.innerHTML=` · ${ico} ${isNaN(d.t)?'':d.t+'°'} ${esc(nom)}`;
+  const a=meteoAlerte(d),z=document.getElementById('meteoA');
+  if(z)z.innerHTML=a?`<span class="ck-meteo${a.grave?' grave':''}">${a.grave?'⚠️ ':''}${esc(a.txt)}</span>`:'';
+}
+
 // V15 — LA TEMPÉRATURE DE LA JOURNÉE : une couleur, un coup d'œil, et le pourquoi quand on la touche
 const TEMP_NIV=[
   {n:0,nom:'Journée calme',c:'#2F62C9',ico:'☽',def:'Rien de prévu aujourd’hui.'},
@@ -2378,7 +2436,7 @@ function cockpit(){
   const etapes=[['À chiffrer','#FFFFFF','#0B5F59'],['En travaux','#E3F2F0','#0B5F59'],['Peinture','#B5DDD7','#084843'],['Prêt à livrer','#0B5F59','#FFFFFF']];
   const coulPre={1:['#FFFFFF','#8F4A0C','#F1D5BC'],2:['#FBEBDD','#8F4A0C','#FBEBDD'],3:['#F3C9A3','#6B2E0A','#F3C9A3'],4:['#6B2E0A','#FFD2AE','#6B2E0A']};
   return `<div class="ck">${asstCarte()}
-  <div class="ck-hello" style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px"><div><small>${esc(now.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}))}</small><h1>${bonjour} ${esc(nom)}</h1></div><span class="chv-box" id="chvBox"><span class="chv-bulle" id="chvBulle" aria-live="polite"></span><svg class="ck-chevre" id="chv" viewBox="0 0 150 124" role="img" aria-label="Biquette, la chèvre de l’atelier : touche-la">
+  <div class="ck-hello" style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px"><div><small>${esc(now.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}))}<span id="meteoL"></span></small><h1>${bonjour} ${esc(nom)}</h1><span id="meteoA"></span></div><span class="chv-box" id="chvBox"><span class="chv-bulle" id="chvBulle" aria-live="polite"></span><svg class="ck-chevre" id="chv" viewBox="0 0 150 124" role="img" aria-label="Biquette, la chèvre de l’atelier : touche-la">
 <ellipse class="chv-ombre" cx="74" cy="114" rx="40" ry="5" fill="#14213D" opacity=".09"/>
 <g stroke="#6BAF7A" stroke-width="2.2" stroke-linecap="round" fill="none"><path d="M22 114q2-8 0-12M26 114q3-7 6-10M18 114q-2-6-5-8"/><path d="M128 114q1-7-1-11M132 114q3-6 6-8"/></g>
 <g class="chv-corps" stroke="#3B3F4A" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round">
@@ -2405,7 +2463,7 @@ function cockpit(){
   <path class="chv-bouche" d="M119 45q4.5 3.4 9 0" fill="none" stroke-width="1.5"/>
  </g>
 </g></svg></span></div>
-  ${tempCarte(prio)}
+  ${(setTimeout(meteoCharge,0),'')}${tempCarte(prio)}
   <div class="ck-bloc"><div class="ck-titre"><i style="background:#2F62C9"></i><h2 class="ck-h">Rendez-vous du jour</h2><button style="color:#1F4699" onclick="calAller('${auj}');go('planning')">Planning →</button></div>
     ${rdv.length?rdv.slice(0,4).map(e=>{const T=CAL_TYPES[calType(e)],n=calNiveau(e);const st=n==='urgent'?`background:${T.d};color:#fff;border-color:${T.d}`:n==='fait'?'opacity:.5':n==='afaire'?`background:${T.t};border-color:${T.t}`:'';return `<button class="ck-ligne" style="border-left:5px solid ${T.c};${st}" onclick="edit('planning','${esc(e.id)}')"><b style="color:${n==='urgent'?'#fff':T.d}">${esc(e.heure||'—')}</b><span>${esc(e.titre||'')}</span></button>`}).join(''):'<div class="ck-vide">Aucun rendez-vous aujourd’hui.</div>'}
   </div>
