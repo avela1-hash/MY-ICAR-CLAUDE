@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#E8EAEE">
+<meta name="robots" content="noindex,nofollow">
+<title>Demandes de pièces — My I-Car</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#14213D;--mut:#5B6475;--fond:#E8EAEE;--carte:#FFFFFF;--bord:#D7DBE3;--or:#C2610F;--or-f:#6B2E0A;--or-c:#FBEBDD;--vert:#0B5F59;--vert-c:#E3F2F0;--rouge:#C2413A}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Manrope',system-ui,sans-serif;background:var(--fond);color:var(--ink);-webkit-tap-highlight-color:transparent}
+.wrap{max-width:620px;margin:0 auto;padding:18px 16px 60px}
+header{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:6px 0 18px}
+h1{font-family:'Fraunces',Georgia,serif;font-size:27px;font-weight:600;margin:0;letter-spacing:-.01em}
+.sous{font-size:14.5px;color:var(--mut);margin:6px 0 0;line-height:1.5;width:100%}
+.d{background:var(--carte);border:1px solid var(--bord);border-radius:16px;padding:15px 16px;margin-bottom:12px}
+.d.rep{border-color:var(--vert);border-width:2px}
+.dh{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.dh b{font-family:'Fraunces',Georgia,serif;font-size:20px;font-weight:600;flex:1;min-width:0;overflow-wrap:anywhere}
+.et{flex:none;font-size:11.5px;font-weight:800;padding:5px 10px;border-radius:999px;background:var(--or-c);color:var(--or-f);white-space:nowrap}
+.et.ok{background:var(--vert-c);color:var(--vert)}
+.piece{font-size:17px;font-weight:800;margin:0 0 10px;overflow-wrap:anywhere}
+.g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-bottom:10px}
+.g div{background:#F2F3F6;border-radius:10px;padding:8px 10px;min-width:0}
+.g small{display:block;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#8A93A3}
+.g b{font-size:14.5px;font-weight:700;overflow-wrap:anywhere}
+.re{display:inline-block;background:#EEEBFA;color:#4A35A0;font-size:12.5px;font-weight:800;padding:6px 11px;border-radius:999px;margin-bottom:10px}
+.note{font-size:14.5px;color:var(--mut);line-height:1.5;margin:0 0 10px;overflow-wrap:anywhere}
+form{border-top:1px solid var(--bord);padding-top:12px;margin-top:2px}
+.l{display:block;font-size:12.5px;font-weight:800;color:var(--mut);margin:10px 0 5px}
+.ch{display:flex;gap:8px}
+.ch button{flex:1;border:1px solid var(--bord);background:#fff;color:var(--ink);font:inherit;font-weight:700;font-size:15px;padding:12px;border-radius:12px;cursor:pointer}
+.ch button[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+input,textarea{width:100%;font:inherit;font-size:16px;padding:12px;border:1px solid var(--bord);border-radius:12px;background:#fff;color:var(--ink)}
+textarea{min-height:72px;resize:vertical}
+.deux{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.coul{display:flex;align-items:center;gap:10px;background:var(--vert-c);border-radius:12px;padding:12px;margin-top:10px;cursor:pointer}
+.coul input{width:22px;height:22px;flex:none}
+.coul span{font-size:14.5px;font-weight:700;color:var(--vert);line-height:1.35}
+.env{width:100%;margin-top:12px;border:0;background:var(--or);color:#fff;font:inherit;font-weight:800;font-size:16px;padding:15px;border-radius:13px;cursor:pointer}
+.env:disabled{opacity:.5}
+.rep-bloc{background:var(--vert-c);border-radius:12px;padding:12px;font-size:14.5px;line-height:1.5;color:#084843}
+.rep-bloc b{display:block;margin-bottom:3px}
+.vide,.err{background:var(--carte);border:1px solid var(--bord);border-radius:16px;padding:22px;text-align:center;color:var(--mut);font-size:15.5px;line-height:1.55}
+.err{border-color:#F0C4C0;background:#FBE7E5;color:#8A2A23}
+footer{margin-top:26px;text-align:center;font-size:13px;color:var(--mut);line-height:1.6}
+.toast{position:fixed;left:16px;right:16px;bottom:16px;background:var(--ink);color:#fff;padding:14px 16px;border-radius:13px;font-weight:700;font-size:15px;text-align:center;display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Demandes de pièces</h1>
+    <p class="sous" id="sous">Chargement…</p>
+  </header>
+  <div id="liste"></div>
+  <footer id="pied"></footer>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const P=new URLSearchParams(location.search),F=P.get('f')||'',J=P.get('j')||'';
+const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const jour=s=>{if(!s)return '';const d=new Date(s);return isNaN(d)?'':d.toLocaleDateString('fr-FR',{day:'numeric',month:'long'})};
+let etat={};
+function toast(t){const e=document.getElementById('toast');e.textContent=t;e.style.display='block';clearTimeout(window.__t);window.__t=setTimeout(()=>e.style.display='none',2600)}
+
+function carte(d){
+  const r=d.reponse;
+  const infos=[['Véhicule',d.vehicule],['Année',d.annee],['Immatriculation',d.immat],['Couleur',d.couleur],['Code peinture',d.code_peinture],['N° de série',d.vin]]
+    .filter(([,v])=>v).map(([l,v])=>`<div><small>${E(l)}</small><b>${E(v)}</b></div>`).join('');
+  if(r) return `<div class="d rep">
+    <div class="dh"><b>${E(d.piece||'Pièce')}</b><span class="et ok">Répondu</span></div>
+    <div class="g">${infos}</div>
+    <div class="rep-bloc"><b>Ta réponse du ${E(jour(r.le))}</b>
+      ${r.dispo==='non'?'Pas disponible.':`Disponible${r.prix?' — '+E(r.prix):''}${r.delai?' — '+E(r.delai):''}${r.couleur_ok?' — à la bonne couleur':''}`}
+      ${r.note?'<br>'+E(r.note):''}</div>
+  </div>`;
+  return `<div class="d">
+    <div class="dh"><b>${E(d.piece||'Pièce')}</b><span class="et">${E(jour(d.envoye_le))||'En attente'}</span></div>
+    ${d.reemploi?'<span class="re">Pièce de réemploi demandée</span>':''}
+    <div class="g">${infos}</div>
+    ${d.note?`<p class="note">${E(d.note)}</p>`:''}
+    <form onsubmit="envoyer(event,'${E(d.id)}')">
+      <span class="l">Tu l'as ?</span>
+      <div class="ch">
+        <button type="button" aria-pressed="true" onclick="dispo('${E(d.id)}',this,'oui')">Oui</button>
+        <button type="button" aria-pressed="false" onclick="dispo('${E(d.id)}',this,'non')">Non</button>
+      </div>
+      <div id="si-${E(d.id)}">
+        <div class="deux">
+          <div><span class="l">Prix</span><input name="prix" inputmode="decimal" placeholder="180 €"></div>
+          <div><span class="l">Délai</span><input name="delai" placeholder="jeudi"></div>
+        </div>
+        <label class="coul"><input type="checkbox" name="couleur_ok"><span>Trouvée à la bonne couleur (pas de peinture à prévoir)</span></label>
+      </div>
+      <span class="l">Un mot pour le garage</span>
+      <textarea name="note" placeholder="Facultatif"></textarea>
+      <button class="env">Envoyer ma réponse</button>
+    </form>
+  </div>`;
+}
+function dispo(id,bt,v){
+  etat[id]=v;
+  [...bt.parentNode.children].forEach(b=>b.setAttribute('aria-pressed',String(b===bt)));
+  const z=document.getElementById('si-'+id); if(z)z.style.display=v==='non'?'none':'';
+}
+async function envoyer(e,id){
+  e.preventDefault();
+  const f=e.target,bt=f.querySelector('.env');
+  bt.disabled=true; bt.textContent='Envoi…';
+  const fd=new FormData(f);
+  try{
+    const r=await fetch('/api/fournisseur',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({f:F,j:J,d:id,reponse:{dispo:etat[id]||'oui',prix:fd.get('prix')||'',delai:fd.get('delai')||'',
+        couleur_ok:!!fd.get('couleur_ok'),note:fd.get('note')||''}})});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.erreur||'envoi impossible');
+    toast('Merci, c’est envoyé au garage');
+    charge();
+  }catch(err){bt.disabled=false;bt.textContent='Envoyer ma réponse';toast(err.message||'Envoi impossible')}
+}
+async function charge(){
+  const L=document.getElementById('liste'),S=document.getElementById('sous'),PD=document.getElementById('pied');
+  if(!F||!J){L.innerHTML='<div class="err">Lien incomplet. Demandez-en un nouveau au garage.</div>';S.textContent='';return}
+  try{
+    const r=await fetch(`/api/fournisseur?f=${encodeURIComponent(F)}&j=${encodeURIComponent(J)}`,{cache:'no-store'});
+    const d=await r.json();
+    if(!r.ok)throw new Error(d.erreur||'Lien invalide');
+    S.textContent=`Bonjour ${d.fournisseur.nom||''} — demandes de ${d.garage.raison}.`;
+    const att=d.demandes.filter(x=>!x.reponse),faites=d.demandes.filter(x=>x.reponse);
+    L.innerHTML=(att.length?att.map(carte).join(''):'<div class="vide">Aucune demande en attente pour le moment.</div>')
+      +(faites.length?`<p class="sous" style="margin:22px 0 10px">Déjà répondu</p>`+faites.map(carte).join(''):'');
+    PD.innerHTML=`${E(d.garage.raison)}${d.garage.tel?' — <a href="tel:'+E(d.garage.tel.replace(/[^\d+]/g,''))+'">'+E(d.garage.tel)+'</a>':''}<br>Cette page ne contient aucune donnée client.`;
+  }catch(err){L.innerHTML=`<div class="err">${E(err.message)}</div>`;S.textContent=''}
+}
+charge();
+</script>
+</body>
+</html>

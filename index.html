@@ -473,6 +473,19 @@ th{background:#F8F9FB!important;color:var(--mut)!important}td{color:var(--ink)!i
 .maj-bar .maj-x{background:rgba(255,255,255,.14);color:#fff;padding:10px 12px}
 @keyframes majEntre{from{transform:translateY(18px);opacity:0}to{transform:none;opacity:1}}
 @media(prefers-reduced-motion:reduce){.maj-bar{animation:none}}
+.dem-g{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.dem{background:#fff;border:1px solid var(--bord);border-radius:16px;padding:14px 15px;display:flex;flex-direction:column;gap:8px}
+.dem-h{display:flex;align-items:center;gap:9px}
+.dem-h b{font-family:'Fraunces',Georgia,serif;font-size:19px;font-weight:600;flex:1;min-width:0;overflow-wrap:anywhere}
+.dem-e{flex:none;font-size:11.5px;font-weight:800;padding:5px 10px;border-radius:999px;background:#FBEBDD;color:#8F4A0C;white-space:nowrap}
+.dem-e.ok{background:#E3F2F0;color:#0B5F59}
+.dem-s{font-size:14px;color:var(--mut);line-height:1.4;overflow-wrap:anywhere}
+.dem-r{background:#E3F2F0;color:#084843;border-radius:12px;padding:11px 12px;font-size:14.5px;line-height:1.5;overflow-wrap:anywhere}
+.dem-a{display:flex;gap:8px;flex-wrap:wrap}
+.dem-a .btn{flex:1;min-width:120px;justify-content:center;padding:11px 10px;font-size:14.5px}
+.coul-case{display:flex;align-items:center;gap:11px;background:#EEEBFA;border-radius:12px;padding:13px;margin:4px 0 2px;cursor:pointer}
+.coul-case input{width:22px;height:22px;flex:none}
+.coul-case span{font-size:14.5px;font-weight:700;color:#4A35A0;line-height:1.35}
 .lc-g{display:flex;flex-direction:column;gap:8px;margin-top:4px}
 .lc-w{display:flex;flex-direction:column}
 .lc{display:flex;flex-direction:column;gap:3px;border:1px solid;border-radius:14px;padding:12px 14px;font:inherit;text-align:left;cursor:pointer;width:100%;transition:transform .15s}
@@ -589,7 +602,7 @@ th{background:#F8F9FB!important;color:var(--mut)!important}td{color:var(--ink)!i
 <script>
 const STORAGE_KEY='myicar_v8_data';
 const LEGACY_KEYS=['myicar_v7_data','myicar_v6_data','myicar_v5_data','myicar_v4_data'];
-const initial={expertises:[],vehicules:[],prets:[],clients:[],taches:[],planning:[]};
+const initial={expertises:[],vehicules:[],prets:[],clients:[],taches:[],planning:[],demandes:[]};
 let db=load(), page='dashboard', query='', filter='';
 const sections=[
   ['dashboard','◈','Accueil'],
@@ -599,7 +612,7 @@ const sections=[
   ['menu','☰','Plus']
 ];
 // Pages rangées sous « Plus » : l'onglet reste allumé quand on y est.
-const MENU_PAGES=['menu','garage','clients','expertises','taches','aide','parametres','education','installer','flotte','amende','assistant'];
+const MENU_PAGES=['menu','garage','clients','expertises','taches','aide','parametres','education','installer','flotte','amende','assistant','pieces'];
 const configs={
   expertises:{sing:'expertise',title:'Expertises',cols:[['client','Client'],['immatriculation','Immatriculation'],['date','Date RDV'],['statut','Statut'],['notes','Observations']],fields:[['client','Client','text',1],['immatriculation','Immatriculation','text'],['date','Date de rendez-vous','date'],['statut','Statut','select','',['Sans RDV','RDV fixé','Réalisée','À relancer']],['notes','Observations','textarea']]},
   vehicules:{sing:'dossier',title:'Dossiers',cols:[['client','Client'],['modele','Véhicule'],['immatriculation','Immatriculation'],['statut','Étape'],['priorite','Priorité']],fields:[['client','Client','text',1],['modele','Modèle','text'],['immatriculation','Immatriculation','text'],['couleur','Couleur','text'],['code_peinture','Code peinture (plaque constructeur)','text'],['vin','Numéro de série (VIN)','text'],['statut','Étape','select','',['À chiffrer','En attente','À planifier','En travaux','Peinture','Prêt à livrer','Livré']],['priorite','Priorité (1 à 10)','number'],['telephone','Téléphone client','tel'],['sinistre','Sinistre','text'],['assurance','Assurance','text'],['expertise','Expertise','select','',['À prévoir','RDV fixé','Faite','Non nécessaire']],['prochaine_action','Prochaine action','text'],['date_action','Pour quand','date'],['responsable','Responsable','select','',['Enzo','IB','Brahim','Aurel','Autre']],['montant','Montant estimé des travaux (€)','number'],['notes','Observations','textarea']]},
@@ -754,6 +767,7 @@ function menuPage(){
     ['Atelier','dos',[
       ['vehicules','▤','Les dossiers','Les véhicules en réparation',db.vehicules.length],
       ['expertises','⌕','Les expertises','Rendez-vous d’expert',db.expertises.length],
+      ['pieces','🔧','Les pièces','Demandes à Julien, Didier…',(db.demandes||[]).filter(d=>!['Reçue','Sans suite'].includes(d.statut)).length],
       ['assistant','🎙','Nouveau dossier à la voix','Entretien guidé',''],
     ]],
     ['Clients','cli',[
@@ -784,7 +798,7 @@ function settings(){return header('Paramètres','Sauvegarder, importer ou export
 function edit(section,id=''){
   const c=configs[section], obj=db[section].find(x=>x.id===id)||{};
   const fields=c.fields.map(([key,label,type,required,opts])=>{if(key==='responsable')opts=equipeCourts();if(key==='dossier')opts=dossiersOuverts();if(type==='select'&&obj[key]&&!opts.includes(obj[key]))opts=[...opts,obj[key]];return [key,label,type,required,opts]}).map(([key,label,type,required,opts])=>`<div class="field"><label for="f_${key}">${label}</label>${type==='textarea'?`<textarea id="f_${key}" name="${key}">${esc(obj[key])}</textarea>`:type==='select'?`<select id="f_${key}" name="${key}"><option value="">Choisir…</option>${opts.map(v=>`<option value="${esc(v)}" ${v===obj[key]?'selected':''}>${esc(v)}</option>`).join('')}</select>`:`<input id="f_${key}" name="${key}" type="${type}" value="${esc(obj[key])}" ${required?'required':''}>`}</div>`).join('');
-  document.getElementById('modalhost').innerHTML=`<div class="modalback" onclick="closeModal()"><div class="modal" onclick="event.stopPropagation()"><h2>${id?'Modifier':'Ajouter'} ${c.sing}</h2><div class="notice" style="margin-bottom:16px">Formulaire agrandi pour être plus évident à utiliser sur mobile comme sur PC.</div><form onsubmit="submitEntry(event,'${section}','${id}')"><div class="fields">${fields}</div>${section==='prets'?pretExtra(obj):''}<div class="buttons">${id?`<button type="button" class="btn btn-suppr" onclick="supprimerFiche('${section}','${esc(id)}')">✕ Supprimer</button>`:''}<button type="button" class="btn btn-dark" onclick="closeModal()">Annuler</button><button type="submit" class="btn btn-primary">Enregistrer</button></div></form></div></div>`;
+  document.getElementById('modalhost').innerHTML=`<div class="modalback" onclick="closeModal()"><div class="modal" onclick="event.stopPropagation()"><h2>${id?'Modifier':'Ajouter'} ${c.sing}</h2><div class="notice" style="margin-bottom:16px">Formulaire agrandi pour être plus évident à utiliser sur mobile comme sur PC.</div><form onsubmit="submitEntry(event,'${section}','${id}')"><div class="fields">${fields}</div>${section==='prets'?pretExtra(obj):''}<div class="buttons">${id&&section==='vehicules'?`<button type="button" class="btn btn-secondary" onclick="closeModal();demNouvelle('${esc(id)}')">🔧 Demander une pièce</button>`:''}${id?`<button type="button" class="btn btn-suppr" onclick="supprimerFiche('${section}','${esc(id)}')">✕ Supprimer</button>`:''}<button type="button" class="btn btn-dark" onclick="closeModal()">Annuler</button><button type="submit" class="btn btn-primary">Enregistrer</button></div></form></div></div>`;
   if(section==='prets'){const i=document.getElementById('f_nom');if(i){i.setAttribute('list','flotteListe');i.insertAdjacentHTML('afterend',`<datalist id="flotteListe">${garage().flotte.map(v=>`<option value="${esc(v.nom)}">${esc(v.plaque||'')}</option>`).join('')}</datalist>`)}pretInit(obj)}
 }
 function closeModal(){document.getElementById('modalhost').innerHTML=''}
@@ -861,7 +875,7 @@ function render(){
   if(change&&document.startViewTransition&&!window.__vt){window.__vt=1;const t=document.startViewTransition(()=>renderInner(true));t.finished.finally(()=>{window.__vt=0});return}
   renderInner(change);
 }
-function renderInner(change){pagePrec=page;document.body.dataset.sec=(window.SEC_OF||{})[page]||'gen';bottomNav(); const root=document.getElementById('root'); root.classList.toggle('entree',!!change); if(page==='dashboard') root.innerHTML=cockpit(); else if(page==='planning'&&cal.vue!=='liste'&&!query&&!filter) root.innerHTML=planningPage(); else if(page==='vehicules'&&!filter) root.innerHTML=atelierPage(); else if(['vehicules','planning','prets','taches','expertises','clients'].includes(page)) root.innerHTML=listing(page); else if(page==='assistant') root.innerHTML=assistantPage(); else if(page==='aide') root.innerHTML=help(); else if(page==='menu') root.innerHTML=menuPage(); else if(page==='education') root.innerHTML=eduPage(); else if(page==='installer') root.innerHTML=installPage(); else if(page==='garage') root.innerHTML=garagePage(); else if(page==='flotte') root.innerHTML=flottePage(); else if(page==='amende') root.innerHTML=amendePage(); else root.innerHTML=settings(); if(change)window.scrollTo(0,0);}
+function renderInner(change){pagePrec=page;document.body.dataset.sec=(window.SEC_OF||{})[page]||'gen';bottomNav(); const root=document.getElementById('root'); root.classList.toggle('entree',!!change); if(page==='dashboard') root.innerHTML=cockpit(); else if(page==='planning'&&cal.vue!=='liste'&&!query&&!filter) root.innerHTML=planningPage(); else if(page==='vehicules'&&!filter) root.innerHTML=atelierPage(); else if(['vehicules','planning','prets','taches','expertises','clients'].includes(page)) root.innerHTML=listing(page); else if(page==='assistant') root.innerHTML=assistantPage(); else if(page==='aide') root.innerHTML=help(); else if(page==='menu') root.innerHTML=menuPage(); else if(page==='education') root.innerHTML=eduPage(); else if(page==='installer') root.innerHTML=installPage(); else if(page==='garage') root.innerHTML=garagePage(); else if(page==='flotte') root.innerHTML=flottePage(); else if(page==='amende') root.innerHTML=amendePage(); else if(page==='pieces') root.innerHTML=piecesPage(); else root.innerHTML=settings(); if(change)window.scrollTo(0,0);}
 
 // V8 - Pilote IA : la conversation passe par la fonction Netlify /api/pilote (Gemini, clé cachée côté serveur).
 // Si l'IA est injoignable (fichier ouvert en local, quota atteint…), le pilote repasse sur les règles locales de la V7.
@@ -1533,7 +1547,7 @@ function eduPage(){
 // V11 — BASE PARTAGÉE : tout le monde voit les mêmes données (Netlify Blobs)
 // ─────────────────────────────────────────────────────────────────────────────
 var sync={etat:'off',code:'',base:null,timer:null,enCours:false,encore:false,derniere:''};
-const SYNC_SECS=['expertises','vehicules','prets','clients','taches','planning'];
+const SYNC_SECS=['expertises','vehicules','prets','clients','taches','planning','demandes'];
 try{sync.code=localStorage.getItem('myicar_code')||'';sync.base=JSON.parse(localStorage.getItem('myicar_base')||'null')}catch(e){}
 // Lien d'invitation : …/#equipe=123456 → ce téléphone rejoint l'équipe tout seul, sans rien taper.
 (function(){
@@ -1758,6 +1772,14 @@ var GARAGE_DEFAUT={
     {id:'f4',nom:'Ford Ka',plaque:'',km:'',notes:''},
     {id:'f5',nom:'DS3',plaque:'',km:'',notes:''}
   ],
+  fournisseurs:[
+    {id:'fo1',nom:'Julien',genre:'pieces',defaut:true,actif:true,tel:'',note:'Pièces adaptables et réemploi. Cherche d’occasion à la bonne couleur.'},
+    {id:'fo2',nom:'Didier',genre:'pare-brise',actif:true,tel:'',note:'Pare-brise et vitrage.'},
+    {id:'fo3',nom:'BMW',genre:'marque',actif:true,tel:'',note:''},
+    {id:'fo4',nom:'Mercedes',genre:'marque',actif:true,tel:'',note:''},
+    {id:'fo5',nom:'Peugeot',genre:'marque',actif:true,tel:'',note:''},
+    {id:'fo6',nom:'Renault',genre:'marque',actif:true,tel:'',note:''}
+  ],
   equipe:[
     {id:'e1',nom:'Aurélien',court:'Aurel',role:'Gérant',tel:'06 08 61 09 76'},
     {id:'e2',nom:'Enzo',court:'Enzo',role:'Administrateur',tel:'06 65 32 04 05'},
@@ -1769,6 +1791,7 @@ var GARAGE_DEFAUT={
 function garage(){
   if(!db.garage)db.garage=clone(GARAGE_DEFAUT);
   const g=db.garage;g.identite=g.identite||{};g.taux=g.taux||{};g.flotte=g.flotte||[];g.equipe=g.equipe||[];
+  if(!g.fournisseurs||!g.fournisseurs.length)g.fournisseurs=clone(GARAGE_DEFAUT.fournisseurs);
   if(!g.maj2){g.maj2=1;if(!g.identite.horaires)g.identite.horaires=GARAGE_DEFAUT.identite.horaires;const a=g.equipe.find(m=>m.court==='Aurel');if(a&&!a.tel)a.tel='06 08 61 09 76';db.garageMaj=new Date().toISOString()}
   return g;
 }
@@ -1778,6 +1801,7 @@ const GAR_ID=[['raison','Raison sociale'],['adresse','Adresse'],['tel','Téléph
 const GAR_TAUX=[['t1','Taux T1 (€ HT/h)'],['t2','Taux T2 (€ HT/h)'],['peinture','Taux peinture (€ HT/h)']];
 const GAR_FLOTTE=[['nom','Voiture'],['plaque','Immatriculation'],['km','Kilométrage'],['ct','Contrôle technique jusqu’au (JJ/MM/AAAA)'],['vidange','Dernière vidange (date ou km)'],['assurance','Assurance'],['notes','Observations']];
 const GAR_EQUIPE=[['nom','Prénom'],['court','Nom court (planning)'],['role','Rôle'],['tel','Portable']];
+const GAR_FOUR=[['nom','Nom'],['tel','Téléphone'],['email','E-mail'],['note','Ce qu’il fournit']];
 function garModal(titre,champs,obj,action){
   document.getElementById('modalhost').innerHTML=`<div class="modalback" onclick="closeModal()"><div class="modal" onclick="event.stopPropagation()"><h2>${titre}</h2><form onsubmit="${action}"><div class="fields">${champs.map(([k,l])=>`<div class="field"><label for="g_${k}">${l}</label><input id="g_${k}" name="${k}" value="${esc(obj[k])}" ${k==='tel'?'type="tel"':''}></div>`).join('')}</div><div class="buttons"><button type="button" class="btn btn-dark" onclick="closeModal()">Annuler</button><button class="btn btn-primary">Enregistrer</button></div></form></div></div>`;
 }
@@ -1786,7 +1810,7 @@ function garEditId(){garModal('Identité du garage',GAR_ID,garage().identite,'ga
 function garSaveId(e){garage().identite=garValeurs(e);garageSave('Identité enregistrée')}
 function garEditTaux(){garModal('Taux horaires',GAR_TAUX,garage().taux,'garSaveTaux(event)')}
 function garSaveTaux(e){garage().taux=garValeurs(e);garageSave('Taux enregistrés')}
-function garEdit(liste,id=''){const it=garage()[liste].find(x=>x.id===id)||{};garModal(liste==='flotte'?(id?'Voiture de prêt':'Nouvelle voiture de prêt'):(id?'Membre de l’équipe':'Nouveau membre'),liste==='flotte'?GAR_FLOTTE:GAR_EQUIPE,it,`garSave(event,'${liste}','${esc(id)}')`)}
+function garEdit(liste,id=''){const it=garage()[liste].find(x=>x.id===id)||{};const T={flotte:[id?'Voiture de prêt':'Nouvelle voiture de prêt',GAR_FLOTTE],equipe:[id?'Membre de l’équipe':'Nouveau membre',GAR_EQUIPE],fournisseurs:[id?'Fournisseur':'Nouveau fournisseur',GAR_FOUR]}[liste];garModal(T[0],T[1],it,`garSave(event,'${liste}','${esc(id)}')`)}
 function garSave(e,liste,id){const v=garValeurs(e);if(!v.nom){toast('Le nom est obligatoire');return}const L=garage()[liste];const it=L.find(x=>x.id===id);if(it)Object.assign(it,v);else L.push({id:pgId(),...v});if(liste==='equipe'&&!v.court){const m=L.find(x=>x.nom===v.nom);m.court=v.nom}garageSave()}
 function garDel(liste,id){const it=garage()[liste].find(x=>x.id===id);if(!it||!confirm('Supprimer '+it.nom+' ?'))return;garage()[liste]=garage()[liste].filter(x=>x.id!==id);garageSave('Supprimé')}
 function garInviter(id){
@@ -2302,7 +2326,116 @@ function planningPage(){
 }
 
 // V14 — CODE COULEUR PAR RUBRIQUE : vert = atelier, bleu = planning, orange = prêts, violet = expertises, rouge = relances
-var SEC_OF={vehicules:'dos',assistant:'dos',planning:'pla',prets:'pre',flotte:'pre',amende:'pre',garage:'pre',expertises:'exp',taches:'tac',clients:'cli'};
+var SEC_OF={vehicules:'dos',assistant:'dos',pieces:'dos',planning:'pla',prets:'pre',flotte:'pre',amende:'pre',garage:'pre',expertises:'exp',taches:'tac',clients:'cli'};
+// V15 — PIÈCES : demander à Julien, à Didier, ou à une marque.
+// Julien et Didier reçoivent un message court, comme on se parle. Les marques
+// reçoivent une commande en règle. Et surtout : la demande part avec le code
+// couleur, parce qu'une pièce de réemploi trouvée à la bonne teinte, c'est
+// l'intérieur qu'on ne peint pas.
+const DEM_STATUTS={'Envoyée':2,'Répondu':3,'Commandée':1,'Reçue':0,'Sans suite':0};
+function fournisseurs(){return garage().fournisseurs||[]}
+function fourDe(id){return fournisseurs().find(f=>f.id===id)||null}
+function fourDefaut(){return fournisseurs().find(f=>f.defaut)||fournisseurs()[0]||null}
+function fourJeton(f){
+  if(!f.jeton){f.jeton=(crypto.randomUUID?crypto.randomUUID():String(Math.random()).slice(2)+Date.now()).replace(/-/g,'');db.garageMaj=new Date().toISOString();save(true);if(typeof syncNow==='function')syncNow()}
+  return f.jeton;
+}
+function fourLien(f){return `${location.origin}/fournisseur.html?f=${encodeURIComponent(f.id)}&j=${fourJeton(f)}`}
+
+// Le lien à transmettre une fois pour toutes au fournisseur
+function fourPartage(id){
+  const f=fourDe(id); if(!f)return;
+  const lien=fourLien(f),G=garage().identite;
+  const t=`Salut ${f.nom}, c’est ${G.raison||'le garage'}.
+Voici ton lien pour voir nos demandes de pièces et répondre directement :
+${lien}
+Garde-le, il reste valable. Tu n’as rien à installer.`;
+  const tel=String(f.tel||'').replace(/[^\d+]/g,'');
+  document.getElementById('modalhost').innerHTML=`<div class="modalback" onclick="closeModal()"><div class="modal" onclick="event.stopPropagation()"><h2>🔗 Lien de ${esc(f.nom)}</h2><p class="t-muted" style="margin-top:-8px">À lui envoyer une seule fois. Il y verra uniquement tes demandes de pièces — aucun nom ni numéro de client.</p><div class="sms-texte" id="smsT">${esc(t)}</div><div class="buttons">${tel?`<a class="btn btn-primary" style="text-decoration:none" href="sms:${esc(tel)}?body=${encodeURIComponent(t)}">📱 SMS</a>`:''}<a class="btn btn-secondary" style="text-decoration:none" href="mailto:${esc(f.email||'')}?subject=${encodeURIComponent('Demandes de pièces — '+(G.raison||''))}&body=${encodeURIComponent(t)}">✉️ E-mail</a><button type="button" class="btn btn-dark" onclick="smsCopier()">Copier</button><button type="button" class="btn btn-dark" onclick="closeModal()">Fermer</button></div>${tel?'':'<p class="t-muted" style="font-size:13px">Ajoute son téléphone dans Mon garage pour l’envoi par SMS.</p>'}</div></div>`;
+}
+
+// Demander une pièce depuis un dossier
+function demNouvelle(dossierId){
+  const v=db.vehicules.find(x=>x.id===dossierId); if(!v){toast('Dossier introuvable');return}
+  const L=fournisseurs().filter(f=>f.actif!==false),d=fourDefaut();
+  document.getElementById('modalhost').innerHTML=`<div class="modalback" onclick="closeModal()"><div class="modal" onclick="event.stopPropagation()"><h2>🔧 Demander une pièce</h2><p class="t-muted" style="margin-top:-8px">${esc([v.modele,v.immatriculation].filter(Boolean).join(' · '))}${v.couleur?' · '+esc(v.couleur):''}${v.code_peinture?' ('+esc(v.code_peinture)+')':''}</p>
+  ${v.couleur||v.code_peinture?'':'<div class="voice-warning">Ce dossier n’a pas de couleur ni de code peinture. Sans ça, il ne peut pas chercher du réemploi à la bonne teinte.</div>'}
+  <form onsubmit="demCree(event,'${esc(dossierId)}')"><div class="fields">
+    <div class="field"><label for="d_piece">Quelle pièce ?</label><input id="d_piece" name="piece" required placeholder="Portière avant gauche"></div>
+    <div class="field"><label for="d_four">À qui ?</label><select id="d_four" name="fournisseur">${L.map(f=>`<option value="${esc(f.id)}" ${d&&f.id===d.id?'selected':''}>${esc(f.nom)}${f.genre==='marque'?' (neuf d’origine)':f.genre==='pare-brise'?' (pare-brise)':''}</option>`).join('')}</select></div>
+    <div class="field"><label for="d_note">Un mot</label><textarea id="d_note" name="note" placeholder="Facultatif"></textarea></div>
+  </div>
+  <label class="coul-case"><input type="checkbox" name="reemploi" checked><span>Pièce de réemploi acceptée (l’expert l’impose souvent)</span></label>
+  <div class="buttons"><button type="button" class="btn btn-dark" onclick="closeModal()">Annuler</button><button class="btn btn-primary">Envoyer</button></div></form></div></div>`;
+}
+function demCree(e,dossierId){
+  e.preventDefault();
+  const v=db.vehicules.find(x=>x.id===dossierId)||{};
+  const fd=new FormData(e.target),fid=String(fd.get('fournisseur')||'');
+  const maint=new Date().toISOString();
+  // On ne recopie QUE la voiture. Jamais le nom ni le téléphone du client :
+  // ces demandes partent sur une page publique.
+  const d={id:pgId(),dossier:dossierId,fournisseur:fid,
+    vehicule:v.modele||'',annee:v.annee||'',immat:v.immatriculation||'',vin:v.vin||'',
+    couleur:v.couleur||'',code_peinture:v.code_peinture||'',
+    piece:String(fd.get('piece')||'').trim(),note:String(fd.get('note')||'').trim(),
+    reemploi:!!fd.get('reemploi'),statut:'Envoyée',envoye_le:maint,maj:maint};
+  db.demandes=db.demandes||[];db.demandes.push(d);
+  save();closeModal();go('pieces');
+  const f=fourDe(fid);
+  if(f)setTimeout(()=>demPrevenir(d.id),300);
+}
+// Prévenir le fournisseur qu'une demande l'attend
+function demPrevenir(id){
+  const d=(db.demandes||[]).find(x=>x.id===id); if(!d)return;
+  const f=fourDe(d.fournisseur); if(!f)return;
+  const G=garage().identite,marque=f.genre==='marque';
+  const t=marque
+    ? `${G.raison||''}
+Commande de pièce
+Véhicule : ${d.vehicule||''}${d.annee?' ('+d.annee+')':''}
+Immatriculation : ${d.immat||''}
+N° de série : ${d.vin||''}
+Couleur : ${d.couleur||''}${d.code_peinture?' — code '+d.code_peinture:''}
+Pièce : ${d.piece||''}${d.note?'\n'+d.note:''}
+Merci de me confirmer prix et délai.
+${G.tel||''}`
+    : `Salut ${f.nom}, il me faudrait ${d.piece||'une pièce'} pour ${d.vehicule||''}${d.annee?' de '+d.annee:''}${d.couleur?', '+d.couleur:''}${d.code_peinture?' (code '+d.code_peinture+')':''}.${d.reemploi?' Du réemploi me va, et si tu trouves à la bonne couleur c’est encore mieux.':''}${d.note?' '+d.note:''}
+C’est sur ta page : ${fourLien(f)}`;
+  const tel=String(f.tel||'').replace(/[^\d+]/g,'');
+  document.getElementById('modalhost').innerHTML=`<div class="modalback" onclick="closeModal()"><div class="modal" onclick="event.stopPropagation()"><h2>📩 Prévenir ${esc(f.nom)}</h2><div class="sms-texte" id="smsT">${esc(t)}</div><div class="buttons">${tel?`<a class="btn btn-primary" style="text-decoration:none" href="sms:${esc(tel)}?body=${encodeURIComponent(t)}">📱 SMS</a>`:''}<a class="btn btn-secondary" style="text-decoration:none" href="mailto:${esc(f.email||'')}?subject=${encodeURIComponent('Pièce — '+(d.vehicule||''))}&body=${encodeURIComponent(t)}">✉️ E-mail</a><button type="button" class="btn btn-dark" onclick="smsCopier()">Copier</button><button type="button" class="btn btn-dark" onclick="closeModal()">Fermer</button></div>${tel?'':`<p class="t-muted" style="font-size:13px">Ajoute son téléphone dans Mon garage pour l’envoi par SMS.</p>`}</div></div>`;
+}
+function demStatut(id,st){
+  const d=(db.demandes||[]).find(x=>x.id===id); if(!d)return;
+  d.statut=st;d.maj=new Date().toISOString();save();render();
+}
+function piecesPage(){
+  const L=(db.demandes||[]).slice().sort((a,b)=>(DEM_STATUTS[b.statut]??1)-(DEM_STATUTS[a.statut]??1)||String(b.envoye_le||'').localeCompare(String(a.envoye_le||'')));
+  const ouvertes=L.filter(d=>!['Reçue','Sans suite'].includes(d.statut));
+  const finies=L.filter(d=>['Reçue','Sans suite'].includes(d.statut));
+  const carte=d=>{
+    const f=fourDe(d.fournisseur),r=d.reponse;
+    const rep=d.statut==='Répondu';
+    return `<div class="dem" style="${rep?'border-color:#0B5F59;border-width:2px':''}">
+      <div class="dem-h"><b>${esc(d.piece||'Pièce')}</b><span class="dem-e${rep?' ok':''}">${esc(d.statut)}</span></div>
+      <div class="dem-s">${esc([d.vehicule,d.immat].filter(Boolean).join(' · '))}${d.couleur?' · '+esc(d.couleur):''} — ${esc(f?f.nom:'fournisseur inconnu')}${d.reemploi?' · réemploi':''}</div>
+      ${r?`<div class="dem-r">${r.dispo==='non'?'<b>Pas disponible.</b>':`<b>${esc(r.prix||'Disponible')}${r.delai?' · '+esc(r.delai):''}</b>${r.couleur_ok?'<br>✅ à la bonne couleur — pas de peinture à prévoir':'<br>⚠️ couleur non garantie — prévoir la peinture'}`}${r.note?'<br>'+esc(r.note):''}</div>`:''}
+      <div class="dem-a">
+        ${rep?`<button class="btn btn-primary" onclick="demStatut('${esc(d.id)}','Commandée')">Je commande</button>`:''}
+        ${d.statut==='Commandée'?`<button class="btn btn-primary" onclick="demStatut('${esc(d.id)}','Reçue')">Reçue</button>`:''}
+        <button class="btn btn-dark" onclick="demPrevenir('${esc(d.id)}')">Relancer</button>
+        ${d.dossier?`<button class="btn btn-dark" onclick="edit('vehicules','${esc(d.dossier)}')">Le dossier</button>`:''}
+      </div></div>`;
+  };
+  const liens=fournisseurs().filter(f=>f.actif!==false&&f.genre!=='marque')
+    .map(f=>`<button class="btn btn-dark" onclick="fourPartage('${esc(f.id)}')">🔗 Lien de ${esc(f.nom)}</button>`).join('');
+  return header('Pièces','Ce que tu as demandé, et ce qu’on t’a répondu.')
+    +`<div class="buttons" style="justify-content:flex-start;margin-top:14px">${liens}</div>`
+    +(ouvertes.length?`<div class="dem-g">${ouvertes.map(carte).join('')}</div>`:'<div class="empty">Aucune demande en cours. Ouvre un dossier et touche « Demander une pièce ».</div>')
+    +(finies.length?`<details class="ate-fin"><summary>${finies.length} demande${finies.length>1?'s':''} terminée${finies.length>1?'s':''}</summary><div class="dem-g">${finies.map(carte).join('')}</div></details>`:'')
+    +'</section>';
+}
+
 // V15 — MÉTÉO DE L'ATELIER (Open-Meteo, sans compte ni clé).
 // Pour un carrossier ce n'est pas décoratif : la grêle fait le carnet de commandes,
 // la pluie décide des livraisons et des sorties de cabine.
