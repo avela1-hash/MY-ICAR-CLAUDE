@@ -470,6 +470,17 @@ th{background:#F8F9FB!important;color:var(--mut)!important}td{color:var(--ink)!i
 .maj-bar .maj-x{background:rgba(255,255,255,.14);color:#fff;padding:10px 12px}
 @keyframes majEntre{from{transform:translateY(18px);opacity:0}to{transform:none;opacity:1}}
 @media(prefers-reduced-motion:reduce){.maj-bar{animation:none}}
+.lc-g{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.lc-w{display:flex;flex-direction:column}
+.lc{display:flex;flex-direction:column;gap:3px;border:1px solid;border-radius:14px;padding:12px 14px;font:inherit;text-align:left;cursor:pointer;width:100%;transition:transform .15s}
+.lc:active{transform:scale(.98)}
+.lc-1{display:flex;align-items:center;gap:8px}
+.lc-1 b{font-size:16px;font-weight:800;flex:1;min-width:0;overflow-wrap:anywhere}
+.lc-1 i{flex:none;font-style:normal;font-size:11.5px;font-weight:800;background:rgba(20,33,61,.07);border-radius:999px;padding:4px 9px;white-space:nowrap}
+.lc-2{font-size:14.5px;opacity:.95;overflow-wrap:anywhere}
+.lc-3{font-size:13px;opacity:.72;line-height:1.35;overflow-wrap:anywhere}
+.lc-tel{padding:8px 0 0}
+.lc-n{margin-top:12px;font-size:13px;color:var(--mut);text-align:right}
 .ate-leg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:16px}
 .ate-l{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--bord);border-radius:12px;padding:10px 11px;font:inherit;cursor:pointer;text-align:left;color:var(--ink)}
 .ate-l i{flex:none;width:11px;height:11px;border-radius:50%}
@@ -665,11 +676,68 @@ function dashboard(){
 function header(title, subtitle, action=''){return `<section class="card section"><div class="section-head"><div><div class="section-title">${title}</div><div style="margin-top:8px;color:#5B6475;font-size:16px;line-height:1.5">${subtitle}</div></div>${action}</div>`}
 function filteredRows(section){return db[section].filter(x=>(!query||Object.values(x).some(y=>!String(y??'').startsWith('data:')&&String(y??'').toLowerCase().includes(query.toLowerCase())))&&(!filter||x.statut===filter))}
 function table(section){const c=configs[section], rows=filteredRows(section);return `<div class="card table-card"><div class="table-scroll"><table><thead><tr>${c.cols.map(col=>`<th>${col[1]}</th>`).join('')}<th>Actions</th></tr></thead><tbody>${rows.length?rows.map(r=>`<tr>${c.cols.map(col=>`<td data-label="${col[1]}">${col[2]?col[2](r):col[0]==='statut'?status(r[col[0]]):`<span class="${col[0]==='notes'?'t-muted':''}">${esc(r[col[0]]||'—')}</span>`}</td>`).join('')}<td class="td-actions"><div class="table-actions">${telBoutons(telDe(r))}<button class="btn-mini btn-edit" onclick="edit('${section}','${r.id}')">Modifier</button><button class="btn-mini btn-del" onclick="removeItem('${section}','${r.id}')">Supprimer</button></div></td></tr>`).join(''):`<tr><td colspan="${c.cols.length+1}"><div class="empty">Aucun élément pour le moment.</div></td></tr>`}</tbody></table></div><div class="table-foot">${rows.length} résultat(s)</div></div>`}
+// V15 — PLUS DE TABLEAUX : chaque ligne devient une carte de 3 informations.
+// 1 = normal (clair) · 2 = à surveiller · 3 = urgent (foncé). Rien d'autre.
+const CARTE_COUL={
+  pre:[['#FFFFFF','#45506A','#F1D5BC'],['#FBEBDD','#8F4A0C','#F3C9A3'],['#6B2E0A','#FFFFFF','#6B2E0A']],
+  pla:[['#FFFFFF','#45506A','#D3DCEA'],['#E6EDFA','#1F4699','#C3D3F0'],['#14306B','#FFFFFF','#14306B']],
+  exp:[['#FFFFFF','#45506A','#DAD3F2'],['#EEEBFA','#4A35A0','#CFC6EE'],['#3E2A80','#FFFFFF','#3E2A80']],
+  cli:[['#FFFFFF','#45506A','#D3DCEA'],['#E6EDFA','#1F4699','#C3D3F0'],['#14306B','#FFFFFF','#14306B']],
+  tac:[['#FFFFFF','#45506A','#F0C4C0'],['#FBE7E5','#8A2A23','#EBB4AF'],['#7A221C','#FFFFFF','#7A221C']],
+  dos:[['#FFFFFF','#45506A','#CDE7E3'],['#E3F2F0','#084843','#B5DDD7'],['#0B5F59','#FFFFFF','#0B5F59']],
+  gen:[['#FFFFFF','#45506A','#E6E8EC'],['#EEF0F4','#14213D','#DDE1E8'],['#14213D','#FFFFFF','#14213D']]
+};
+// Pour chaque rubrique : le gros titre, la ligne du dessous, le petit détail, et l'urgence.
+const CARTE_DE={
+  prets:r=>({
+    t:r.nom||'Véhicule', s:r.client||'Pas de client',
+    d:[r.date_depart?'Parti '+dh(r.date_depart,r.heure_depart):'', r.date_retour?'retour '+dh(r.date_retour,r.heure_retour):'retour non fixé'].filter(Boolean).join(' · '),
+    e:pretEnRetard(r)?'En retard':r.statut, tel:r.telephone,
+    n:pretEnRetard(r)?3:r.statut==='Prêté'?2:r.statut==='Retourné'?0:1}),
+  planning:r=>{const niv=calNiveau(r);return{
+    t:r.titre||'Rendez-vous', s:dh(r.date,r.heure)||'Sans date',
+    d:[r.responsable,r.notes].filter(Boolean).join(' · '),
+    e:r.statut, tel:telDe(r),
+    n:niv==='urgent'?3:niv==='afaire'?2:niv==='fait'?0:1}},
+  clients:r=>({
+    t:r.nom||'Client', s:r.telephone||'Pas de numéro',
+    d:[r.vehicule,r.email].filter(Boolean).join(' · '),
+    e:'', tel:r.telephone, n:1}),
+  expertises:r=>({
+    t:r.client||'Dossier', s:r.immatriculation||'Pas d’immatriculation',
+    d:r.date?'Rendez-vous '+dh(r.date,''):'Aucune date fixée',
+    e:r.statut, tel:'',
+    n:(r.statut==='Sans RDV'||!r.date)?3:r.statut==='À relancer'?2:r.statut==='Réalisée'?0:1}),
+  taches:r=>{const auj=localISO();return{
+    t:r.titre||'Relance', s:r.client||'',
+    d:r.echeance?'Pour le '+dh(r.echeance,''):'Sans échéance',
+    e:r.statut, tel:'',
+    n:r.statut==='Terminée'?0:(r.echeance&&r.echeance<auj)?3:r.echeance===auj?2:1}}
+};
+function carteListe(section,r){
+  const f=CARTE_DE[section]; if(!f)return '';
+  const c=f(r), sec=(window.SEC_OF||{})[section]||'gen';
+  const C=(CARTE_COUL[sec]||CARTE_COUL.gen)[Math.max(0,c.n-1)]||CARTE_COUL.gen[0];
+  const pale=c.n===0;
+  return `<div class="lc-w"><button class="lc" style="background:${C[0]};color:${C[1]};border-color:${C[2]};${pale?'opacity:.55':''}" onclick="edit('${section}','${esc(r.id)}')">
+    <span class="lc-1"><b>${esc(c.t)}</b>${c.e?`<i style="${c.n>=3?'background:rgba(255,255,255,.2);color:#fff':''}">${esc(c.e)}</i>`:''}</span>
+    ${c.s?`<span class="lc-2">${esc(c.s)}</span>`:''}
+    ${c.d?`<span class="lc-3">${esc(c.d)}</span>`:''}
+  </button>${c.tel?`<div class="lc-tel">${telBoutons(c.tel,1)}</div>`:''}</div>`;
+}
+function cartes(section){
+  const rows=filteredRows(section);
+  if(!rows.length)return '<div class="empty">Rien à afficher pour le moment.</div>';
+  const f=CARTE_DE[section];
+  const tri=f?rows.slice().sort((a,b)=>f(b).n-f(a).n):rows;
+  return `<div class="lc-g">${tri.map(r=>carteListe(section,r)).join('')}</div><div class="lc-n">${rows.length} élément${rows.length>1?'s':''}</div>`;
+}
+
 function listing(section){
   const c=configs[section];
   const statuses=[...new Set(db[section].map(x=>x.statut).filter(Boolean))];
   const subtitle={vehicules:'Tes dossiers atelier, les étapes de réparation et les priorités.',planning:'Le planning de l’atelier et des rendez-vous.',prets:'La gestion des voitures de prêt.',taches:'Les signaux, relances et actions du pilote.',clients:'Tes clients et leurs coordonnées.',expertises:'Les expertises et les rendez-vous à organiser.'}[section] || '';
-  return header(c.title,subtitle,`${section==='planning'?`<button class="btn btn-dark" onclick="query='';filter='';calVue('jour')">📅 Calendrier</button> `:''}<button class="btn btn-primary" onclick="edit('${section}')">+ Ajouter</button>`)+(section==='prets'?flotteTableau():'')+`<div class="toolbar"><div class="grow"><input class="search" value="${esc(query)}" oninput="query=this.value;render()" placeholder="Rechercher un client, une immatriculation, un dossier…"></div><div class="w240"><select class="select" onchange="filter=this.value;render()"><option value="">Tous les statuts</option>${statuses.map(s=>`<option ${s===filter?'selected':''}>${esc(s)}</option>`).join('')}</select></div></div>${table(section)}</section>`
+  return header(c.title,subtitle,`${section==='planning'?`<button class="btn btn-dark" onclick="query='';filter='';calVue('jour')">📅 Calendrier</button> `:''}<button class="btn btn-primary" onclick="edit('${section}')">+ Ajouter</button>`)+(section==='prets'?flotteTableau():'')+`<div class="toolbar"><div class="grow"><input class="search" value="${esc(query)}" oninput="query=this.value;render()" placeholder="Rechercher un client, une immatriculation, un dossier…"></div><div class="w240"><select class="select" onchange="filter=this.value;render()"><option value="">Tous les statuts</option>${statuses.map(s=>`<option ${s===filter?'selected':''}>${esc(s)}</option>`).join('')}</select></div></div>${CARTE_DE[section]?cartes(section):table(section)}</section>`
 }
 function menuPage(){
   // V15 — Quatre groupes, trois ou quatre choix chacun : l'œil compte sans lire
@@ -2090,7 +2158,7 @@ function accesCarte(){
 }
 
 // V13 — PLANNING EN CALENDRIER : semaine en haut, journée en dessous, code couleur par type
-var cal={jour:new Date().toLocaleDateString('en-CA'),vue:'jour',mode:'jour'};
+var cal={jour:new Date().toLocaleDateString('en-CA'),vue:'mois',mode:'mois'};
 const CAL_TYPES={
   pret:{nom:'Prêt',c:'#C2610F',d:'#6B2E0A',t:'#FBEBDD',rgb:'217,115,26'},
   rdv:{nom:'Rendez-vous',c:'#2F62C9',d:'#14306B',t:'#E6EDFA',rgb:'47,98,201'},
