@@ -464,6 +464,8 @@ th{background:#F8F9FB!important;color:var(--mut)!important}td{color:var(--ink)!i
 .ck-at button{border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:2px;cursor:pointer;font:inherit;text-align:left;border:1px solid #CDE7E3;transition:transform .15s}
 .ck-at b{font-size:20px;font-family:'Fraunces',Georgia,serif}.ck-at span{font-size:11.5px;font-weight:700}
 .ck-vide{font-size:14px;color:var(--mut);padding:4px 2px}
+.btn-suppr{background:#FBE7E5;border:1px solid rgba(221,115,130,.35);color:#8A2A23;margin-right:auto}
+.toast-annul{border:0;background:rgba(255,255,255,.22);color:#fff;font:inherit;font-weight:800;font-size:14px;padding:7px 14px;border-radius:10px;margin-left:10px;cursor:pointer}
 .fl-grille{display:flex;flex-direction:column;gap:12px;margin-top:16px}
 .fl-c{display:flex;flex-direction:column;gap:10px;border-radius:18px;padding:15px 16px;border:1px solid var(--bord);background:#fff}
 .fl-h{display:flex;align-items:center;gap:11px}
@@ -574,7 +576,7 @@ function load(){
   return clone(initial)
 }
 function save(silent=false){if(typeof planningDesPrets==='function')planningDesPrets();try{localStorage.setItem(STORAGE_KEY,JSON.stringify(db)); if(!silent) toast(sync.etat==='ok'?'Enregistré pour toute l’équipe':'Enregistré');}catch(e){toast('Mémoire du téléphone pleine : exporte une sauvegarde')} if(typeof syncPlus==='function')syncPlus()}
-function toast(t){const e=document.getElementById('toast');e.textContent=t;e.style.display='block';clearTimeout(window.__tt);window.__tt=setTimeout(()=>e.style.display='none',2200)}
+function toast(t){const e=document.getElementById('toast');e.innerHTML='';e.textContent=t;e.style.display='block';clearTimeout(window.__tt);window.__tt=setTimeout(()=>e.style.display='none',2200)}
 function go(p){page=p;query='';filter='';render()}
 function dateHeure(d,h){if(!d&&!h)return '—';const t=d?d.split('-').reverse().join('/'):'';return esc([t,h].filter(Boolean).join(' à '))}
 // Une voiture prêtée est en retard si l'heure (ou, sans heure, la journée) de retour prévue est passée.
@@ -676,7 +678,7 @@ function settings(){return header('Paramètres','Sauvegarder, importer ou export
 function edit(section,id=''){
   const c=configs[section], obj=db[section].find(x=>x.id===id)||{};
   const fields=c.fields.map(([key,label,type,required,opts])=>{if(key==='responsable')opts=equipeCourts();if(key==='dossier')opts=dossiersOuverts();if(type==='select'&&obj[key]&&!opts.includes(obj[key]))opts=[...opts,obj[key]];return [key,label,type,required,opts]}).map(([key,label,type,required,opts])=>`<div class="field"><label for="f_${key}">${label}</label>${type==='textarea'?`<textarea id="f_${key}" name="${key}">${esc(obj[key])}</textarea>`:type==='select'?`<select id="f_${key}" name="${key}"><option value="">Choisir…</option>${opts.map(v=>`<option value="${esc(v)}" ${v===obj[key]?'selected':''}>${esc(v)}</option>`).join('')}</select>`:`<input id="f_${key}" name="${key}" type="${type}" value="${esc(obj[key])}" ${required?'required':''}>`}</div>`).join('');
-  document.getElementById('modalhost').innerHTML=`<div class="modalback" onclick="closeModal()"><div class="modal" onclick="event.stopPropagation()"><h2>${id?'Modifier':'Ajouter'} ${c.sing}</h2><div class="notice" style="margin-bottom:16px">Formulaire agrandi pour être plus évident à utiliser sur mobile comme sur PC.</div><form onsubmit="submitEntry(event,'${section}','${id}')"><div class="fields">${fields}</div>${section==='prets'?pretExtra(obj):''}<div class="buttons"><button type="button" class="btn btn-dark" onclick="closeModal()">Annuler</button><button type="submit" class="btn btn-primary">Enregistrer</button></div></form></div></div>`;
+  document.getElementById('modalhost').innerHTML=`<div class="modalback" onclick="closeModal()"><div class="modal" onclick="event.stopPropagation()"><h2>${id?'Modifier':'Ajouter'} ${c.sing}</h2><div class="notice" style="margin-bottom:16px">Formulaire agrandi pour être plus évident à utiliser sur mobile comme sur PC.</div><form onsubmit="submitEntry(event,'${section}','${id}')"><div class="fields">${fields}</div>${section==='prets'?pretExtra(obj):''}<div class="buttons">${id?`<button type="button" class="btn btn-suppr" onclick="supprimerFiche('${section}','${esc(id)}')">✕ Supprimer</button>`:''}<button type="button" class="btn btn-dark" onclick="closeModal()">Annuler</button><button type="submit" class="btn btn-primary">Enregistrer</button></div></form></div></div>`;
   if(section==='prets'){const i=document.getElementById('f_nom');if(i){i.setAttribute('list','flotteListe');i.insertAdjacentHTML('afterend',`<datalist id="flotteListe">${garage().flotte.map(v=>`<option value="${esc(v.nom)}">${esc(v.plaque||'')}</option>`).join('')}</datalist>`)}pretInit(obj)}
 }
 function closeModal(){document.getElementById('modalhost').innerHTML=''}
@@ -688,7 +690,34 @@ function submitEntry(e,section,id){e.preventDefault(); const values=Object.fromE
   if(section==='vehicules') dossierComplet(el,avant);
   if(section==='prets'&&pretTmp.sms) smsSheet(el); else if(section==='prets'&&!el.signature&&['Réservé','Prêté'].includes(el.statut)) distanceSheet(el);
 }
-function removeItem(section,id){if(confirm('Supprimer définitivement cet élément ?')){db[section]=db[section].filter(x=>x.id!==id); save(); render();}}
+function removeItem(section,id){if(confirm('Supprimer définitivement cet élément ?')){supprime(section,id);}}
+// V15 — REVENIR EN ARRIÈRE : on supprime, et on peut annuler pendant 8 secondes
+var corbeille=null;
+function supprime(section,id){
+  const el=(db[section]||[]).find(x=>x.id===id); if(!el)return;
+  corbeille={section,el:clone(el)};
+  db[section]=db[section].filter(x=>x.id!==id);
+  save(true); render();
+  const nom=el.nom||el.client||el.titre||'Élément';
+  toastAnnuler(`${nom} supprimé`);
+}
+function annulerSuppression(){
+  if(!corbeille)return;
+  db[corbeille.section]=[...(db[corbeille.section]||[]),corbeille.el];
+  corbeille=null; save(true); render(); toast('Remis en place');
+}
+function toastAnnuler(txt){
+  const e=document.getElementById('toast');
+  e.innerHTML=`${esc(txt)} <button class="toast-annul" onclick="annulerSuppression();document.getElementById('toast').style.display='none'">Annuler</button>`;
+  e.style.display='block'; clearTimeout(window.__tt);
+  window.__tt=setTimeout(()=>{e.style.display='none';corbeille=null},8000);
+}
+function supprimerFiche(section,id){
+  const c=configs[section],el=(db[section]||[]).find(x=>x.id===id);
+  const nom=el?(el.nom||el.client||el.titre||''):'';
+  if(!confirm(`Supprimer ${c?c.sing:'cet élément'}${nom?' « '+nom+' »':''} ?`))return;
+  closeModal(); supprime(section,id);
+}
 function exportData(){const a=document.createElement('a'); const blob=new Blob([JSON.stringify({app:'My I-Car',version:8,data:db,exportedAt:new Date().toISOString()},null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); a.href=url; a.download='my-icar-v8-sauvegarde-'+new Date().toISOString().slice(0,10)+'.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1200)}
 async function importData(e){const f=e.target.files[0]; if(!f) return; try{const d=JSON.parse(await f.text()); const raw=d.data||d; if(!Object.keys(initial).every(k=>Array.isArray(raw[k]))) throw Error('Structure invalide'); if(!confirm('Remplacer toutes les données locales ?')) return; db=raw; save(true); render(); toast('Import terminé')}catch(err){alert('Fichier invalide : '+err.message)}}
 function resetAll(){if(confirm('Effacer toutes les données locales de My I-Car V8 ?')){db=clone(initial); save(true); render(); toast('Données effacées')}}
