@@ -464,6 +464,49 @@ th{background:#F8F9FB!important;color:var(--mut)!important}td{color:var(--ink)!i
 .ck-at button{border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:2px;cursor:pointer;font:inherit;text-align:left;border:1px solid #CDE7E3;transition:transform .15s}
 .ck-at b{font-size:20px;font-family:'Fraunces',Georgia,serif}.ck-at span{font-size:11.5px;font-weight:700}
 .ck-vide{font-size:14px;color:var(--mut);padding:4px 2px}
+.fl-grille{display:flex;flex-direction:column;gap:12px;margin-top:16px}
+.fl-c{display:flex;flex-direction:column;gap:10px;border-radius:18px;padding:15px 16px;border:1px solid var(--bord);background:#fff}
+.fl-h{display:flex;align-items:center;gap:11px}
+.fl-pt{flex:none;width:13px;height:13px;border-radius:50%}
+.fl-n{font-family:'Fraunces',Georgia,serif;font-size:20px;font-weight:600;flex:1;min-width:0}
+.fl-e{font-size:12.5px;font-weight:800;padding:5px 11px;border-radius:999px;white-space:nowrap}
+.fl-d{font-size:14.5px;line-height:1.45;color:#45506A;overflow-wrap:anywhere}
+.fl-i{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.fl-c{padding:14px}
+.fl-i div{background:#F5F6F8;border-radius:11px;padding:8px 9px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.fl-i small{font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#8A93A3}
+.fl-i b{font-size:14px;font-weight:700;overflow-wrap:anywhere}
+.fl-i div.alerte{background:#FBE7E5}.fl-i div.alerte b{color:#8A2A23}
+.fl-a{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.fl-a .btn{justify-content:center;padding:11px 10px;font-size:14.5px}
+.fl-a .tel-bt{grid-column:1/-1}
+.fl-a .tel-bt.petit{padding-left:0;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.fl-a .tel-bt.petit a{justify-content:center}
+.am-res{border-radius:18px;padding:16px;margin-top:14px;border:1px solid var(--bord);background:#fff;display:flex;flex-direction:column;gap:12px}
+.am-res.trouve{border-color:#C2610F;border-width:2px}
+.am-l{display:flex;justify-content:space-between;gap:12px;font-size:15px;border-bottom:1px solid #EEF0F4;padding-bottom:8px}
+.am-l:last-of-type{border:0;padding:0}.am-l span{color:#8A93A3;flex:none}.am-l b{text-align:right;overflow-wrap:anywhere}
+.am-txt{background:#F5F6F8;border-radius:12px;padding:12px;font-size:14px;line-height:1.5;white-space:pre-wrap;max-height:260px;overflow:auto}
+/* V15 — Température de la journée */
+.ck-temp{border:0;width:100%;border-radius:22px;padding:16px 18px;display:flex;align-items:center;gap:14px;cursor:pointer;font:inherit;text-align:left;color:#fff;transition:transform .15s;box-shadow:0 12px 26px rgba(20,33,61,.18)}
+.ck-temp:active{transform:scale(.98)}
+.ck-temp-a{flex-direction:column;align-items:stretch;gap:12px;padding:0;overflow:hidden}
+.ck-temp-a:active{transform:none}
+.ck-temp-h{border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer;display:flex;align-items:center;gap:14px;padding:16px 18px 0;transition:opacity .15s}
+.ck-temp-h:active{opacity:.75}
+.ck-temp-b{border:0;background:#fff;color:var(--ink);font:inherit;font-weight:800;font-size:15px;padding:13px;margin:0 14px 14px;border-radius:13px;cursor:pointer;transition:transform .15s}
+.ck-temp-b:active{transform:scale(.97)}
+.ck-temp .tj{flex:none;width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:23px}
+.ck-temp .tt{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.ck-temp b{font-family:'Fraunces',Georgia,serif;font-size:21px;font-weight:600;line-height:1.1}
+.ck-temp small{font-size:13.5px;opacity:.92;line-height:1.35;overflow-wrap:anywhere}
+.ck-temp .tf{flex:none;opacity:.7;font-size:22px}
+.ck-jauge{display:flex;gap:4px;margin-top:7px}
+.ck-jauge i{height:5px;flex:1;border-radius:3px;background:rgba(255,255,255,.28)}
+.ck-jauge i.on{background:#fff}
+.temp-liste{display:flex;flex-direction:column;gap:11px;margin:12px 0 4px;text-align:left}
+.temp-liste>div{display:flex;gap:10px;align-items:flex-start;font-size:15px;line-height:1.4}
+.temp-liste i{flex:none;width:9px;height:9px;border-radius:50%;margin-top:6px}
 /* ════ Effets : transitions de page, entrée en cascade ════ */
 @keyframes fondu{from{opacity:0}}
 @keyframes monte{from{opacity:0;transform:translateY(24px) scale(.98)}}
@@ -483,7 +526,7 @@ th{background:#F8F9FB!important;color:var(--mut)!important}td{color:var(--ink)!i
 </style>
 </head>
 <body>
-<div class="topbar"><div class="topbar-inner"><div class="brand"><div class="mark"><img src="data:image/png;base64,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" alt="Logo My I-Car"></div><div><div class="brand-title">My I-Car <span class="ver">V14</span></div><div class="brand-sub">Cockpit atelier • pilotage intelligent de carrosserie</div></div></div><div class="top-badge" id="iaBadge">Pilote IA</div></div></div>
+<div class="topbar"><div class="topbar-inner"><div class="brand"><div class="mark"><img src="data:image/png;base64,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" alt="Logo My I-Car"></div><div><div class="brand-title">My I-Car <span class="ver">V15</span></div><div class="brand-sub">Cockpit atelier • pilotage intelligent de carrosserie</div></div></div><div class="top-badge" id="iaBadge">Pilote IA</div></div></div>
 <div class="wrap">
   <main id="root"></main>
 </div>
@@ -497,15 +540,14 @@ const LEGACY_KEYS=['myicar_v7_data','myicar_v6_data','myicar_v5_data','myicar_v4
 const initial={expertises:[],vehicules:[],prets:[],clients:[],taches:[],planning:[]};
 let db=load(), page='dashboard', query='', filter='';
 const sections=[
-  ['dashboard','◈','Cockpit'],
-  ['vehicules','▤','Dossiers'],
+  ['dashboard','◈','Accueil'],
+  ['vehicules','▤','Atelier'],
   ['planning','▦','Planning'],
   ['prets','▬','Prêts'],
-  ['assistant','✦','Dossier vocal'],
   ['menu','☰','Plus']
 ];
 // Pages rangées sous « Plus » : l'onglet reste allumé quand on y est.
-const MENU_PAGES=['menu','garage','clients','expertises','taches','aide','parametres','education','installer'];
+const MENU_PAGES=['menu','garage','clients','expertises','taches','aide','parametres','education','installer','flotte','amende','assistant'];
 const configs={
   expertises:{sing:'expertise',title:'Expertises',cols:[['client','Client'],['immatriculation','Immatriculation'],['date','Date RDV'],['statut','Statut'],['notes','Observations']],fields:[['client','Client','text',1],['immatriculation','Immatriculation','text'],['date','Date de rendez-vous','date'],['statut','Statut','select','',['Sans RDV','RDV fixé','Réalisée','À relancer']],['notes','Observations','textarea']]},
   vehicules:{sing:'dossier',title:'Dossiers',cols:[['client','Client'],['modele','Véhicule'],['immatriculation','Immatriculation'],['statut','Étape'],['priorite','Priorité']],fields:[['client','Client','text',1],['modele','Modèle','text'],['immatriculation','Immatriculation','text'],['statut','Étape','select','',['À chiffrer','En attente','À planifier','En travaux','Peinture','Prêt à livrer','Livré']],['priorite','Priorité (1 à 10)','number'],['telephone','Téléphone client','tel'],['sinistre','Sinistre','text'],['assurance','Assurance','text'],['expertise','Expertise','select','',['À prévoir','RDV fixé','Faite','Non nécessaire']],['prochaine_action','Prochaine action','text'],['date_action','Pour quand','date'],['responsable','Responsable','select','',['Enzo','IB','Brahim','Aurel','Autre']],['montant','Montant estimé des travaux (€)','number'],['notes','Observations','textarea']]},
@@ -592,23 +634,43 @@ function listing(section){
   return header(c.title,subtitle,`${section==='planning'?`<button class="btn btn-dark" onclick="query='';filter='';calVue('jour')">📅 Calendrier</button> `:''}<button class="btn btn-primary" onclick="edit('${section}')">+ Ajouter</button>`)+(section==='prets'?flotteTableau():'')+`<div class="toolbar"><div class="grow"><input class="search" value="${esc(query)}" oninput="query=this.value;render()" placeholder="Rechercher un client, une immatriculation, un dossier…"></div><div class="w240"><select class="select" onchange="filter=this.value;render()"><option value="">Tous les statuts</option>${statuses.map(s=>`<option ${s===filter?'selected':''}>${esc(s)}</option>`).join('')}</select></div></div>${table(section)}</section>`
 }
 function menuPage(){
-  const tuiles=[
-    ['vehicules','▤','Dossiers','Les véhicules à l’atelier',db.vehicules.length],
-    ['planning','▦','Planning','Rendez-vous et interventions',db.planning.length],
-    ['prets','▬','Voitures de prêt','Qui a quelle voiture',db.prets.length],
-    ['clients','☺','Clients','Coordonnées et véhicules',db.clients.length],
-    ['expertises','⌕','Expertises','Rendez-vous d’expert',db.expertises.length],
-    ['taches','✦','Relances','Ce qu’il reste à faire',db.taches.filter(x=>x.statut!=='Terminée').length],
-    ['assistant','🎙','Nouveau dossier à la voix','Entretien guidé',''],
-    ['education','🎓','Éduquer le pilote','Ses savoir-faire, questions et consignes',''],
-    ['garage','🏠','Mon garage','Identité, voitures de prêt, équipe',''],
-    ['parametres','⇩','Accès et sauvegardes','Codes de l’équipe, exporter, importer',''],
-    ['aide','?','Guide','Comment se servir de l’appli',''],
-    ['matin','☀️','Ma journée le matin',asstLire('matin')==='1'?'Activé · touche pour arrêter':'Un petit résumé chaque matin, si tu veux',''],
-    ...(installEtat().installee?[]:[['installer','📲','Installer l’appli','Icône sur l’écran d’accueil','']])
+  // V15 — L'appli en 6 rubriques : on trouve sans chercher
+  const horsStock=db.taches.filter(x=>x.statut!=='Terminée').length;
+  const rubriques=[
+    ['Prêts','pre',[
+      ['prets','▬','Les prêts','Qui a quelle voiture',db.prets.length],
+      ['flotte','⛽','La flotte','État, km, contrôle technique',garage().flotte.length],
+      ['amende','✉','Qui avait la voiture ?','Retrouver le conducteur d’une amende','']
+    ]],
+    ['Atelier','dos',[
+      ['vehicules','▤','Les dossiers','Les véhicules en réparation',db.vehicules.length],
+      ['assistant','🎙','Nouveau dossier à la voix','Entretien guidé','']
+    ]],
+    ['Sinistres et expertises','exp',[
+      ['expertises','⌕','Les expertises','Rendez-vous d’expert',db.expertises.length]
+    ]],
+    ['Clients et messages','cli',[
+      ['clients','☺','Les clients','Coordonnées et véhicules',db.clients.length],
+      ['taches','✦','Les relances','Ce qu’il reste à dire',horsStock]
+    ]],
+    ['Planning','pla',[
+      ['planning','▦','Le planning','Rendez-vous et interventions',db.planning.length]
+    ]],
+    ['Réglages','gen',[
+      ['garage','🏠','Mon garage','Identité, taux, équipe',''],
+      ['education','🎓','Éduquer le pilote','Ses savoir-faire et consignes',''],
+      ['parametres','⇩','Accès et sauvegardes','Codes de l’équipe, exporter',''],
+      ['aide','?','Guide','Comment se servir de l’appli',''],
+      ['matin','☀️','Ma journée le matin',asstLire('matin')==='1'?'Activé · touche pour arrêter':'Un petit résumé chaque matin, si tu veux',''],
+      ...(installEtat().installee?[]:[['installer','📲','Installer l’appli','Icône sur l’écran d’accueil','']])
+    ]]
   ];
-  return header('Toute l’appli','Touche une rubrique pour l’ouvrir.')+`<div class="menu-grid">${tuiles.map(([p,i,t,d,n])=>`<button class="card menu-tile" data-sec="${SEC_OF[p]||'gen'}" onclick="${p==='matin'?'asstBascule()':`go('${p}')`}"><span class="menu-ico">${i}</span><span class="menu-txt"><strong>${t}</strong><small>${d}</small></span>${n!==''?`<span class="menu-count">${n}</span>`:''}</button>`).join('')}</div>${(typeof sync!=='undefined'&&sync.nom==='Enzo')?'<div class="dedicace"><span>Pour toi, Enzo.</span><small>— Papa</small></div>':''}</section>`;
+  const tuile=([p,i,t,d,n])=>`<button class="card menu-tile" data-sec="${SEC_OF[p]||'gen'}" onclick="${p==='matin'?'asstBascule()':`go('${p}')`}"><span class="menu-ico">${i}</span><span class="menu-txt"><strong>${t}</strong><small>${d}</small></span>${n!==''?`<span class="menu-count">${n}</span>`:''}</button>`;
+  return header('Toute l’appli','Six rubriques, rien de plus. Touche pour ouvrir.')
+    +rubriques.map(([titre,sec,items])=>`<div class="ck-bloc" style="margin-top:20px"><div class="ck-titre"><i style="background:${MENU_COUL[sec]}"></i><h2 class="ck-h">${titre}</h2></div><div class="menu-grid">${items.map(tuile).join('')}</div></div>`).join('')
+    +`${(typeof sync!=='undefined'&&sync.nom==='Enzo')?'<div class="dedicace"><span>Pour toi, Enzo.</span><small>— Papa</small></div>':''}</section>`;
 }
+const MENU_COUL={pre:'#C2610F',dos:'#0E7C74',exp:'#6B4FBB',cli:'#2F62C9',pla:'#2F62C9',tac:'#C2413A',gen:'#14213D'};
 function help(){return header('Guide de démarrage','Un parcours simple pour comprendre l’application sans jargon.')+`<div class="notice" style="margin-bottom:16px"><b>But de cette version :</b> t’offrir une interface sombre, premium, très lisible, qui met en avant ce qui compte vraiment dans le garage.</div><div class="help-grid"><div class="card step-card"><div class="step-num">1</div><h3>Commence par les dossiers</h3><p>Ajoute les véhicules dans “Dossiers” pour suivre où ils en sont : attente, planification, travaux, peinture, livraison.</p></div><div class="card step-card"><div class="step-num">2</div><h3>Utilise le cockpit</h3><p>Le cockpit fait ressortir les points à risque et les alertes du flux atelier. Il t’aide à voir tout de suite ce qui bloque.</p></div><div class="card step-card"><div class="step-num">3</div><h3>Prépare la journée</h3><p>Le planning et les signaux du pilote permettent d’anticiper demain et de limiter les oublis.</p></div><div class="card step-card"><div class="step-num">4</div><h3>Sauvegarde localement</h3><p>Pour l’instant, tes données restent sur cet appareil. Pense à exporter régulièrement dans les paramètres.</p></div></div></section>`}
 function settings(){return header('Paramètres','Sauvegarder, importer ou exporter les données de l’atelier.')+`<div class="settings-grid">${syncCarte()}<div class="card settings-card"><h3>Sauvegardes</h3><p>Les données sont enregistrées localement sur cet appareil et dans ce navigateur. Tu peux exporter un fichier JSON pour conserver ton test.</p><div class="buttons" style="justify-content:flex-start"><button class="btn btn-primary" onclick="exportData()">↓ Exporter</button><button class="btn btn-dark" onclick="document.getElementById('importFile').click()">↑ Importer</button><input id="importFile" type="file" accept=".json,application/json" hidden onchange="importData(event)"></div></div><div class="card settings-card"><h3>Réinitialisation</h3><p>Si tu veux refaire un essai propre avec le nouveau design, tu peux effacer les données locales.</p><div class="buttons" style="justify-content:flex-start"><button class="btn btn-dark" style="border-color:rgba(221,115,130,.2);color:#8A2A23;background:rgba(221,115,130,.12)" onclick="resetAll()">Effacer les données</button></div></div></div></section>`}
 function edit(section,id=''){
@@ -664,7 +726,7 @@ function render(){
   if(change&&document.startViewTransition&&!window.__vt){window.__vt=1;const t=document.startViewTransition(()=>renderInner(true));t.finished.finally(()=>{window.__vt=0});return}
   renderInner(change);
 }
-function renderInner(change){pagePrec=page;document.body.dataset.sec=(window.SEC_OF||{})[page]||'gen';bottomNav(); const root=document.getElementById('root'); root.classList.toggle('entree',!!change); if(page==='dashboard') root.innerHTML=cockpit(); else if(page==='planning'&&cal.vue!=='liste'&&!query&&!filter) root.innerHTML=planningPage(); else if(['vehicules','planning','prets','taches','expertises','clients'].includes(page)) root.innerHTML=listing(page); else if(page==='assistant') root.innerHTML=assistantPage(); else if(page==='aide') root.innerHTML=help(); else if(page==='menu') root.innerHTML=menuPage(); else if(page==='education') root.innerHTML=eduPage(); else if(page==='installer') root.innerHTML=installPage(); else if(page==='garage') root.innerHTML=garagePage(); else root.innerHTML=settings(); if(change)window.scrollTo(0,0);}
+function renderInner(change){pagePrec=page;document.body.dataset.sec=(window.SEC_OF||{})[page]||'gen';bottomNav(); const root=document.getElementById('root'); root.classList.toggle('entree',!!change); if(page==='dashboard') root.innerHTML=cockpit(); else if(page==='planning'&&cal.vue!=='liste'&&!query&&!filter) root.innerHTML=planningPage(); else if(['vehicules','planning','prets','taches','expertises','clients'].includes(page)) root.innerHTML=listing(page); else if(page==='assistant') root.innerHTML=assistantPage(); else if(page==='aide') root.innerHTML=help(); else if(page==='menu') root.innerHTML=menuPage(); else if(page==='education') root.innerHTML=eduPage(); else if(page==='installer') root.innerHTML=installPage(); else if(page==='garage') root.innerHTML=garagePage(); else if(page==='flotte') root.innerHTML=flottePage(); else if(page==='amende') root.innerHTML=amendePage(); else root.innerHTML=settings(); if(change)window.scrollTo(0,0);}
 
 // V8 - Pilote IA : la conversation passe par la fonction Netlify /api/pilote (Gemini, clé cachée côté serveur).
 // Si l'IA est injoignable (fichier ouvert en local, quota atteint…), le pilote repasse sur les règles locales de la V7.
@@ -1210,7 +1272,7 @@ function pgNavDirecte(s){
   const reste=m[1];
   if(PG_MOTS_SECTION.planning.test(reste)&&/demain|aujourd|matin|soir|semaine|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|\d/.test(reste))return ''; // « le planning de demain » → l'IA le lit
 
-  const cible=[[/nouveau dossier|creer un dossier|entretien/,'assistant'],[/mon garage|equipe|siret|taux horaire|identite/,'garage'],[/voitures? de pret|\bprets?\b/,'prets'],[/planning|agenda|rendez.vous/,'planning'],[/relances?|taches?/,'taches'],[/expertises?/,'expertises'],[/clients?/,'clients'],[/dossiers?|vehicules?|atelier/,'vehicules'],[/sauvegardes?|parametres?|export/,'parametres'],[/cockpit|accueil|tableau de bord/,'dashboard'],[/guide|aide/,'aide']].find(([re])=>re.test(reste));
+  const cible=[[/nouveau dossier|creer un dossier|entretien/,'assistant'],[/mon garage|equipe|siret|taux horaire|identite/,'garage'],[/amende|radar|contravention|qui avait la voiture|designer? le conducteur/,'amende'],[/flotte|etat des voitures|controle technique/,'flotte'],[/voitures? de pret|\bprets?\b/,'prets'],[/planning|agenda|rendez.vous/,'planning'],[/relances?|taches?/,'taches'],[/expertises?/,'expertises'],[/clients?/,'clients'],[/dossiers?|vehicules?|atelier/,'vehicules'],[/sauvegardes?|parametres?|export/,'parametres'],[/cockpit|accueil|tableau de bord/,'dashboard'],[/guide|aide/,'aide']].find(([re])=>re.test(reste));
   if(!cible)return '';
   const sec=cible[1];
   const opts=configs[sec]?.fields.find(f=>f[0]==='statut')?.[4]||[];
@@ -1220,7 +1282,7 @@ function pgNavDirecte(s){
   if(autres.length>1)return ''; // demande plus riche → l'IA s'en occupe
   if(sec==='assistant'){go('assistant');return 'J’ouvre l’entretien de dossier.'}
   page=sec;query=autres[0]||'';filter=etape||'';render();
-  const noms={prets:'les prêts',planning:'le planning',taches:'les relances',expertises:'les expertises',clients:'les clients',vehicules:'les dossiers',parametres:'les sauvegardes',dashboard:'le cockpit',aide:'le guide',garage:'ton garage'};
+  const noms={amende:'la recherche d’amende',flotte:'la flotte',prets:'les prêts',planning:'le planning',taches:'les relances',expertises:'les expertises',clients:'les clients',vehicules:'les dossiers',parametres:'les sauvegardes',dashboard:'le cockpit',aide:'le guide',garage:'ton garage'};
   if(configs[sec]&&(etape||query)){const n=filteredRows(sec).length;return `Voici ${noms[sec]}${etape?' à l’étape '+etape:''}${query?' pour '+query:''} : ${n?n+' résultat'+(n>1?'s':''):'aucun résultat'}.`}
   return 'J’ouvre '+noms[sec]+'.';
 }
@@ -1249,10 +1311,10 @@ function pgUndo(){if(!pg.undo)return;db=pg.undo;pg.undo=null;save(true);render()
 
 // Secours sans IA : ouvrir une page par mot-clé.
 function pgLocal(s){
-  const map=[[/nouveau dossier|creer un dossier/,'assistant'],[/mon garage|equipe|siret|taux horaire/,'garage'],[/pret|voiture de pret/,'prets'],[/planning|agenda|rendez.vous|demain|aujourd/,'planning'],[/relance|tache/,'taches'],[/expertise/,'expertises'],[/client/,'clients'],[/dossier|vehicule|atelier/,'vehicules'],[/sauvegarde|parametre|export/,'parametres'],[/cockpit|accueil/,'dashboard']];
+  const map=[[/nouveau dossier|creer un dossier/,'assistant'],[/mon garage|equipe|siret|taux horaire/,'garage'],[/amende|radar|contravention|qui avait la voiture/,'amende'],[/flotte|controle technique/,'flotte'],[/pret|voiture de pret/,'prets'],[/planning|agenda|rendez.vous|demain|aujourd/,'planning'],[/relance|tache/,'taches'],[/expertise/,'expertises'],[/client/,'clients'],[/dossier|vehicule|atelier/,'vehicules'],[/sauvegarde|parametre|export/,'parametres'],[/cockpit|accueil/,'dashboard']];
   const hit=map.find(([re])=>re.test(s));if(!hit)return '';
   go(hit[1]);
-  return 'J’ouvre '+({assistant:'l’entretien de dossier',prets:'les prêts',planning:'le planning',taches:'les relances',expertises:'les expertises',clients:'les clients',vehicules:'les dossiers',parametres:'les sauvegardes',dashboard:'le cockpit',garage:'ton garage'}[hit[1]])+'.';
+  return 'J’ouvre '+({assistant:'l’entretien de dossier',amende:'la recherche d’amende',flotte:'la flotte',prets:'les prêts',planning:'le planning',taches:'les relances',expertises:'les expertises',clients:'les clients',vehicules:'les dossiers',parametres:'les sauvegardes',dashboard:'le cockpit',garage:'ton garage'}[hit[1]])+'.';
 }
 
 function pgRender(){
@@ -1579,7 +1641,7 @@ function equipeCourts(){return [...garage().equipe.map(m=>m.court||m.nom).filter
 function garageSave(msg){db.garageMaj=new Date().toISOString();save(true);closeModal();render();toast(msg||'Enregistré')}
 const GAR_ID=[['raison','Raison sociale'],['adresse','Adresse'],['tel','Téléphone'],['fax','Fax'],['siret','SIRET'],['ape','Code APE'],['horaires','Horaires d’ouverture']];
 const GAR_TAUX=[['t1','Taux T1 (€ HT/h)'],['t2','Taux T2 (€ HT/h)'],['peinture','Taux peinture (€ HT/h)']];
-const GAR_FLOTTE=[['nom','Voiture'],['plaque','Immatriculation'],['km','Kilométrage'],['notes','Observations']];
+const GAR_FLOTTE=[['nom','Voiture'],['plaque','Immatriculation'],['km','Kilométrage'],['ct','Contrôle technique jusqu’au (JJ/MM/AAAA)'],['vidange','Dernière vidange (date ou km)'],['assurance','Assurance'],['notes','Observations']];
 const GAR_EQUIPE=[['nom','Prénom'],['court','Nom court (planning)'],['role','Rôle'],['tel','Portable']];
 function garModal(titre,champs,obj,action){
   document.getElementById('modalhost').innerHTML=`<div class="modalback" onclick="closeModal()"><div class="modal" onclick="event.stopPropagation()"><h2>${titre}</h2><form onsubmit="${action}"><div class="fields">${champs.map(([k,l])=>`<div class="field"><label for="g_${k}">${l}</label><input id="g_${k}" name="${k}" value="${esc(obj[k])}" ${k==='tel'?'type="tel"':''}></div>`).join('')}</div><div class="buttons"><button type="button" class="btn btn-dark" onclick="closeModal()">Annuler</button><button class="btn btn-primary">Enregistrer</button></div></form></div></div>`;
@@ -1667,6 +1729,114 @@ function pretAlertes(){
   }
   return out;
 }
+// V15 — FLOTTE : les voitures de prêt, leur état, leurs échéances
+function ctJours(v){
+  const m=String(v||'').match(/(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})/);
+  if(!m)return null;
+  let a=+m[3]; if(a<100)a+=2000;
+  const d=new Date(a,+m[2]-1,+m[1]);
+  if(isNaN(d))return null;
+  return Math.round((d-new Date())/864e5);
+}
+function flotteEtat(f){
+  const now=new Date(),ps=db.prets.filter(p=>p.nom===f.nom&&pretActif(p));
+  const en=ps.find(p=>p.statut==='Prêté');
+  const res=ps.filter(p=>p.statut==='Réservé'&&pretFin(p)>now).sort((a,b)=>pretDebut(a)-pretDebut(b))[0];
+  if(en&&pretEnRetard(en))return{n:4,lib:'En retard',c:'#C2413A',bg:'#FBE7E5',fg:'#8A2A23',p:en,res};
+  if(en)return{n:3,lib:'Dehors',c:'#C2610F',bg:'#FBEBDD',fg:'#8F4A0C',p:en,res};
+  if(res)return{n:2,lib:'Réservée',c:'#2F62C9',bg:'#E6EDFA',fg:'#1F4699',p:null,res};
+  return{n:1,lib:'Au garage',c:'#0E7C74',bg:'#E3F2F0',fg:'#0B5F59',p:null,res};
+}
+function flottePage(){
+  const g=garage(),al=pretAlertes();
+  const cartes=g.flotte.map(f=>{
+    const e=flotteEtat(f),j=ctJours(f.ct);
+    const det=[];
+    if(e.p)det.push(`Chez <b>${esc(e.p.client||'un client')}</b>${e.p.date_retour?' · retour '+esc(dh(e.p.date_retour,e.p.heure_retour)):' · retour non fixé'}`);
+    if(e.res)det.push(`Réservée le ${esc(dh(e.res.date_depart,e.res.heure_depart))}${e.res.client?' pour '+esc(e.res.client):''}`);
+    const ctCls=j!==null&&j<60?'alerte':'';
+    const ctTxt=f.ct?(j!==null&&j<0?'Périmé':esc(f.ct)+(j!==null&&j<60?' ('+j+' j)':'')):'—';
+    return `<div class="fl-c">
+      <div class="fl-h"><span class="fl-pt" style="background:${e.c}"></span><span class="fl-n">${esc(f.nom)}</span><span class="fl-e" style="background:${e.bg};color:${e.fg}">${e.lib}</span></div>
+      ${det.length?`<div class="fl-d">${det.join('<br>')}</div>`:''}
+      <div class="fl-i">
+        <div><small>Plaque</small><b>${esc(f.plaque||'—')}</b></div>
+        <div><small>Km</small><b>${esc(String(f.km||'').replace(/\B(?=(\d{3})+(?!\d))/g,'\u202f')||'—')}</b></div>
+        <div class="${ctCls}"><small>Contrôle tech.</small><b>${ctTxt}</b></div>
+      </div>
+      <div class="fl-i"><div><small>Vidange</small><b>${esc(f.vidange||'—')}</b></div><div style="grid-column:span 2"><small>Assurance</small><b>${esc(f.assurance||'—')}</b></div></div>
+      <div class="fl-a">
+        ${e.p?`<button class="btn btn-primary" onclick="edit('prets','${esc(e.p.id)}')">Ouvrir le prêt</button>`:`<button class="btn btn-primary" onclick="pretNouveau('${esc(f.nom)}')">Prêter</button>`}
+        <button class="btn btn-dark" onclick="garEdit('flotte','${esc(f.id||'')}')">Modifier la fiche</button>
+        ${e.p&&e.p.telephone?telBoutons(e.p.telephone,1):''}
+      </div></div>`;
+  }).join('');
+  const libres=g.flotte.filter(f=>flotteEtat(f).n===1).length;
+  return header('La flotte',`Tes ${g.flotte.length} voitures de prêt — ${libres} au garage en ce moment.`,
+    '<button class="btn btn-primary" onclick="garEdit(\'flotte\')">+ Voiture</button>')
+    +(al.length?`<div class="notice" style="margin-top:14px;background:var(--red-soft);border-color:rgba(221,115,130,.3);color:#8A2A23">${al.map(a=>'⚠️ '+esc(a.texte)).join('<br><br>')}</div>`:'')
+    +`<div class="fl-grille">${cartes||'<div class="empty">Aucune voiture de prêt enregistrée.</div>'}</div></section>`;
+}
+
+// V15 — AMENDE : à telle date, à telle heure, qui avait la voiture ?
+var amende={date:'',heure:'',nom:''};
+function amendeSet(k,v){amende[k]=v;render()}
+function amendeCherche(){
+  if(!amende.date)return null;
+  const t=new Date(amende.date+'T'+(amende.heure||'12:00'));
+  if(isNaN(t))return null;
+  const hits=db.prets.filter(p=>{
+    if(amende.nom&&String(p.nom||'').trim().toLowerCase()!==amende.nom.trim().toLowerCase())return false;
+    if(!p.date_depart)return false;
+    const a=new Date(p.date_depart+'T'+(p.heure_depart||'00:00'));
+    const b=p.date_retour?new Date(p.date_retour+'T'+(p.heure_retour||'23:59')):new Date(8.64e15);
+    return a<=t&&t<=b;
+  });
+  return {t,hits};
+}
+function amendeTexte(p){
+  const G=garage().identite;
+  return `DÉSIGNATION DU CONDUCTEUR
+
+Véhicule : ${p.nom||''}${p.plaque?' — '+p.plaque:''}
+Date et heure de l’infraction : ${dh(amende.date,amende.heure)}
+
+Le véhicule ci-dessus était prêté à :
+Nom : ${p.client||''}
+Téléphone : ${p.telephone||''}
+${p.email?'E-mail : '+p.email:''}
+
+Période du prêt : ${pretPeriode(p)}
+Contrat de prêt signé : ${p.signature?'oui':'non'}
+
+Le contrat de prêt prévoit que le bénéficiaire est seul responsable des infractions commises pendant le prêt et accepte d’être désigné comme conducteur.
+
+${G.raison||''}
+${G.adresse||''}
+${G.tel||''}${G.siret?'\nSIRET : '+G.siret:''}`;
+}
+function amendeCopier(i){
+  const el=document.getElementById('amTxt'+i); if(!el)return;
+  navigator.clipboard?.writeText(el.textContent).then(()=>toast('Copié'),()=>toast('Copie impossible'));
+}
+function amendePage(){
+  const g=garage(),r=amendeCherche();
+  const form=`<div class="toolbar" style="margin-top:14px"><div class="grow"><label class="t-muted" style="font-size:13px;font-weight:700">Date de l’infraction</label><input class="search" type="date" value="${esc(amende.date)}" onchange="amendeSet('date',this.value)"></div><div class="w240"><label class="t-muted" style="font-size:13px;font-weight:700">Heure</label><input class="search" type="time" value="${esc(amende.heure)}" onchange="amendeSet('heure',this.value)"></div><div class="w240"><label class="t-muted" style="font-size:13px;font-weight:700">Voiture (facultatif)</label><select class="select" onchange="amendeSet('nom',this.value)"><option value="">Toutes</option>${g.flotte.map(f=>`<option ${f.nom===amende.nom?'selected':''}>${esc(f.nom)}</option>`).join('')}</select></div></div>`;
+  let res='';
+  if(!amende.date) res='<div class="empty">Mets la date qui figure sur l’avis, et l’heure si tu l’as.</div>';
+  else if(!r||!r.hits.length) res=`<div class="am-res"><b>Aucun prêt à ce moment-là.</b><div class="fl-d">Le ${esc(dh(amende.date,amende.heure))}, aucune voiture de prêt n’était sortie d’après l’appli${amende.nom?' pour la '+esc(amende.nom):''}. C’était donc le garage qui conduisait, ou le prêt n’a pas été enregistré.</div></div>`;
+  else res=r.hits.map((p,i)=>`<div class="am-res trouve">
+      <div class="fl-h"><span class="fl-pt" style="background:#C2610F"></span><span class="fl-n">${esc(p.nom||'Véhicule')}</span><span class="fl-e" style="background:#FBEBDD;color:#8F4A0C">Trouvé</span></div>
+      <div class="am-l"><span>Client</span><b>${esc(p.client||'—')}</b></div>
+      <div class="am-l"><span>Téléphone</span><b>${esc(p.telephone||'—')}</b></div>
+      <div class="am-l"><span>Période</span><b>${esc(pretPeriode(p))}</b></div>
+      <div class="am-l"><span>Contrat signé</span><b>${p.signature?'✅ oui':'❌ non'}</b></div>
+      <div class="am-txt" id="amTxt${i}">${esc(amendeTexte(p))}</div>
+      <div class="fl-a"><button class="btn btn-primary" onclick="amendeCopier(${i})">Copier la désignation</button><button class="btn btn-dark" onclick="edit('prets','${esc(p.id)}')">Ouvrir le prêt</button>${telBoutons(p.telephone,1)}</div>
+    </div>`).join('');
+  return header('Qui avait la voiture ?','Une amende arrive six mois après ? Mets la date et l’heure de l’avis, l’appli retrouve le client et prépare la désignation.')+form+res+'</section>';
+}
+
 function flotteTableau(){
   const now=new Date();
   const cartes=garage().flotte.map(f=>{
@@ -1902,7 +2072,57 @@ function planningPage(){
 }
 
 // V14 — CODE COULEUR PAR RUBRIQUE : vert = atelier, bleu = planning, orange = prêts, violet = expertises, rouge = relances
-var SEC_OF={vehicules:'dos',assistant:'dos',planning:'pla',prets:'pre',garage:'pre',expertises:'exp',taches:'tac',clients:'cli'};
+var SEC_OF={vehicules:'dos',assistant:'dos',planning:'pla',prets:'pre',flotte:'pre',amende:'pre',garage:'pre',expertises:'exp',taches:'tac',clients:'cli'};
+// V15 — LA TEMPÉRATURE DE LA JOURNÉE : une couleur, un coup d'œil, et le pourquoi quand on la touche
+const TEMP_NIV=[
+  {n:0,nom:'Journée calme',c:'#2F62C9',ico:'☽',def:'Rien de prévu aujourd’hui.'},
+  {n:1,nom:'Journée normale',c:'#0E7C74',ico:'✓',def:'Tout est sous contrôle.'},
+  {n:2,nom:'Ça approche',c:'#C2610F',ico:'⧗',def:'Quelque chose arrive bientôt.'},
+  {n:3,nom:'Ça chauffe',c:'#C2413A',ico:'⚠',def:'À traiter tout de suite.'}
+];
+function temperature(){
+  const auj=localISO(),now=new Date(),H=now.getTime(),pts=[],add=(n,t)=>pts.push({n,t});
+  // Rouge : c'est déjà en retard
+  for(const p of db.prets.filter(pretEnRetard))
+    add(3,`${p.nom} pas rentrée — ${p.client||'client'}, retour prévu ${dh(p.date_retour,p.heure_retour)}.`);
+  for(const e of db.planning.filter(e=>e.statut!=='Terminé'&&e.date===auj&&calNiveau(e)==='urgent'))
+    add(3,`${e.titre||'Rendez-vous'} de ${e.heure||'—'} n’est pas marqué fait.`);
+  for(const e of db.planning.filter(e=>e.statut!=='Terminé'&&e.date&&e.date<auj).slice(0,3))
+    add(3,`${e.titre||'Rendez-vous'} du ${dh(e.date,e.heure)} est resté en plan.`);
+  for(const t of db.taches.filter(x=>x.statut!=='Terminée'&&x.echeance&&x.echeance<auj).slice(0,3))
+    add(3,`Relance en retard : ${t.titre||'à faire'}${t.client?' · '+t.client:''}.`);
+  // Orange : ça arrive dans l'heure, ou ça risque de coincer
+  for(const a of pretAlertes()) add(2,a.texte);
+  for(const e of db.planning.filter(e=>e.statut!=='Terminé'&&e.date===auj&&e.heure)){
+    const t=new Date(auj+'T'+e.heure); if(t>=now&&t-H<=36e5) add(2,`${e.titre||'Rendez-vous'} à ${e.heure}, dans ${Math.max(1,Math.round((t-H)/6e4))} min.`)}
+  for(const p of db.prets.filter(x=>x.statut==='Prêté'&&x.date_retour===auj&&x.heure_retour)){
+    const t=new Date(auj+'T'+p.heure_retour); if(t>=now&&t-H<=72e5) add(2,`Retour de la ${p.nom} à ${p.heure_retour}${p.client?' ('+p.client+')':''}.`)}
+  for(const t of db.taches.filter(x=>x.statut!=='Terminée'&&x.echeance===auj))
+    add(2,`Relance pour aujourd’hui : ${t.titre||'à faire'}${t.client?' · '+t.client:''}.`);
+  for(const x of db.expertises.filter(x=>x.statut==='Sans RDV'||!x.date).slice(0,2))
+    add(2,`${x.client||'Un dossier'} attend une date d’expertise.`);
+  // Vert : de quoi est faite la journée
+  const rdvJour=db.planning.filter(e=>e.date===auj&&e.statut!=='Terminé');
+  const dehors=db.prets.filter(p=>p.statut==='Prêté');
+  if(rdvJour.length) add(1,`${rdvJour.length} rendez-vous aujourd’hui.`);
+  if(dehors.length) add(1,`${dehors.length} voiture${dehors.length>1?'s':''} de prêt dehors.`);
+  const niv=pts.reduce((m,p)=>Math.max(m,p.n),pts.length?1:0),N=TEMP_NIV[niv];
+  const chauds=pts.filter(p=>p.n===niv);
+  return {...N,points:pts.slice().sort((a,b)=>b.n-a.n),resume:chauds.length?chauds[0].t:N.def};
+}
+function tempCarte(prio){
+  const T=temperature();
+  const haut=`<span class="tj">${T.ico}</span><span class="tt"><b>${esc(T.nom)}</b><small>${esc(T.resume)}</small><span class="ck-jauge">${[0,1,2,3].map(i=>`<i class="${i<=T.n?'on':''}"></i>`).join('')}</span></span><span class="tf">›</span>`;
+  if(!prio) return `<button class="ck-temp" style="background:${T.c}" onclick="tempDetail()" aria-label="Température de la journée : ${esc(T.nom)}">${haut}</button>`;
+  return `<div class="ck-temp ck-temp-a" style="background:${T.c}"><button class="ck-temp-h" onclick="tempDetail()" aria-label="Température de la journée : ${esc(T.nom)}">${haut}</button><button class="ck-temp-b" onclick="${prio.on}">${prio.bt} →</button></div>`;
+}
+function tempDetail(){
+  const T=temperature();
+  const liste=T.points.length
+    ? T.points.map(p=>`<div><i style="background:${TEMP_NIV[p.n].c}"></i><span>${esc(p.t)}</span></div>`).join('')
+    : '<div><i style="background:#2F62C9"></i><span>Rien à signaler : pas de rendez-vous, pas de voiture dehors, pas de relance.</span></div>';
+  document.getElementById('modalhost').innerHTML=`<div class="modalback" onclick="closeModal()"><div class="modal" onclick="event.stopPropagation()"><h2>${T.ico} ${esc(T.nom)}</h2><p class="t-muted" style="margin-top:-8px">Voilà pourquoi la barre est de cette couleur.</p><div class="temp-liste">${liste}</div><div class="buttons"><button class="btn btn-dark" onclick="closeModal()">Fermer</button></div></div></div>`;
+}
 // V14 — COCKPIT : l'essentiel d'un coup d'œil, du clair (normal) au foncé (urgent)
 function cockpit(){
   const auj=localISO(),now=new Date();
@@ -1958,20 +2178,12 @@ function cockpit(){
   <path class="chv-bouche" d="M119 45q4.5 3.4 9 0" fill="none" stroke-width="1.5"/>
  </g>
 </g></svg></span></div>
-  <div class="ck-tuiles">
-    <button class="ck-tuile" style="background:#E3F2F0;color:#0B5F59" onclick="go('vehicules')"><b>${dossiers.length}</b><span>Dossiers</span></button>
-    <button class="ck-tuile" style="background:#E6EDFA;color:#1F4699" onclick="calAller('${auj}');go('planning')"><b>${rdv.filter(e=>e.statut!=='Terminé').length}</b><span>RDV du jour</span></button>
-    <button class="ck-tuile" style="background:#FBEBDD;color:#8F4A0C" onclick="go('prets')"><b>${libres}/${flotte.length}</b><span>Prêts libres</span></button>
-  </div>
-  ${prio?`<div class="ck-prio" style="background:${prio.sec}"><small>${prio.lib}</small><p>${esc(prio.txt)}</p><button onclick="${prio.on}">${prio.bt} →</button></div>`:`<div class="ck-ok">✓ Rien d’urgent pour l’instant.</div>`}
+  ${tempCarte(prio)}
   <div class="ck-bloc"><div class="ck-titre"><i style="background:#2F62C9"></i><h2 class="ck-h">Rendez-vous du jour</h2><button style="color:#1F4699" onclick="calAller('${auj}');go('planning')">Planning →</button></div>
-    ${rdv.length?rdv.slice(0,4).map(e=>{const T=CAL_TYPES[calType(e)],n=calNiveau(e);const st=n==='urgent'?`background:${T.d};color:#fff;border-color:${T.d}`:n==='fait'?'opacity:.5':n==='afaire'?`background:${T.t};border-color:${T.t}`:'';return `<button class="ck-ligne" style="border-left:5px solid ${T.c};${st}" onclick="edit('planning','${esc(e.id)}')"><b style="color:${n==='urgent'?'#fff':T.d}">${esc(e.heure||'—')}</b><span>${esc(e.titre||'')}</span>${telBoutons(telDe(e),1)}</button>`}).join(''):'<div class="ck-vide">Aucun rendez-vous aujourd’hui.</div>'}
+    ${rdv.length?rdv.slice(0,4).map(e=>{const T=CAL_TYPES[calType(e)],n=calNiveau(e);const st=n==='urgent'?`background:${T.d};color:#fff;border-color:${T.d}`:n==='fait'?'opacity:.5':n==='afaire'?`background:${T.t};border-color:${T.t}`:'';return `<button class="ck-ligne" style="border-left:5px solid ${T.c};${st}" onclick="edit('planning','${esc(e.id)}')"><b style="color:${n==='urgent'?'#fff':T.d}">${esc(e.heure||'—')}</b><span>${esc(e.titre||'')}</span></button>`}).join(''):'<div class="ck-vide">Aucun rendez-vous aujourd’hui.</div>'}
   </div>
   <div class="ck-bloc"><div class="ck-titre"><i style="background:#D9731A"></i><h2 class="ck-h">Voitures de prêt</h2><button style="color:#8F4A0C" onclick="go('prets')">Prêts →</button></div>
     <div class="ck-pre">${etats.map(e=>{const c=coulPre[e.n];return `<button style="background:${c[0]};color:${e.n===4?'#fff':'var(--ink)'};border-color:${c[2]}" onclick="${e.id?`edit('prets','${esc(e.id)}')`:`pretNouveau('${esc(e.f.nom)}')`}"><b>${esc(e.f.nom.replace(/^(Peugeot|Renault|Ford|Alfa Romeo)\s*/,m=>m.startsWith('Alfa')?'Alfa ':''))}</b><span style="color:${c[1]}">${esc(e.t)}</span></button>`}).join('')}</div>
-  </div>
-  <div class="ck-bloc"><div class="ck-titre"><i style="background:#0E7C74"></i><h2 class="ck-h">Atelier</h2><button style="color:#0B5F59" onclick="go('vehicules')">Dossiers →</button></div>
-    <div class="ck-at">${etapes.map(([et,bg,fg])=>`<button style="background:${bg};color:${fg}" onclick="go('vehicules');filter='${et}';render()"><b>${dossiers.filter(x=>x.statut===et).length}</b><span>${et==='Prêt à livrer'?'À livrer':et}</span></button>`).join('')}</div>
   </div>
   <button class="btn btn-primary" style="justify-content:center" onclick="pgOpen()">🎙 Parler au pilote</button>
   </div>`;
