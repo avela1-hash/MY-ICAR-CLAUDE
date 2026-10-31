@@ -464,6 +464,14 @@ th{background:#F8F9FB!important;color:var(--mut)!important}td{color:var(--ink)!i
 .ck-at button{border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:2px;cursor:pointer;font:inherit;text-align:left;border:1px solid #CDE7E3;transition:transform .15s}
 .ck-at b{font-size:20px;font-family:'Fraunces',Georgia,serif}.ck-at span{font-size:11.5px;font-weight:700}
 .ck-vide{font-size:14px;color:var(--mut);padding:4px 2px}
+.menu-bloc{margin-top:26px}
+.menu-tete{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.menu-tete i{width:4px;height:20px;border-radius:2px;flex:none}
+.menu-tete h2{margin:0;font-family:'Fraunces',Georgia,serif;font-size:21px;font-weight:600;flex:1;letter-spacing:-.01em}
+.menu-tete span{flex:none;font-size:12.5px;font-weight:800;color:var(--mut);background:#fff;border:1px solid var(--bord);border-radius:999px;min-width:26px;height:26px;display:grid;place-items:center}
+.menu-petits{display:flex;flex-direction:column;gap:8px;margin-top:28px;padding-top:18px;border-top:1px solid var(--bord)}
+.menu-petit{border:0;background:none;font:inherit;font-size:14.5px;font-weight:700;color:var(--mut);text-align:left;padding:10px 2px;cursor:pointer;display:flex;gap:8px;align-items:baseline}
+.menu-petit em{font-style:normal;font-weight:400;font-size:13.5px;opacity:.8}
 .btn-suppr{background:#FBE7E5;border:1px solid rgba(221,115,130,.35);color:#8A2A23;margin-right:auto}
 .toast-annul{border:0;background:rgba(255,255,255,.22);color:#fff;font:inherit;font-weight:800;font-size:14px;padding:7px 14px;border-radius:10px;margin-left:10px;cursor:pointer}
 .fl-grille{display:flex;flex-direction:column;gap:12px;margin-top:16px}
@@ -636,40 +644,39 @@ function listing(section){
   return header(c.title,subtitle,`${section==='planning'?`<button class="btn btn-dark" onclick="query='';filter='';calVue('jour')">📅 Calendrier</button> `:''}<button class="btn btn-primary" onclick="edit('${section}')">+ Ajouter</button>`)+(section==='prets'?flotteTableau():'')+`<div class="toolbar"><div class="grow"><input class="search" value="${esc(query)}" oninput="query=this.value;render()" placeholder="Rechercher un client, une immatriculation, un dossier…"></div><div class="w240"><select class="select" onchange="filter=this.value;render()"><option value="">Tous les statuts</option>${statuses.map(s=>`<option ${s===filter?'selected':''}>${esc(s)}</option>`).join('')}</select></div></div>${table(section)}</section>`
 }
 function menuPage(){
-  // V15 — L'appli en 6 rubriques : on trouve sans chercher
+  // V15 — Quatre groupes, trois ou quatre choix chacun : l'œil compte sans lire
   const horsStock=db.taches.filter(x=>x.statut!=='Terminée').length;
   const rubriques=[
     ['Prêts','pre',[
       ['prets','▬','Les prêts','Qui a quelle voiture',db.prets.length],
       ['flotte','⛽','La flotte','État, km, contrôle technique',garage().flotte.length],
-      ['amende','✉','Qui avait la voiture ?','Retrouver le conducteur d’une amende','']
+      ['amende','✉','Qui avait la voiture ?','Retrouver le conducteur',''],
     ]],
     ['Atelier','dos',[
       ['vehicules','▤','Les dossiers','Les véhicules en réparation',db.vehicules.length],
-      ['assistant','🎙','Nouveau dossier à la voix','Entretien guidé','']
+      ['expertises','⌕','Les expertises','Rendez-vous d’expert',db.expertises.length],
+      ['assistant','🎙','Nouveau dossier à la voix','Entretien guidé',''],
     ]],
-    ['Sinistres et expertises','exp',[
-      ['expertises','⌕','Les expertises','Rendez-vous d’expert',db.expertises.length]
-    ]],
-    ['Clients et messages','cli',[
+    ['Clients','cli',[
       ['clients','☺','Les clients','Coordonnées et véhicules',db.clients.length],
-      ['taches','✦','Les relances','Ce qu’il reste à dire',horsStock]
-    ]],
-    ['Planning','pla',[
-      ['planning','▦','Le planning','Rendez-vous et interventions',db.planning.length]
+      ['taches','✦','Les relances','Ce qu’il reste à dire',horsStock],
     ]],
     ['Réglages','gen',[
       ['garage','🏠','Mon garage','Identité, taux, équipe',''],
-      ['education','🎓','Éduquer le pilote','Ses savoir-faire et consignes',''],
+      ['education','🎓','Éduquer le pilote','Ses savoir-faire',''],
       ['parametres','⇩','Accès et sauvegardes','Codes de l’équipe, exporter',''],
       ['aide','?','Guide','Comment se servir de l’appli',''],
-      ['matin','☀️','Ma journée le matin',asstLire('matin')==='1'?'Activé · touche pour arrêter':'Un petit résumé chaque matin, si tu veux',''],
-      ...(installEtat().installee?[]:[['installer','📲','Installer l’appli','Icône sur l’écran d’accueil','']])
     ]]
   ];
-  const tuile=([p,i,t,d,n])=>`<button class="card menu-tile" data-sec="${SEC_OF[p]||'gen'}" onclick="${p==='matin'?'asstBascule()':`go('${p}')`}"><span class="menu-ico">${i}</span><span class="menu-txt"><strong>${t}</strong><small>${d}</small></span>${n!==''?`<span class="menu-count">${n}</span>`:''}</button>`;
-  return header('Toute l’appli','Six rubriques, rien de plus. Touche pour ouvrir.')
-    +rubriques.map(([titre,sec,items])=>`<div class="ck-bloc" style="margin-top:20px"><div class="ck-titre"><i style="background:${MENU_COUL[sec]}"></i><h2 class="ck-h">${titre}</h2></div><div class="menu-grid">${items.map(tuile).join('')}</div></div>`).join('')
+  const tuile=([p,i,t,d,n])=>`<button class="card menu-tile" data-sec="${SEC_OF[p]||'gen'}" onclick="go('${p}')"><span class="menu-ico">${i}</span><span class="menu-txt"><strong>${t}</strong><small>${d}</small></span>${n!==''?`<span class="menu-count">${n}</span>`:''}</button>`;
+  const matinOn=asstLire('matin')==='1';
+  const petits=[
+    `<button class="menu-petit" onclick="asstBascule()">☀️ Ma journée le matin <em>${matinOn?'activé':'désactivé'}</em></button>`,
+    ...(installEtat().installee?[]:[`<button class="menu-petit" onclick="go('installer')">📲 Installer l’appli <em>icône sur l’écran d’accueil</em></button>`])
+  ].join('');
+  return header('Toute l’appli','Quatre rubriques. Touche pour ouvrir.')
+    +rubriques.map(([titre,sec,items])=>`<div class="menu-bloc"><div class="menu-tete"><i style="background:${MENU_COUL[sec]}"></i><h2>${titre}</h2><span>${items.length}</span></div><div class="menu-grid">${items.map(tuile).join('')}</div></div>`).join('')
+    +`<div class="menu-petits">${petits}</div>`
     +`${(typeof sync!=='undefined'&&sync.nom==='Enzo')?'<div class="dedicace"><span>Pour toi, Enzo.</span><small>— Papa</small></div>':''}</section>`;
 }
 const MENU_COUL={pre:'#C2610F',dos:'#0E7C74',exp:'#6B4FBB',cli:'#2F62C9',pla:'#2F62C9',tac:'#C2413A',gen:'#14213D'};
