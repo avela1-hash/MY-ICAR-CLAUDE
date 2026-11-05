@@ -16,7 +16,8 @@ const SECTIONS = {
       expertise: ['À prévoir', 'RDV fixé', 'Faite', 'Non nécessaire'],
       prochaine_action: 'texte', date_action: 'AAAA-MM-JJ',
       responsable: ['Enzo', 'IB', 'Brahim', 'Aurel', 'Adam', 'Autre'],
-      priorite: 'entier 1 à 10', montant: 'nombre en euros', notes: 'texte',
+      priorite: 'entier 1 à 10', montant: 'nombre en euros', annee: 'texte (année du véhicule)', km: 'nombre (kilométrage)',
+      paiement: ['À facturer', 'Facturé, en attente', 'Payé', 'Refusé par l’assurance'], cote: 'LECTURE SEULE : cote occasion estimée en euros', notes: 'texte',
       manque: 'LECTURE SEULE : infos encore manquantes dans ce dossier'
     }
   },
