@@ -785,6 +785,7 @@ function menuPage(){
   const matinOn=asstLire('matin')==='1';
   const petits=[
     `<button class="menu-petit" onclick="asstBascule()">☀️ Ma journée le matin <em>${matinOn?'activé':'désactivé'}</em></button>`,
+    `<button class="menu-petit" onclick="alerteBascule()">🔔 Alertes sur ce téléphone <em>${alerteOn()?'activées':'désactivées'}</em></button>`,
     ...(installEtat().installee?[]:[`<button class="menu-petit" onclick="go('installer')">📲 Installer l’appli <em>icône sur l’écran d’accueil</em></button>`])
   ].join('');
   return header('Toute l’appli','Quatre rubriques. Touche pour ouvrir.')
@@ -2760,6 +2761,34 @@ function asstCarte(){
   const r=asstResume();
   return `<div class="asst-carte"><div><b>Salut ${esc(sync.nom||'')} ☀️</b><span>${esc(r.court)}</span></div><div class="asst-bt"><button aria-label="Écouter ma journée" onclick="ttsSay(asstResume().oral)">🔊</button><button onclick="calAller('${auj}');cal.mode='jour';go('planning')">Voir</button><button aria-label="Masquer pour aujourd’hui" onclick="asstEcrire('ferme','${auj}');render()">✕</button></div></div>`;
 }
+
+// Alertes des agents : prêt pas rentré, retour à risque, CT / assurance. Chacun les active sur son téléphone.
+function alerteOn(){try{return localStorage.getItem('myicar_alertes')==='1'}catch(e){return false}}
+function alerteB64(b){const p='='.repeat((4-b.length%4)%4),r=atob((b+p).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(r,c=>c.charCodeAt(0))}
+async function alerteBascule(){
+  const H={'Content-Type':'application/json','x-code-equipe':sync.code};
+  if(!sync.code){toast('Connecte-toi d’abord avec ton code');return}
+  if(!('serviceWorker' in navigator)||!('PushManager' in window)){toast(/iphone|ipad/i.test(navigator.userAgent)?'Sur iPhone : ajoute d’abord l’appli à l’écran d’accueil, puis ouvre-la depuis l’icône':'Ce navigateur ne gère pas les alertes');return}
+  try{
+    const reg=await navigator.serviceWorker.ready;let sub=await reg.pushManager.getSubscription();
+    if(alerteOn()){
+      if(sub){await fetch('/api/alertes',{method:'DELETE',headers:H,body:JSON.stringify({sub})}).catch(()=>{});await sub.unsubscribe().catch(()=>{})}
+      try{localStorage.setItem('myicar_alertes','0')}catch(e){}
+      toast('Alertes coupées sur ce téléphone');render();return;
+    }
+    if(await Notification.requestPermission()!=='granted'){toast('Autorise les notifications pour My I-Car dans les réglages du téléphone');return}
+    const k=await (await fetch('/api/alertes',{headers:H})).json();
+    if(!k.cle)throw new Error(k.erreur||'clé absente');
+    if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:alerteB64(k.cle)});
+    const r=await fetch('/api/alertes',{method:'POST',headers:H,body:JSON.stringify({sub:sub.toJSON()})});
+    if(!r.ok)throw new Error('serveur');
+    try{localStorage.setItem('myicar_alertes','1')}catch(e){}
+    await fetch('/api/alertes',{method:'POST',headers:H,body:JSON.stringify({essai:1})}).catch(()=>{});
+    toast('Alertes activées : une alerte d’essai arrive');render();
+  }catch(e){toast('Impossible d’activer les alertes pour l’instant')}
+}
+if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data&&e.data.aller){closeModal&&closeModal();go(e.data.aller)}});
+(()=>{const p=new URLSearchParams(location.search).get('page');if(p&&/^[a-z]+$/.test(p)){page=p;history.replaceState(null,'',location.pathname+location.hash)}})();
 
 render();
 pgRender();

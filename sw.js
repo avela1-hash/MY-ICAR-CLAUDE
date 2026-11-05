@@ -1,6 +1,6 @@
 // My I-Car : rend l'appli installable et permet de l'ouvrir même sans réseau.
 // Toujours la dernière version quand il y a du réseau ; l'IA (/api/) n'est jamais mise en cache.
-const CACHE = 'myicar-v14';
+const CACHE = 'myicar-v16';
 const BASE = ['/', '/index.html', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(BASE)).then(() => self.skipWaiting()));
@@ -17,4 +17,23 @@ self.addEventListener('fetch', e => {
       return r;
     }).catch(() => caches.match(e.request).then(r => r || caches.match('/index.html')))
   );
+});
+
+// Alertes des agents (prêt en retard, échéances…)
+self.addEventListener('push', e => {
+  let m = {};
+  try { m = e.data ? e.data.json() : {}; } catch { m = { texte: e.data && e.data.text() }; }
+  e.waitUntil(self.registration.showNotification(m.titre || 'My I-Car', {
+    body: m.texte || '', icon: '/icons/icon-192.png', badge: '/icons/icon-192.png',
+    tag: m.tag || undefined, renotify: !!m.tag, data: { page: m.page || 'dashboard' }
+  }));
+});
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  const page = (e.notification.data && e.notification.data.page) || 'dashboard';
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(cs => {
+    const c = cs.find(x => new URL(x.url).origin === location.origin);
+    if (c) { c.postMessage({ aller: page }); return c.focus(); }
+    return self.clients.openWindow('/?page=' + encodeURIComponent(page));
+  }));
 });
