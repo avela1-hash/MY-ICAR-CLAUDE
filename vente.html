@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>My I-Car pour carrosseries</title>
+<meta name="description" content="L'appli d'atelier faite par un carrossier, pour les carrossiers : prêts de voitures, planning, dossiers, expertises, pilote à la voix.">
+<meta name="theme-color" content="#F5F6F8">
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F5F6F8;--card:#fff;--ink:#14213D;--muted:#5B6478;--line:#E3E6EC;
+--teal:#0E7C74;--blue:#2F62C9;--orange:#C2610F;--violet:#6B4FBB;--red:#C2413A}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Manrope,system-ui,sans-serif}
+.w{max-width:1040px;margin:0 auto;padding:0 16px}
+h1,h2,h3{font-family:Fraunces,Georgia,serif;line-height:1.15;margin:0}
+header{padding:28px 0 8px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800}
+.logo img{width:36px;height:36px;border-radius:10px}
+.hero{padding:36px 0 28px}
+.hero h1{font-size:clamp(32px,6vw,54px);max-width:16ch}
+.hero p{font-size:19px;color:var(--muted);max-width:52ch;margin:16px 0 24px}
+.btns{display:flex;flex-wrap:wrap;gap:10px}
+.b{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 22px;border-radius:14px;font-weight:800;text-decoration:none;border:1.5px solid var(--ink)}
+.b.p{background:var(--ink);color:#fff}.b.s{color:var(--ink);background:#fff}
+section{padding:28px 0}
+section>h2{font-size:28px;margin-bottom:18px}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.c{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px;border-top:5px solid var(--k,var(--ink))}
+.c h3{font-size:20px;margin-bottom:6px}.c p{margin:0;color:var(--muted)}
+.why{background:var(--ink);color:#fff;border-radius:24px;padding:28px}
+.why h2{font-size:28px;margin-bottom:10px}.why p{color:#C9D1E3;margin:0;max-width:60ch}
+.prix{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.px{background:#fff;border:1px solid var(--line);border-radius:22px;padding:24px}
+.px.on{border:2px solid var(--teal)}
+.px .n{font-weight:800;color:var(--muted);text-transform:uppercase;font-size:13px;letter-spacing:.06em}
+.px .v{font-family:Fraunces,serif;font-size:44px;font-weight:700;margin:6px 0}
+.px .v small{font:600 16px Manrope,sans-serif;color:var(--muted)}
+.px ul{padding-left:18px;margin:12px 0 0;color:var(--muted)}
+footer{padding:32px 0 48px;color:var(--muted);font-size:14px}
+</style>
+</head>
+<body>
+<div class="w">
+<header><div class="logo"><img src="/icons/icon-192.png" alt="">My I-Car</div></header>
+
+<div class="hero">
+  <h1>L'appli d'atelier faite par un carrossier.</h1>
+  <p>Prêts de voitures, planning, dossiers, expertises : tout le garage dans le téléphone, et on lui parle à la voix. Née et utilisée chaque jour à la Nouvelle Carrosserie de la Jomayere, à Saint-Étienne.</p>
+  <div class="btns">
+    <a class="b p" href="tel:+33608610976">Appeler Aurélien</a>
+    <a class="b s" href="sms:+33608610976?body=Bonjour%2C%20je%20voudrais%20essayer%20My%20I-Car%20pour%20mon%20garage.">Demander un essai par SMS</a>
+  </div>
+</div>
+
+<section>
+  <h2>Ce qu'elle fait</h2>
+  <div class="g">
+    <div class="c" style="--k:var(--orange)"><h3>Fini les amendes sans conducteur</h3><p>Chaque prêt : photo du permis, heure de départ, contrat signé au doigt par le client. Six mois après, vous savez qui avait la voiture.</p></div>
+    <div class="c" style="--k:var(--orange)"><h3>Les voitures de prêt d'un coup d'œil</h3><p>Au garage, dehors, en retard, réservée. Plus de double réservation, alerte si une voiture n'est pas rentrée.</p></div>
+    <div class="c" style="--k:var(--blue)"><h3>Un planning lisible</h3><p>Rendez-vous, départs et retours de prêts au même endroit, en jour, semaine ou mois, au doigt.</p></div>
+    <div class="c" style="--k:var(--teal)"><h3>Les dossiers d'atelier</h3><p>Carte grise en photo : plaque, modèle, VIN remplis tout seuls. Ce qui reste à faire, les livraisons qui approchent.</p></div>
+    <div class="c" style="--k:var(--violet)"><h3>Sinistres et expertises</h3><p>Suivi des dossiers assurance, raccourci vers votre logiciel de chiffrage, montants sur la carte.</p></div>
+    <div class="c" style="--k:var(--red)"><h3>Alertes sur le téléphone</h3><p>Prêt pas rentré, contrôle technique ou assurance d'une voiture de prêt qui arrive à échéance.</p></div>
+    <div class="c"><h3>On lui parle</h3><p>« Prête la Clio à M. Martin jusqu'à vendredi » : le pilote vocal remplit l'appli pour vous.</p></div>
+    <div class="c"><h3>Toute l'équipe</h3><p>Un code par personne, coupable à tout moment. Pièces commandées à vos fournisseurs en un bouton.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="why">
+    <h2>Simple, pas une usine à gaz.</h2>
+    <p>Pas de formation, pas d'ordinateur obligatoire : un lien, un code, et ça marche sur Android, iPhone et PC. Vos données restent à vous, séparées de celles des autres garages.</p>
+  </div>
+</section>
+
+<section>
+  <h2>Prix</h2>
+  <div class="prix">
+    <div class="px on">
+      <div class="n">Un garage</div>
+      <div class="v">49 € <small>HT / mois</small></div>
+      <ul><li>Toute l'équipe incluse</li><li>Pilote vocal inclus</li><li>Mises à jour incluses</li><li>Sans engagement</li></ul>
+    </div>
+    <div class="px">
+      <div class="n">Mise en route</div>
+      <div class="v">Offerte</div>
+      <ul><li>Installation de votre appli</li><li>Votre garage, vos voitures, votre équipe</li><li>Premier mois d'essai gratuit</li></ul>
+    </div>
+  </div>
+</section>
+
+<footer>My I-Car · SARL Nouvelle Carrosserie de la Jomayere · 17 rue Édouard Martel, 42100 Saint-Étienne · 06 08 61 09 76</footer>
+</div>
+</body>
+</html>
