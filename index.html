@@ -2777,15 +2777,17 @@ async function alerteBascule(){
       toast('Alertes coupées sur ce téléphone');render();return;
     }
     if(await Notification.requestPermission()!=='granted'){toast('Autorise les notifications pour My I-Car dans les réglages du téléphone');return}
-    const k=await (await fetch('/api/alertes',{headers:H})).json();
-    if(!k.cle)throw new Error(k.erreur||'clé absente');
+    let etape='clé';const k=await (await fetch('/api/alertes',{headers:H})).json().catch(()=>({}));
+    if(!k.cle)throw new Error(k.erreur||'le serveur ne répond pas');
+    etape='téléphone';
+    if(sub&&sub.options&&sub.options.applicationServerKey){const a=new Uint8Array(sub.options.applicationServerKey),b=alerteB64(k.cle);if(a.length!==b.length||a.some((x,i)=>x!==b[i])){await sub.unsubscribe().catch(()=>{});sub=null}}
     if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:alerteB64(k.cle)});
-    const r=await fetch('/api/alertes',{method:'POST',headers:H,body:JSON.stringify({sub:sub.toJSON()})});
-    if(!r.ok)throw new Error('serveur');
+    etape='enregistrement';const r=await fetch('/api/alertes',{method:'POST',headers:H,body:JSON.stringify({sub:sub.toJSON()})});
+    if(!r.ok)throw new Error((await r.json().catch(()=>({}))).erreur||('erreur '+r.status));
     try{localStorage.setItem('myicar_alertes','1')}catch(e){}
-    await fetch('/api/alertes',{method:'POST',headers:H,body:JSON.stringify({essai:1})}).catch(()=>{});
-    toast('Alertes activées : une alerte d’essai arrive');render();
-  }catch(e){toast('Impossible d’activer les alertes pour l’instant')}
+    const t=await (await fetch('/api/alertes',{method:'POST',headers:H,body:JSON.stringify({essai:1})})).json().catch(()=>({}));
+    toast(t.envoyes?'Alertes activées : une alerte d’essai arrive':'Alertes activées'+(t.erreurs&&t.erreurs.length?' (essai : '+t.erreurs[0]+')':''));render();
+  }catch(e){const el=document.getElementById('toast');toast('x');el.textContent='Alertes pas activées : '+String(e&&e.message||e).slice(0,140);clearTimeout(window.__tt);window.__tt=setTimeout(()=>el.style.display='none',9000)}
 }
 if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data&&e.data.aller){closeModal&&closeModal();go(e.data.aller)}});
 (()=>{const p=new URLSearchParams(location.search).get('page');if(p&&/^[a-z]+$/.test(p)){page=p;history.replaceState(null,'',location.pathname+location.hash)}})();

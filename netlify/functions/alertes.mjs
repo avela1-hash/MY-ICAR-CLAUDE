@@ -3,6 +3,11 @@ import { verifier, json } from '../lib/acces.mjs';
 import { clesVapid, abonnes, ecrireAbonnes, envoyer } from '../lib/alertes.mjs';
 
 export default async (req) => {
+  try { return await traiter(req); }
+  catch (e) { return json({ erreur: 'serveur : ' + String(e && e.message || e).slice(0, 160) }, 500); }
+};
+
+async function traiter(req) {
   const qui = await verifier(req);
   if (qui instanceof Response) return qui;
 
@@ -34,6 +39,6 @@ export default async (req) => {
     return json({ ok: true });
   }
   return json({ erreur: 'méthode non autorisée' }, 405);
-};
+}
 
 export const config = { path: '/api/alertes' };
