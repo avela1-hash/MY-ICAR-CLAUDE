@@ -822,7 +822,8 @@ async function coteEstimer(){
   toast('Cote trouvée — pense à Enregistrer');
 }
 // V16 — CARTE GRISE EN PHOTO : la fiche se remplit toute seule, puis la cote se lance
-function cgBloc(){return `<div class="card" style="padding:14px;margin:0 0 14px;border:1px solid #CFE6E3;background:#F2F9F8"><label class="btn btn-primary" style="width:100%;justify-content:center;cursor:pointer">📷 Photo de la carte grise<input type="file" accept="image/*" capture="environment" hidden onchange="cgLire(event)"></label><div id="cgInfo" class="t-muted" style="margin-top:8px;font-size:14px">L’appli remplit la plaque, le modèle, l’année et le VIN toute seule.</div></div>`}
+function cgBloc(){return `<div class="card" style="padding:14px;margin:0 0 14px;border:1px solid #CFE6E3;background:#F2F9F8"><label class="btn btn-primary" style="width:100%;justify-content:center;cursor:pointer">📷 Photo de la carte grise<input type="file" accept="image/*" capture="environment" hidden onchange="cgLire(event)"></label><button type="button" class="btn btn-secondary" style="width:100%;margin-top:8px" onclick="plaqueAtelio()">🔎 Chercher la plaque dans Atelio</button><div id="cgInfo" class="t-muted" style="margin-top:8px;font-size:14px">L’appli remplit la plaque, le modèle, l’année et le VIN toute seule.</div></div>`}
+async function plaqueAtelio(){const f=document.querySelector('#modalhost form'),pl=(f?.elements.immatriculation?.value||'').replace(/[^A-Z0-9]/gi,'').toUpperCase();if(!pl){toast('Tape d’abord la plaque');return}try{await navigator.clipboard.writeText(pl);toast('Plaque '+pl+' copiée — colle-la dans Atelio')}catch(e){toast('Plaque : '+pl)}window.open('https://www.atelio-chiffrage.com/mainMenu.html?method=index','_blank','noopener')}
 async function cgLire(ev){
   const file=ev.target.files&&ev.target.files[0];if(!file)return;const info=document.getElementById('cgInfo'),f=document.querySelector('#modalhost form');
   info.textContent='Lecture de la carte grise…';let d=null;
