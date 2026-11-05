@@ -664,7 +664,7 @@ function bottomNav(){
 }
 function hero(){
   const risk=countRisk();
-  return `<section class="hero"><div class="kicker">✦ Pilotage intelligent de carrosserie</div><h1>Bonjour Aurel. <br>Ton atelier a une longueur d’avance.</h1><p>Les dossiers avancent. Le pilote t’aide à recueillir les informations d’un dossier et à repérer les points qui restent à traiter.</p><div class="hero-actions"><button class="btn btn-primary" onclick="pgOpen()">🎙 Parler au pilote</button><button class="btn btn-secondary" onclick="go('planning')">▦ Préparer demain</button><button class="btn btn-secondary" onclick="go('taches')">✦ Relances</button></div>${risk===0?`<div class="hint-card"><strong>Nouveau sur My I-Car ?</strong><span>Un parcours guidé t’explique les fonctions, sans jargon technique. <span style="color:#0B5F59;font-weight:900;cursor:pointer" onclick="go('aide')">Démarrer avec le guide →</span></span></div>`:''}</section>`;
+  return `<section class="hero"><div class="kicker">✦ Pilotage intelligent de carrosserie</div><h1>Bonjour ${esc(sync.nom||'')}. <br>Ton atelier a une longueur d’avance.</h1><p>Les dossiers avancent. Le pilote t’aide à recueillir les informations d’un dossier et à repérer les points qui restent à traiter.</p><div class="hero-actions"><button class="btn btn-primary" onclick="pgOpen()">🎙 Parler au pilote</button><button class="btn btn-secondary" onclick="go('planning')">▦ Préparer demain</button><button class="btn btn-secondary" onclick="go('taches')">✦ Relances</button></div>${risk===0?`<div class="hint-card"><strong>Nouveau sur My I-Car ?</strong><span>Un parcours guidé t’explique les fonctions, sans jargon technique. <span style="color:#0B5F59;font-weight:900;cursor:pointer" onclick="go('aide')">Démarrer avec le guide →</span></span></div>`:''}</section>`;
 }
 function linkedVehicule(e){const plate=String(e.immatriculation||'').replace(/[^A-Z0-9]/gi,'').toUpperCase(); return db.vehicules.find(v=>plate&&String(v.immatriculation||'').replace(/[^A-Z0-9]/gi,'').toUpperCase()===plate)||db.vehicules.find(v=>e.client&&v.client&&v.client.trim().toLowerCase()===e.client.trim().toLowerCase())}
 function dashboard(){
@@ -767,7 +767,7 @@ function menuPage(){
     ['Atelier','dos',[
       ['vehicules','▤','Les dossiers','Les véhicules en réparation',db.vehicules.length],
       ['expertises','⌕','Les expertises','Rendez-vous d’expert',db.expertises.length],
-      ['pieces','🔧','Les pièces','Demandes à Julien, Didier…',(db.demandes||[]).filter(d=>!['Reçue','Sans suite'].includes(d.statut)).length],
+      ['pieces','🔧','Les pièces',(()=>{const n=garage().fournisseurs.filter(f=>f.actif&&f.genre!=='marque').map(f=>f.nom).slice(0,2);return n.length?'Demandes à '+n.join(', ')+'…':'Demandes aux fournisseurs'})(),(db.demandes||[]).filter(d=>!['Reçue','Sans suite'].includes(d.statut)).length],
       ['assistant','🎙','Nouveau dossier à la voix','Entretien guidé',''],
     ]],
     ['Clients','cli',[
@@ -791,7 +791,7 @@ function menuPage(){
   return header('Toute l’appli','Quatre rubriques. Touche pour ouvrir.')
     +rubriques.map(([titre,sec,items])=>`<div class="menu-bloc"><div class="menu-tete"><i style="background:${MENU_COUL[sec]}"></i><h2>${titre}</h2><span>${items.length}</span></div><div class="menu-grid">${items.map(tuile).join('')}</div></div>`).join('')
     +`<div class="menu-petits">${petits}</div>`
-    +`${(typeof sync!=='undefined'&&sync.nom==='Enzo')?'<div class="dedicace"><span>Pour toi, Enzo.</span><small>— Papa</small></div>':''}</section>`;
+    +`${(JOMAYERE&&typeof sync!=='undefined'&&sync.nom==='Enzo')?'<div class="dedicace"><span>Pour toi, Enzo.</span><small>— Papa</small></div>':''}</section>`;
 }
 const MENU_COUL={pre:'#C2610F',dos:'#0E7C74',exp:'#6B4FBB',cli:'#2F62C9',pla:'#2F62C9',tac:'#C2413A',gen:'#14213D'};
 function help(){return header('Guide de démarrage','Un parcours simple pour comprendre l’application sans jargon.')+`<div class="notice" style="margin-bottom:16px"><b>But de cette version :</b> t’offrir une interface sombre, premium, très lisible, qui met en avant ce qui compte vraiment dans le garage.</div><div class="help-grid"><div class="card step-card"><div class="step-num">1</div><h3>Commence par les dossiers</h3><p>Ajoute les véhicules dans “Dossiers” pour suivre où ils en sont : attente, planification, travaux, peinture, livraison.</p></div><div class="card step-card"><div class="step-num">2</div><h3>Utilise le cockpit</h3><p>Le cockpit fait ressortir les points à risque et les alertes du flux atelier. Il t’aide à voir tout de suite ce qui bloque.</p></div><div class="card step-card"><div class="step-num">3</div><h3>Prépare la journée</h3><p>Le planning et les signaux du pilote permettent d’anticiper demain et de limiter les oublis.</p></div><div class="card step-card"><div class="step-num">4</div><h3>Sauvegarde localement</h3><p>Pour l’instant, tes données restent sur cet appareil. Pense à exporter régulièrement dans les paramètres.</p></div></div></section>`}
@@ -1279,7 +1279,7 @@ async function pgSend(t,reessai){
   try{
     const ctrl=new AbortController();const timer=setTimeout(()=>ctrl.abort(),30000);
     const r=await fetch(GLOBAL_URL,{method:'POST',headers:{'Content-Type':'application/json'},signal:ctrl.signal,
-      body:JSON.stringify({phrase:t,historique,page,maintenant:pgMaintenant(),resume:ctx.resume,donnees:ctx.donnees,education:{questions:eduActives(),consignes:edu().consignes,savoirs:savoirsActifs()}})});
+      body:JSON.stringify({phrase:t,historique,page,maintenant:pgMaintenant(),resume:ctx.resume,donnees:ctx.donnees,education:{questions:eduActives(),consignes:edu().consignes,savoirs:savoirsActifs()},equipe:equipeCourts()})});
     clearTimeout(timer);
     const brut=await r.text();let d;
     try{d=JSON.parse(brut)}catch{d={erreur:r.status===404?'fonction serveur introuvable (404) : le site n’a pas été redéployé':(r.status===502||r.status===504||/timed out|timeout/i.test(brut))?'le serveur a dépassé 10 secondes ('+r.status+')':'réponse illisible du serveur ('+r.status+' : '+brut.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim().slice(0,80)+')'}}
@@ -1679,7 +1679,7 @@ function syncBadge(){
   const e=document.querySelector('.brand-sub');if(e)e.textContent=t;
 }
 function syncDemanderCode(msg=''){
-  document.getElementById('modalhost').innerHTML=`<div class="modalback"><div class="modal"><h2>🔒 Code d’équipe</h2><p class="t-muted" style="font-size:16px;line-height:1.5">Ce code protège les données de l’atelier. Chaque personne a son propre code, donné par Aurel.</p>${msg?`<div class="voice-warning">${esc(msg)}</div>`:''}<form onsubmit="syncValiderCode(event)"><div class="field"><input id="codeEq" type="password" autocomplete="current-password" placeholder="Code d’équipe" style="font-size:20px"></div><div class="buttons"><button type="button" class="btn btn-dark" onclick="closeModal();sync.etat=sync.code?sync.etat:'off';syncBadge()">Plus tard</button><button class="btn btn-primary">Valider</button></div></form></div></div>`;
+  document.getElementById('modalhost').innerHTML=`<div class="modalback"><div class="modal"><h2>🔒 Code d’équipe</h2><p class="t-muted" style="font-size:16px;line-height:1.5">Ce code protège les données de l’atelier. Chaque personne a son propre code, donné par ${esc(patronNom())}.</p>${msg?`<div class="voice-warning">${esc(msg)}</div>`:''}<form onsubmit="syncValiderCode(event)"><div class="field"><input id="codeEq" type="password" autocomplete="current-password" placeholder="Code d’équipe" style="font-size:20px"></div><div class="buttons"><button type="button" class="btn btn-dark" onclick="closeModal();sync.etat=sync.code?sync.etat:'off';syncBadge()">Plus tard</button><button class="btn btn-primary">Valider</button></div></form></div></div>`;
   setTimeout(()=>document.getElementById('codeEq')?.focus(),50);
 }
 function syncValiderCode(e){e.preventDefault();const v=document.getElementById('codeEq').value.trim();if(!v)return;sync.code=v;try{localStorage.setItem('myicar_code',v)}catch(_){}closeModal();toast('Connexion à la base…');syncNow()}
@@ -1803,7 +1803,25 @@ function fanfare(el){
 // ─────────────────────────────────────────────────────────────────────────────
 // V12 — MON GARAGE : identité (contrats), taux, voitures de prêt, équipe (partagé)
 // ─────────────────────────────────────────────────────────────────────────────
-var GARAGE_DEFAUT={
+// MULTI-GARAGES — un site Netlify par garage, même code.
+// Le site de la Jomayere garde son profil de départ (identité, équipe, flotte, reprise TimeTree) ;
+// tout autre site démarre vierge et se règle dans « Mon garage ». Rien ne change pour la Jomayere.
+var JOMAYERE=/(^|--)tangerine-naiad-424468\.netlify\.app$/.test(location.hostname)||(location.hostname==='localhost'&&!/vierge/.test(location.search));
+var GARAGE_VIERGE={
+  identite:{raison:'',adresse:'',tel:'',fax:'',siret:'',ape:'',horaires:''},
+  taux:{t1:'',t2:'',peinture:''},
+  flotte:[],
+  fournisseurs:[
+    {id:'fo3',nom:'BMW',genre:'marque',actif:true,tel:'',note:''},
+    {id:'fo4',nom:'Mercedes',genre:'marque',actif:true,tel:'',note:''},
+    {id:'fo5',nom:'Peugeot',genre:'marque',actif:true,tel:'',note:''},
+    {id:'fo6',nom:'Renault',genre:'marque',actif:true,tel:'',note:''}
+  ],
+  equipe:[]
+};
+// Le patron : celui de « Mon garage » (rôle Gérant), sinon un mot neutre.
+function patronNom(){const g=db.garage||GARAGE_DEFAUT,m=(g.equipe||[]).find(x=>/g[ée]rant|patron/i.test(x.role||''));return m?(m.nom||m.court):(JOMAYERE?'Aurélien':'le patron')}
+var GARAGE_JOMAYERE={
   identite:{raison:'SARL Nouvelle Carrosserie de la Jomayere',adresse:'17 rue Édouard Martel, 42100 Saint-Étienne',tel:'04 77 57 15 98',fax:'04 77 80 67 58',siret:'449 369 958 00011',ape:'502 Z',horaires:'Du lundi au vendredi, 8h-12h et 14h-18h'},
   taux:{t1:'106',t2:'109',peinture:'109'},
   flotte:[
@@ -1829,11 +1847,12 @@ var GARAGE_DEFAUT={
     {id:'e5',nom:'Adam',court:'Adam',role:'Apprenti',tel:'07 87 06 47 83'}
   ]
 };
+var GARAGE_DEFAUT=JOMAYERE?GARAGE_JOMAYERE:GARAGE_VIERGE;
 function garage(){
   if(!db.garage)db.garage=clone(GARAGE_DEFAUT);
   const g=db.garage;g.identite=g.identite||{};g.taux=g.taux||{};g.flotte=g.flotte||[];g.equipe=g.equipe||[];
   if(!g.fournisseurs||!g.fournisseurs.length)g.fournisseurs=clone(GARAGE_DEFAUT.fournisseurs);
-  if(!g.maj2){g.maj2=1;if(!g.identite.horaires)g.identite.horaires=GARAGE_DEFAUT.identite.horaires;const a=g.equipe.find(m=>m.court==='Aurel');if(a&&!a.tel)a.tel='06 08 61 09 76';db.garageMaj=new Date().toISOString()}
+  if(!g.maj2){g.maj2=1;if(!g.identite.horaires)g.identite.horaires=GARAGE_DEFAUT.identite.horaires;const a=JOMAYERE&&g.equipe.find(m=>m.court==='Aurel');if(a&&!a.tel)a.tel='06 08 61 09 76';db.garageMaj=new Date().toISOString()}
   return g;
 }
 function equipeCourts(){return [...garage().equipe.map(m=>m.court||m.nom).filter(Boolean),'Autre']}
@@ -1861,7 +1880,7 @@ function garInviter(id){
   const a=(acces.liste||[]).find(x=>x.actif&&[m.nom,m.court].map(v=>String(v||'').toLowerCase()).includes(String(x.nom).toLowerCase()));
   if(a){accesInviter(a.id);return}
   if(sync.role==='admin'){if(confirm('Créer un accès pour '+m.nom+' et lui envoyer l’invitation ?')){accesApi({action:'ajouter',nom:m.nom}).then(()=>{const n=(acces.liste||[]).find(x=>x.nom===m.nom);if(n)accesInviter(n.id)})}return}
-  const t=`Salut ${m.nom}, voici l’appli de l’atelier My I-Car : ${location.origin}/ . Ton code personnel te sera donné par Aurélien.`;
+  const t=`Salut ${m.nom}, voici l’appli de l’atelier My I-Car : ${location.origin}/ . Ton code personnel te sera donné par ${patronNom()}.`;
   location.href=`sms:${tel}?body=${encodeURIComponent(t)}`;
 }
 function garagePage(){
@@ -2191,7 +2210,7 @@ function ttImport(){
   try{localStorage.setItem('myicar_tt_2026_10_25b','1')}catch(e){}
   if(n){save(true);setTimeout(()=>{render();toast(n+' rendez-vous TimeTree ajoutés au planning')},0)}
 }
-ttImport();ttHeures();ttImport1910();
+if(JOMAYERE){ttImport();ttHeures();ttImport1910();}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ACCÈS : un code par personne, que le patron peut couper à tout moment
@@ -2497,7 +2516,17 @@ function piecesPage(){
 // V15 — MÉTÉO DE L'ATELIER (Open-Meteo, sans compte ni clé).
 // Pour un carrossier ce n'est pas décoratif : la grêle fait le carnet de commandes,
 // la pluie décide des livraisons et des sorties de cabine.
-const METEO_POS={lat:45.4397,lon:4.3872,ville:'Saint-Étienne'}; // le garage
+var METEO_POS={lat:45.4397,lon:4.3872,ville:'Saint-Étienne'}; // la Jomayere ; un autre garage : sa ville, lue dans l'adresse de « Mon garage »
+async function meteoPosition(){
+  if(JOMAYERE)return METEO_POS;
+  const adr=String((db.garage&&db.garage.identite&&db.garage.identite.adresse)||'');
+  const m=adr.match(/\b\d{5}\s+([^,\n]+)/);if(!m)return null;
+  const ville=m[1].trim();
+  try{const c=JSON.parse(localStorage.getItem('myicar_meteo_pos')||'null');if(c&&c.ville===ville)return c}catch(e){}
+  try{const r=await fetch('https://geocoding-api.open-meteo.com/v1/search?count=1&language=fr&country_code=FR&name='+encodeURIComponent(ville));
+    const g=((await r.json()).results||[])[0];if(!g)return null;
+    const pos={lat:g.latitude,lon:g.longitude,ville};try{localStorage.setItem('myicar_meteo_pos',JSON.stringify(pos))}catch(e){}return pos}catch(e){return null}
+}
 const METEO_CODE={0:['Ciel clair','☀'],1:['Peu nuageux','⛅'],2:['Nuageux','⛅'],3:['Couvert','☁'],
   45:['Brouillard','▒'],48:['Brouillard givrant','▒'],
   51:['Bruine','☔'],53:['Bruine','☔'],55:['Bruine forte','☔'],56:['Bruine verglaçante','❄'],57:['Bruine verglaçante','❄'],
@@ -2511,6 +2540,7 @@ function meteoLis(){try{const b=JSON.parse(localStorage.getItem('myicar_meteo')|
 async function meteoCharge(){
   const cache=meteoLis(); if(cache){meteo={etat:'ok',data:cache};return meteoAffiche()}
   try{
+    const pos=await meteoPosition();if(!pos)throw 0;METEO_POS=pos;
     const u=`https://api.open-meteo.com/v1/forecast?latitude=${METEO_POS.lat}&longitude=${METEO_POS.lon}`
       +`&current=temperature_2m,weather_code&hourly=weather_code,precipitation_probability`
       +`&forecast_days=2&timezone=auto`;
@@ -2606,7 +2636,7 @@ function tempDetail(){
 function cockpit(){
   const auj=localISO(),now=new Date();
   const h=now.getHours(),bonjour=h<6||h>=18?'Bonsoir':'Bonjour';
-  const nom=(sync.nom&&sync.nom!=='Aurel')?sync.nom:((garage().equipe.find(m=>m.court==='Aurel')||{}).nom||'Aurélien');
+  const nom=(sync.nom&&sync.role!=='admin')?sync.nom:patronNom();
   const dossiers=db.vehicules.filter(x=>x.statut!=='Livré');
   const rdv=db.planning.filter(x=>x.date===auj).sort((a,b)=>(a.heure||'99').localeCompare(b.heure||'99'));
   const flotte=garage().flotte;
@@ -2704,8 +2734,8 @@ const CHV_PHRASES=()=>{
   const g=typeof garage==='function'?garage():{flotte:[]},auj=localISO();
   const libres=g.flotte.filter(f=>!db.prets.some(p=>p.nom===f.nom&&(p.statut==='Prêté'||p.statut==='Réservé'))).length;
   const rdv=db.planning.filter(e=>e.date===auj&&e.statut!=='Terminé').length;
-  const qui=(typeof sync!=='undefined'&&sync.nom&&sync.nom!=='Aurel')?sync.nom:'Aurélien';
-  return ['Bêêê !','Coucou '+qui+' !',...(qui==='Enzo'?['Salut Enzo 🙂']:[]),libres+' voiture'+(libres>1?'s':'')+' de prêt libre'+(libres>1?'s':'')+' 🚗',rdv?rdv+' rendez-vous aujourd’hui 📅':'Rien au planning aujourd’hui 😌','On lâche rien ! 💪','Miam, du bon foin…','La peinture sèche ? 🎨'];
+  const qui=(typeof sync!=='undefined'&&sync.nom&&sync.role!=='admin')?sync.nom:patronNom();
+  return ['Bêêê !','Coucou '+qui+' !',...(JOMAYERE&&qui==='Enzo'?['Salut Enzo 🙂']:[]),libres+' voiture'+(libres>1?'s':'')+' de prêt libre'+(libres>1?'s':'')+' 🚗',rdv?rdv+' rendez-vous aujourd’hui 📅':'Rien au planning aujourd’hui 😌','On lâche rien ! 💪','Miam, du bon foin…','La peinture sèche ? 🎨'];
 };
 function chvDire(t){const b=document.getElementById('chvBulle');if(!b)return;b.textContent=t;b.classList.add('on');clearTimeout(chv.parle);chv.parle=setTimeout(()=>b.classList.remove('on'),2200)}
 function chvCoeurs(n){const box=document.getElementById('chvBox');if(!box)return;for(let i=0;i<n;i++){const c=document.createElement('span');c.className='chv-coeur';c.textContent=['💛','💚','🧡','✨'][i%4];c.style.left=(70+Math.random()*36)+'px';c.style.top=(6+Math.random()*14)+'px';c.style.setProperty('--dx',(Math.random()*40-20)+'px');c.style.setProperty('--r',(Math.random()*40-20)+'deg');c.style.animationDelay=(i*.08)+'s';box.appendChild(c);setTimeout(()=>c.remove(),1400)}}

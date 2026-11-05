@@ -8,6 +8,9 @@ export const json = (data, status = 200) => new Response(JSON.stringify(data), {
   status, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }
 });
 
+// Prénom du patron (variable PATRON sur Netlify). Sans variable : « Aurel » (la Jomayere).
+export const nomPatron = () => String(env('PATRON') || 'Aurel').trim().slice(0, 30) || 'Aurel';
+
 export function egal(a, b) {
   a = String(a); b = String(b);
   if (a.length !== b.length) return false;
@@ -31,7 +34,7 @@ export async function verifier(req) {
   if (!patron) return json({ erreur: 'base non configurée : ajoute la variable CODE_EQUIPE sur Netlify', configuree: false }, 503);
   const recu = String(req.headers.get('x-code-equipe') || '').trim();
   if (!recu) return json({ erreur: 'code d’équipe incorrect' }, 401);
-  if (egal(recu, patron)) return { role: 'admin', nom: 'Aurel' };
+  if (egal(recu, patron)) return { role: 'admin', nom: nomPatron() };
   const liste = await listeAcces();
   const m = liste.find(p => p.actif && egal(p.code, recu));
   if (m) {

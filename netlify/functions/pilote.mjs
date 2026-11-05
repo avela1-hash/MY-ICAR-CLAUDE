@@ -2,6 +2,7 @@
 // Elle reçoit la conversation depuis l'appli, interroge l'IA (ChatGPT avec OPENAI_API_KEY,
 // Gemini en secours avec GEMINI_API_KEY — clés secrètes Netlify) et renvoie les champs du dossier.
 import { demanderIA, lireJSON } from '../lib/ia.mjs';
+import { nomPatron } from '../lib/acces.mjs';
 
 const SYSTEME = `Tu es « le pilote » de My I-Car, l'assistant d'un atelier de carrosserie.
 Tu aides Aurel, le patron, à constituer un dossier véhicule en conversation orale. Tu le tutoies.
@@ -56,7 +57,7 @@ export default async (req) => {
 
   const historique = (Array.isArray(body.historique) ? body.historique : [])
     .slice(-30)
-    .map(m => `${m?.qui === 'aurel' ? 'Aurel' : 'Pilote'} : ${String(m?.texte ?? '').slice(0, 2000)}`)
+    .map(m => `${m?.qui === 'aurel' ? nomPatron() : 'Pilote'} : ${String(m?.texte ?? '').slice(0, 2000)}`)
     .join('\n');
   const valeurs = {};
   for (const k of CHAMPS) if (body.valeurs?.[k]) valeurs[k] = String(body.valeurs[k]).slice(0, 500);
@@ -71,7 +72,7 @@ Conversation :
 ${historique}`;
 
   let resultat;
-  try { resultat = await demanderIA({ systeme: SYSTEME, prompt, maxSortie: 800 }); }
+  try { resultat = await demanderIA({ systeme: nomPatron() === 'Aurel' ? SYSTEME : SYSTEME.split('Aurel').join(nomPatron()), prompt, maxSortie: 800 }); }
   catch (e) { return json({ erreur: e.message, detail: e.detail || '' }, 502); }
   const out = lireJSON(resultat.texte);
   if (!out) return json({ erreur: 'réponse de l’IA illisible' }, 502);

@@ -4,7 +4,7 @@
 //  3. Échéances de la flotte : contrôle technique et assurance à 30 j, 7 j, et le jour où c'est dépassé.
 // Envoi uniquement de 7 h à 21 h (heure de Paris) ; la nuit, ça attend le matin.
 import { getStore } from '@netlify/blobs';
-import { listeAcces } from '../lib/acces.mjs';
+import { listeAcces, nomPatron } from '../lib/acces.mjs';
 import { abonnes, ecrireAbonnes, envoyer } from '../lib/alertes.mjs';
 
 const DOSSIER_FINI = ['Prêt à livrer', 'Livré'];
@@ -87,7 +87,7 @@ export default async () => {
   if (!base?.data || !liste.length) return new Response('rien');
 
   // Un code coupé = plus d'alertes pour cette personne.
-  const autorises = new Set(['Aurel', ...acces.filter(a => a.actif).map(a => a.nom)]);
+  const autorises = new Set([nomPatron(), ...acces.filter(a => a.actif).map(a => a.nom)]);
   const vivants = liste.filter(a => autorises.has(a.nom));
   if (vivants.length !== liste.length) await ecrireAbonnes(vivants);
   if (!vivants.length) return new Response('rien');

@@ -5,6 +5,20 @@
 // L'IA est ChatGPT (clé OPENAI_API_KEY) avec Gemini en secours (GEMINI_API_KEY) :
 // les clés restent secrètes côté Netlify. Voir netlify/lib/ia.mjs.
 import { demanderIA, lireJSON } from '../lib/ia.mjs';
+import { nomPatron } from '../lib/acces.mjs';
+
+// Multi-garages : l'équipe vient de « Mon garage » (envoyée par l'appli), le patron de la variable PATRON.
+const EQUIPE_DEFAUT = ['Enzo', 'IB', 'Brahim', 'Aurel', 'Adam', 'Autre'];
+function equipeDe(body) {
+  const l = (Array.isArray(body?.equipe) ? body.equipe : []).map(x => String(x ?? '').trim().slice(0, 30)).filter(Boolean).slice(0, 20);
+  if (!l.length) return EQUIPE_DEFAUT;
+  return l.includes('Autre') ? l : [...l, 'Autre'];
+}
+function systemePour(patron, equipe) {
+  let s = SYSTEME.split(JSON.stringify(EQUIPE_DEFAUT)).join(JSON.stringify(equipe));
+  if (patron !== 'Aurel') s = s.split('Aurel').join(patron);
+  return s;
+}
 
 const SECTIONS = {
   vehicules: {
@@ -134,29 +148,30 @@ function resumeCompact(r) {
   return court(JSON.stringify(r), 1500);
 }
 
-function nettoieValeurs(section, valeurs) {
+function nettoieValeurs(section, valeurs, equipe) {
   const def = SECTIONS[section]?.champs || {};
   const propres = {};
   for (const [k, v] of Object.entries(valeurs || {})) {
     if (!(k in def) || k === 'manque' || v === null || v === undefined) continue;
     let s = String(v).trim().slice(0, 600);
-    if (Array.isArray(def[k]) && s && !def[k].includes(s)) continue; // valeur hors liste → ignorée
+    const liste = k === 'responsable' && equipe ? equipe : def[k];
+    if (Array.isArray(liste) && s && !liste.includes(s)) continue; // valeur hors liste → ignorée
     propres[k] = s;
   }
   return propres;
 }
 
-function nettoieActions(actions) {
+function nettoieActions(actions, equipe) {
   const out = [];
   for (const a of (Array.isArray(actions) ? actions : []).slice(0, 12)) {
     const type = a?.type;
     if (type === 'aller' && PAGES.includes(a.page)) {
       out.push({ type, page: a.page, recherche: court(a.recherche, 80), statut: court(a.statut, 40) });
     } else if (type === 'ajouter' && SECTIONS[a.section]) {
-      const valeurs = nettoieValeurs(a.section, a.valeurs);
+      const valeurs = nettoieValeurs(a.section, a.valeurs, equipe);
       if (Object.keys(valeurs).length) out.push({ type, section: a.section, valeurs });
     } else if (type === 'modifier' && SECTIONS[a.section] && a.id) {
-      const valeurs = nettoieValeurs(a.section, a.valeurs);
+      const valeurs = nettoieValeurs(a.section, a.valeurs, equipe);
       if (Object.keys(valeurs).length) out.push({ type, section: a.section, id: court(a.id, 60), valeurs });
     } else if (type === 'supprimer' && SECTIONS[a.section] && a.id) {
       out.push({ type, section: a.section, id: court(a.id, 60) });
@@ -190,9 +205,10 @@ export default async (req) => {
   const phrase = court(body.phrase, 1500).trim();
   if (!phrase) return json({ erreur: 'phrase vide' }, 400);
 
+  const patron = nomPatron(), equipe = equipeDe(body);
   const historique = (Array.isArray(body.historique) ? body.historique : [])
     .slice(-10)
-    .map(m => `${m?.qui === 'aurel' ? 'Aurel' : 'Pilote'} : ${court(m?.texte, 300)}`)
+    .map(m => `${m?.qui === 'aurel' ? patron : 'Pilote'} : ${court(m?.texte, 300)}`)
     .join('\n');
 
   const edu = body.education && typeof body.education === 'object' ? body.education : {};
@@ -224,16 +240,16 @@ ${donneesEnTableaux(body.donnees)}
 Conversation récente :
 ${historique || '(début de conversation)'}
 
-Aurel vient de dire : « ${phrase} »`;
+${patron} vient de dire : « ${phrase} »`;
 
   // Réponse plafonnée : une réponse orale courte suffit, et c'est la partie la plus chère.
   let resultat;
-  try { resultat = await demanderIA({ systeme: SYSTEME, prompt, maxSortie: 600 }); }
+  try { resultat = await demanderIA({ systeme: systemePour(patron, equipe), prompt, maxSortie: 600 }); }
   catch (e) { return json({ erreur: e.message, detail: e.detail || '' }, 502); }
   const out = lireJSON(resultat.texte);
   if (!out) return json({ erreur: 'réponse de l’IA illisible' }, 502);
 
-  const actions = nettoieActions(out.actions);
+  const actions = nettoieActions(out.actions, equipe);
   return json({
     reponse: court(out.reponse, 700) || 'Je n’ai pas compris, tu peux répéter ?',
     actions,
