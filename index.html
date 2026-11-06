@@ -448,8 +448,33 @@ html[data-page="dashboard"],body[data-page="dashboard"]{height:100%;overflow:hid
 #meteoL{text-transform:none;letter-spacing:0;font-weight:600}
 .ck-meteo{display:inline-block;margin-top:7px;font-size:13px;font-weight:700;color:#1F4699;background:#E6EDFA;border-radius:999px;padding:5px 11px}
 .ck-meteo.grave{color:#fff;background:#C2413A}
-.ck-hello small{font-size:13px;font-weight:700;color:var(--mut);letter-spacing:.07em;text-transform:uppercase}
-.ck-hello h1{margin:4px 0 0;font-size:32px;font-weight:600;line-height:1.1}
+.ck-hello{position:relative;background:#14213D;color:#fff;border-radius:24px;padding:18px 16px 16px 18px;overflow:hidden;align-items:center!important;box-shadow:0 14px 30px rgba(20,33,61,.22)}
+.ck-hello::before,.ck-hello::after{content:'';position:absolute;border-radius:50%;pointer-events:none}
+.ck-hello::before{width:170px;height:170px;right:-50px;top:-70px;background:#C2610F;opacity:.38}
+.ck-hello::after{width:120px;height:120px;left:38%;bottom:-70px;background:#0E7C74;opacity:.38}
+.ck-hello>*{position:relative;z-index:1}
+.ck-hello .ck-meteo{background:rgba(255,255,255,.16);color:#fff}
+.ck-hello small{font-size:13px;font-weight:700;color:#FFD3A8;letter-spacing:.07em;text-transform:uppercase}
+.ck-hello h1{margin:4px 0 0;font-size:32px;font-weight:600;line-height:1.1;color:#fff!important}
+.ck-hello .chv-bulle{background:#fff;color:#14213D}
+.ck-groupes{display:flex;gap:8px}
+.ck-grp{min-width:0;display:flex;flex-direction:column;gap:5px;padding:6px;border-radius:14px}
+.ck-grp>small{font-size:11px;font-weight:800;text-align:center;letter-spacing:.03em}
+.ck-grp>div{display:flex;gap:5px}.ck-grp>div>button{flex:1 1 0;min-width:0}
+.ck-grp.g1{background:#EEF8F2}.ck-grp.g1>small{color:#17613F}
+.ck-grp.g2{background:#FDF3E8}.ck-grp.g2>small{color:#A9520B}
+.ck-grp.g3{background:#F8E7D8}.ck-grp.g3>small{color:#6B2E0A}
+.fl-grp{border-radius:18px;padding:10px;margin-bottom:12px}
+.fl-grp>h3{display:flex;align-items:center;gap:8px;margin:2px 4px 10px;font-size:13px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;font-family:inherit!important}
+.fl-grp>h3 i{width:10px;height:10px;border-radius:5px}
+.fl-grp .flotte-grille{margin-bottom:0}
+.fl-grp.g1{background:#EEF8F2}.fl-grp.g1>h3{color:#17613F}.fl-grp.g1>h3 i{background:#2E9E6A}
+.fl-grp.g2{background:#FDF3E8}.fl-grp.g2>h3{color:#A9520B}.fl-grp.g2>h3 i{background:#E08A1E}
+.fl-grp.g3{background:#F8E7D8}.fl-grp.g3>h3{color:#6B2E0A}.fl-grp.g3>h3 i{background:#6B2E0A}
+.pouls{animation:pouls 1.8s ease-in-out infinite}
+@keyframes pouls{0%,100%{box-shadow:0 0 0 0 rgba(194,97,15,.55)}50%{box-shadow:0 0 0 7px rgba(194,97,15,0)}}
+.card.section>.section-head:first-child{margin:-22px -22px 18px;padding:20px 22px 18px;background:var(--st,#EEF1F5);border-bottom:3px solid var(--s,#14213D)}
+@media (max-width:760px){.card.section>.section-head:first-child{margin:-18px -18px 16px;padding:16px 18px}}
 .ck-tuiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .ck-tuile{border:0;border-radius:18px;padding:14px 12px;text-align:left;display:flex;flex-direction:column;gap:2px;cursor:pointer;font:inherit;transition:transform .15s}
 .ck-tuile b{font-family:'Fraunces',Georgia,serif;font-size:32px;font-weight:600;line-height:1.05}.ck-tuile span{font-size:12.5px;font-weight:700}
@@ -1964,8 +1989,8 @@ function flotteEtat(f){
   const res=ps.filter(p=>p.statut==='Réservé'&&pretFin(p)>now).sort((a,b)=>pretDebut(a)-pretDebut(b))[0];
   if(en&&pretEnRetard(en))return{n:4,lib:'En retard',c:'#C2413A',bg:'#FBE7E5',fg:'#8A2A23',p:en,res};
   if(en)return{n:3,lib:'Dehors',c:'#C2610F',bg:'#FBEBDD',fg:'#8F4A0C',p:en,res};
-  if(res)return{n:2,lib:'Réservée',c:'#2F62C9',bg:'#E6EDFA',fg:'#1F4699',p:null,res};
-  return{n:1,lib:'Au garage',c:'#0E7C74',bg:'#E3F2F0',fg:'#0B5F59',p:null,res};
+  if(res)return{n:2,lib:'Réservée',c:'#E08A1E',bg:'#F2A65E',fg:'#4A2302',p:null,res};
+  return{n:1,lib:'Libre',c:'#2E9E6A',bg:'#DDF3E6',fg:'#17613F',p:null,res};
 }
 function flottePage(){
   const g=garage(),al=pretAlertes();
@@ -2159,14 +2184,17 @@ function flotteTableau(){
     const ps=db.prets.filter(p=>p.nom===f.nom&&pretActif(p));
     const enCours=ps.find(p=>p.statut==='Prêté');
     const proch=ps.filter(p=>p.statut==='Réservé'&&pretFin(p)>now).sort((a,b)=>pretDebut(a)-pretDebut(b))[0];
-    let ico='🟢',etat='Au garage',detail='';
-    if(enCours){ico=pretEnRetard(enCours)?'🔴':'🔵';etat=pretEnRetard(enCours)?'En retard · '+enCours.client:'Chez '+enCours.client;detail=enCours.date_retour?'Retour '+dh(enCours.date_retour,enCours.heure_retour):'Retour non fixé';const d=dossierDe(enCours);if(d)detail+=' · sa voiture : '+(d.statut||'—')}
+    let ico='🟢',etat='Libre',detail='';
+    if(enCours){ico=pretEnRetard(enCours)?'🔴':'🟤';etat=pretEnRetard(enCours)?'En retard · '+enCours.client:'Chez '+enCours.client;detail=enCours.date_retour?'Retour '+dh(enCours.date_retour,enCours.heure_retour):'Retour non fixé';const d=dossierDe(enCours);if(d)detail+=' · sa voiture : '+(d.statut||'—')}
+    if(proch&&!enCours){ico='🟠';etat='Réservée'}
     if(proch)detail+=(detail?'<br>':'')+'🟠 Réservée '+esc(dh(proch.date_depart,proch.heure_depart))+' · '+esc(proch.client||'');
     const id=(enCours||proch||{}).id;
-    return `<div class="card flotte-wrap"><button class="flotte-carte" onclick="${id?`edit('prets','${esc(id)}')`:`pretNouveau('${esc(f.nom)}')`}"><div class="flotte-nom">${ico} ${esc(f.nom)}</div><div class="flotte-etat">${esc(etat)}</div><small>${detail}</small></button>${enCours&&enCours.telephone?`<div class="flotte-tel">${telBoutons(enCours.telephone,1)}</div>`:''}</div>`;
-  }).join('');
+    const grp=enCours?'g3':(proch?'g2':'g1'),rt=enCours&&pretEnRetard(enCours);
+    return {grp,html:`<div class="card flotte-wrap${rt?' pouls':''}"><button class="flotte-carte" onclick="${id?`edit('prets','${esc(id)}')`:`pretNouveau('${esc(f.nom)}')`}"><div class="flotte-nom">${ico} ${esc(f.nom)}</div><div class="flotte-etat">${esc(etat)}</div><small>${detail}</small></button>${enCours&&enCours.telephone?`<div class="flotte-tel">${telBoutons(enCours.telephone,1)}</div>`:''}</div>`};
+  });
+  const blocs=[['g1','Libres'],['g2','Réservées'],['g3','Dehors']].map(([g,t])=>{const l=cartes.filter(c=>c.grp===g);return l.length?`<div class="fl-grp ${g}"><h3><i></i>${t} · ${l.length}</h3><div class="flotte-grille">${l.map(c=>c.html).join('')}</div></div>`:''}).join('');
   const al=pretAlertes();
-  return (al.length?`<div class="notice" style="margin-bottom:12px;background:var(--red-soft);border-color:rgba(221,115,130,.3);color:#8A2A23">${al.map(a=>'⚠️ '+esc(a.texte)).join('<br><br>')}</div>`:'')+`<div class="flotte-grille">${cartes}</div>`;
+  return (al.length?`<div class="notice" style="margin-bottom:12px;background:var(--red-soft);border-color:rgba(221,115,130,.3);color:#8A2A23">${al.map(a=>'⚠️ '+esc(a.texte)).join('<br><br>')}</div>`:'')+blocs;
 }
 function pretNouveau(nom){edit('prets');const i=document.getElementById('f_nom');if(i){i.value=nom;i.dispatchEvent(new Event('input'))}}
 
@@ -2659,7 +2687,9 @@ function cockpit(){
   else if(rel[0])prio={sec:'#7A221C',lib:'RELANCE · À FAIRE',txt:`${rel[0].titre||'Relance'}${rel[0].client?' · '+rel[0].client:''}`,bt:'Voir les relances',on:`go('taches')`};
   else if(exp[0])prio={sec:'#3E2A80',lib:'EXPERTISE · SANS RENDEZ-VOUS',txt:`${exp[0].client||'Un dossier'} attend une date d’expertise.`,bt:'Voir les expertises',on:`go('expertises')`};
   const etapes=[['À chiffrer','#FFFFFF','#0B5F59'],['En travaux','#E3F2F0','#0B5F59'],['Peinture','#B5DDD7','#084843'],['Prêt à livrer','#0B5F59','#FFFFFF']];
-  const coulPre={1:['#FFFFFF','#8F4A0C','#F1D5BC'],2:['#FBEBDD','#8F4A0C','#FBEBDD'],3:['#F3C9A3','#6B2E0A','#F3C9A3'],4:['#6B2E0A','#FFD2AE','#6B2E0A']};
+  const coulPre={1:['#DDF3E6','#17613F','#BFE6CF'],2:['#B4560C','#FFE3C8','#B4560C'],3:['#F2A65E','#4A2302','#F2A65E'],4:['#6B2E0A','#FFD2AE','#6B2E0A']};
+  const btnPre=e=>{const c=coulPre[e.n];return `<button class="${e.n===4?'pouls':''}" style="background:${c[0]};color:${e.n>=2&&e.n!==3?'#fff':'var(--ink)'};border-color:${c[2]}" onclick="${e.id?`edit('prets','${esc(e.id)}')`:`pretNouveau('${esc(e.f.nom)}')`}"><b>${esc(e.f.nom.replace(/^(Peugeot|Renault|Ford|Alfa Romeo)\s*/,m=>m.startsWith('Alfa')?'Alfa ':''))}</b><span style="color:${c[1]}">${esc(e.t)}</span></button>`};
+  const grpPre=[['g1','Libres',etats.filter(e=>e.n===1)],['g2','Réservées',etats.filter(e=>e.n===3)],['g3','Dehors',etats.filter(e=>e.n===2||e.n===4)]].filter(g=>g[2].length);
   return `<div class="ck">${asstCarte()}
   <div class="ck-hello" style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px"><div><small>${esc(now.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}))}<span id="meteoL"></span></small><h1>${bonjour} ${esc(nom)}</h1><span id="meteoA"></span></div><span class="chv-box" id="chvBox"><span class="chv-bulle" id="chvBulle" aria-live="polite"></span><svg class="ck-chevre" id="chv" viewBox="0 0 150 124" role="img" aria-label="Biquette, la chèvre de l’atelier : touche-la">
 <ellipse class="chv-ombre" cx="74" cy="114" rx="40" ry="5" fill="#14213D" opacity=".09"/>
@@ -2693,7 +2723,7 @@ function cockpit(){
     ${rdv.length?rdv.slice(0,3).map(e=>{const T=CAL_TYPES[calType(e)],n=calNiveau(e);const st=n==='urgent'?`background:${T.d};color:#fff;border-color:${T.d}`:n==='fait'?'opacity:.5':n==='afaire'?`background:${T.t};border-color:${T.t}`:'';return `<button class="ck-ligne" style="border-left:5px solid ${T.c};${st}" onclick="edit('planning','${esc(e.id)}')"><b style="color:${n==='urgent'?'#fff':T.d}">${esc(e.heure||'—')}</b><span>${esc(e.titre||'')}</span></button>`}).join('')+(rdv.length>3?`<button class="ck-vide" style="border:0;background:none;font:inherit;text-align:left;cursor:pointer;color:#1F4699;font-weight:700" onclick="calAller('${auj}');go('planning')">+ ${rdv.length-3} autre${rdv.length>4?'s':''} →</button>`:''):'<div class="ck-vide">Aucun rendez-vous aujourd’hui.</div>'}
   </div>
   <div class="ck-bloc"><div class="ck-titre"><i style="background:#D9731A"></i><h2 class="ck-h">Voitures de prêt</h2><button style="color:#8F4A0C" onclick="go('prets')">Prêts →</button></div>
-    <div class="ck-pre">${etats.map(e=>{const c=coulPre[e.n];return `<button style="background:${c[0]};color:${e.n===4?'#fff':'var(--ink)'};border-color:${c[2]}" onclick="${e.id?`edit('prets','${esc(e.id)}')`:`pretNouveau('${esc(e.f.nom)}')`}"><b>${esc(e.f.nom.replace(/^(Peugeot|Renault|Ford|Alfa Romeo)\s*/,m=>m.startsWith('Alfa')?'Alfa ':''))}</b><span style="color:${c[1]}">${esc(e.t)}</span></button>`}).join('')}</div>
+    <div class="ck-groupes ck-pre-g">${grpPre.map(g=>`<div class="ck-grp ${g[0]}" style="flex:${g[2].length} 1 0"><small>${g[1]}</small><div class="ck-pre" style="display:flex">${g[2].map(btnPre).join('')}</div></div>`).join('')||'<div class="ck-vide">Aucune voiture de prêt.</div>'}</div>
   </div>
   <button class="btn btn-primary" style="justify-content:center" onclick="pgOpen()">🎙 Parler au pilote</button>
   </div>`;
